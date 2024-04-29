@@ -1,0 +1,27 @@
+diff -up openssh-7.4p1/servconf.c.sshd-t openssh-7.4p1/servconf.c
+--- openssh-7.4p1/servconf.c.sshd-t	2017-02-09 10:19:56.859306131 +0100
++++ openssh-7.4p1/servconf.c	2017-02-09 10:22:07.895104402 +0100
+@@ -2337,7 +2337,7 @@ dump_config(ServerOptions *o)
+ 	dump_cfg_string(sXAuthLocation, o->xauth_location);
+ 	dump_cfg_string(sCiphers, o->ciphers ? o->ciphers : KEX_SERVER_ENCRYPT);
+ 	dump_cfg_string(sMacs, o->macs ? o->macs : KEX_SERVER_MAC);
+-	dump_cfg_string(sBanner, o->banner);
++	dump_cfg_string(sBanner, o->banner == NULL ? "none" : o->banner);
+ 	dump_cfg_string(sForceCommand, o->adm_forced_command);
+ 	dump_cfg_string(sChrootDirectory, o->chroot_directory);
+ 	dump_cfg_string(sTrustedUserCAKeys, o->trusted_user_ca_keys);
+diff -up openssh-7.4p1/ssh.1.sshd-t openssh-7.4p1/ssh.1
+--- openssh-7.4p1/ssh.1.sshd-t	2017-02-09 10:19:56.823306172 +0100
++++ openssh-7.4p1/ssh.1	2017-02-09 10:19:56.859306131 +0100
+@@ -512,7 +512,11 @@ For full details of the options listed b
+ .It GatewayPorts
+ .It GlobalKnownHostsFile
+ .It GSSAPIAuthentication
++.It GSSAPIKeyExchange
++.It GSSAPIClientIdentity
+ .It GSSAPIDelegateCredentials
++.It GSSAPIRenewalForcesRekey
++.It GSSAPITrustDns
+ .It HashKnownHosts
+ .It Host
+ .It HostbasedAuthentication

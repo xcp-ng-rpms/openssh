@@ -1,0 +1,66 @@
+diff -up openssh-7.4p1/pam_ssh_agent_auth-0.10.3/get_command_line.c.psaa-xfree openssh-7.4p1/pam_ssh_agent_auth-0.10.3/get_command_line.c
+--- openssh-7.4p1/pam_ssh_agent_auth-0.10.3/get_command_line.c.psaa-xfree	2017-02-13 16:06:46.260653300 +0100
++++ openssh-7.4p1/pam_ssh_agent_auth-0.10.3/get_command_line.c	2017-02-13 16:07:22.228619884 +0100
+@@ -105,9 +105,9 @@ pamsshagentauth_free_command_line(char *
+ {
+     size_t i;
+     for (i = 0; i < n_args; i++)
+-        pamsshagentauth_xfree(argv[i]);
++        free(argv[i]);
+ 
+-    pamsshagentauth_xfree(argv);
++    free(argv);
+     return;
+ }
+ 
+diff -up openssh-7.4p1/pam_ssh_agent_auth-0.10.3/iterate_ssh_agent_keys.c.psaa-xfree openssh-7.4p1/pam_ssh_agent_auth-0.10.3/iterate_ssh_agent_keys.c
+--- openssh-7.4p1/pam_ssh_agent_auth-0.10.3/iterate_ssh_agent_keys.c.psaa-xfree	2017-02-13 16:06:46.261653299 +0100
++++ openssh-7.4p1/pam_ssh_agent_auth-0.10.3/iterate_ssh_agent_keys.c	2017-02-13 16:08:01.263583622 +0100
+@@ -170,7 +170,7 @@ pamsshagentauth_session_id2_gen(Buffer *
+     /* pamsshagentauth_debug3("action: %s", action_logbuf); */
+     pamsshagentauth_buffer_put_string(session_id2, action_agentbuf.buf + action_agentbuf.offset, action_agentbuf.end - action_agentbuf.offset);
+     if (free_logbuf) { 
+-        pamsshagentauth_xfree(action_logbuf);
++        free(action_logbuf);
+         pamsshagentauth_buffer_free(&action_agentbuf);
+     }
+     /* pamsshagentauth_debug3("hostname: %s", hostname); */
+@@ -306,9 +306,9 @@ pamsshagentauth_find_authorized_keys(con
+                 if(userauth_pubkey_from_id(ruser, id, &session_id2)) {
+                     retval = 1;
+                 }
+-                pamsshagentauth_xfree(id->filename);
++                free(id->filename);
+                 pamsshagentauth_key_free(id->key);
+-                pamsshagentauth_xfree(id);
++                free(id);
+                 if(retval == 1)
+                     break;
+             }
+diff -up openssh-7.4p1/pam_ssh_agent_auth-0.10.3/pam_user_key_allowed2.c.psaa-xfree openssh-7.4p1/pam_ssh_agent_auth-0.10.3/pam_user_key_allowed2.c
+--- openssh-7.4p1/pam_ssh_agent_auth-0.10.3/pam_user_key_allowed2.c.psaa-xfree	2017-02-13 16:06:46.261653299 +0100
++++ openssh-7.4p1/pam_ssh_agent_auth-0.10.3/pam_user_key_allowed2.c	2017-02-13 16:08:25.507561099 +0100
+@@ -105,7 +105,7 @@ pamsshagentauth_check_authkeys_file(FILE
+             fp = pamsshagentauth_key_fingerprint(found, SSH_FP_MD5, SSH_FP_HEX);
+             pamsshagentauth_logit("Found matching %s key: %s",
+                                   pamsshagentauth_key_type(found), fp);
+-            pamsshagentauth_xfree(fp);
++            free(fp);
+             break;
+         }
+     }
+diff -up openssh-7.4p1/pam_ssh_agent_auth-0.10.3/userauth_pubkey_from_id.c.psaa-xfree openssh-7.4p1/pam_ssh_agent_auth-0.10.3/userauth_pubkey_from_id.c
+--- openssh-7.4p1/pam_ssh_agent_auth-0.10.3/userauth_pubkey_from_id.c.psaa-xfree	2017-02-13 16:06:46.261653299 +0100
++++ openssh-7.4p1/pam_ssh_agent_auth-0.10.3/userauth_pubkey_from_id.c	2017-02-13 16:08:44.164543767 +0100
+@@ -93,9 +93,9 @@ userauth_pubkey_from_id(const char *ruse
+     /* if(&b != NULL) */
+     pamsshagentauth_buffer_free(&b);
+     if(sig != NULL)
+-        pamsshagentauth_xfree(sig);
++        free(sig);
+     if(pkblob != NULL)
+-        pamsshagentauth_xfree(pkblob);
++        free(pkblob);
+     CRYPTO_cleanup_all_ex_data();
+     return authenticated;
+ }
