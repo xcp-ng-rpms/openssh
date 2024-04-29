@@ -75,7 +75,7 @@
 Summary: An open source implementation of SSH protocol versions 1 and 2
 Name: openssh
 Version: %{openssh_ver}
-Release: %{xsrel}%{?dist}
+Release: %{xsrel}.1%{?dist}
 URL: http://www.openssh.com/portable.html
 #URL1: http://pamsshagentauth.sourceforge.net
 Source0: openssh-7.4p1.tar.gz
@@ -166,6 +166,10 @@ Patch72: openssh-7.4p1-fips.patch
 Patch73: openssh-7.4p1-coverity.patch
 Patch74: openssh-9.3p1-upstream-cve-2023-38408.patch
 Patch75: openssh-8.7p1-CVE-2023-48795.patch
+
+# XCP-ng patches
+Patch1000: xcpng-harden-default-ciphers-and-algorithms.patch
+Patch1001: xcpng-disable-gssapiauth-in-sshd_config.patch
 
 License: BSD
 Group: Applications/Internet
@@ -649,6 +653,11 @@ getent passwd sshd >/dev/null || \
 %endif
 
 %changelog
+* Mon Apr 29 2024 Thierry Escande <thierry.escande@vates.tech> - 7.4p1-23.2.1 + 0.10.3-2
+- Cleanup spec file
+- Harden default ciphers and algorithms
+- Disable GSSAPIAuthentication in sshd_config
+
 * Wed Jan 24 2024 Alex Brett <alex.brett@cloud.com> - 7.4p1-23.2 + 0.10.3-2
 - Fix for CVE-2023-48795: Add strict key exchange extension
 
