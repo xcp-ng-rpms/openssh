@@ -167,6 +167,10 @@ Patch73: openssh-7.4p1-coverity.patch
 Patch74: openssh-9.3p1-upstream-cve-2023-38408.patch
 Patch75: openssh-8.7p1-CVE-2023-48795.patch
 
+# XCP-ng patches
+Patch1000: xcpng-harden-default-ciphers-and-algorithms.patch
+Patch1001: xcpng-disable-gssapiauth-in-sshd_config.patch
+
 License: BSD
 Group: Applications/Internet
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
