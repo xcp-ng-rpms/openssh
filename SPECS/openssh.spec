@@ -214,8 +214,6 @@ Requires: audit-libs >= 1.0.8
 BuildRequires: audit-libs >= 1.0.8
 %endif
 
-BuildRequires: xauth
-
 %package clients
 Summary: An open source SSH client applications
 Group: Applications/Internet
