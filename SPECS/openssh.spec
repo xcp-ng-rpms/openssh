@@ -214,8 +214,6 @@ Requires: audit-libs >= 1.0.8
 BuildRequires: audit-libs >= 1.0.8
 %endif
 
-BuildRequires: xauth
-
 %package clients
 Summary: An open source SSH client applications
 Group: Applications/Internet
@@ -653,10 +651,11 @@ getent passwd sshd >/dev/null || \
 %endif
 
 %changelog
-* Mon Apr 29 2024 Thierry Escande <thierry.escande@vates.tech> - 7.4p1-23.2.1 + 0.10.3-2
+* Tue Apr 30 2024 Thierry Escande <thierry.escande@vates.tech> - 7.4p1-23.2.1 + 0.10.3-2.23.2
 - Cleanup spec file
 - Harden default ciphers and algorithms
 - Disable GSSAPIAuthentication in sshd_config
+- Remove build dependency on xauth (used for X11 forwarding not supported on XCP-ng hosts)
 
 * Wed Jan 24 2024 Alex Brett <alex.brett@cloud.com> - 7.4p1-23.2 + 0.10.3-2
 - Fix for CVE-2023-48795: Add strict key exchange extension
