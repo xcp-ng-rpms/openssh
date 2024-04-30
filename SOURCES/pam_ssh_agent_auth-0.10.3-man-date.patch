@@ -1,0 +1,12 @@
+diff -up openssh-7.4p1/pam_ssh_agent_auth-0.10.3/Makefile.in.pss-pod openssh-7.4p1/pam_ssh_agent_auth-0.10.3/Makefile.in
+--- openssh-7.4p1/pam_ssh_agent_auth-0.10.3/Makefile.in.pod	2017-05-12 16:10:50.484898322 +0200
++++ openssh-7.4p1/pam_ssh_agent_auth-0.10.3/Makefile.in	2017-05-12 16:10:20.149908941 +0200
+@@ -103,7 +103,7 @@ pam_ssh_agent_auth.so: $(PAM_SSH_AGENT_A
+ 	$(LD) $(LDFLAGS_SHARED) -o $@ $(PAM_SSH_AGENT_AUTH_OBJS) $(LDFLAGS) -lssh -lopenbsd-compat pam_ssh_agent_auth.o $(LIBS) -lpam -lnss3
+ 
+ $(MANPAGES): $(MANPAGES_IN)
+-	pod2man --section=8 --release=v0.10.3 --name=pam_ssh_agent_auth --official --center "PAM" pam_ssh_agent_auth.pod > pam_ssh_agent_auth.8
++	pod2man --date="2016-11-12" --section=8 --release=v0.10.3 --name=pam_ssh_agent_auth --official --center "PAM" pam_ssh_agent_auth.pod > pam_ssh_agent_auth.8
+ 
+ clean:	regressclean
+ 	rm -f *.o *.a $(PAM_MODULES) logintest config.cache config.log
