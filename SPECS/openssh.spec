@@ -9,6 +9,9 @@
 %define WITH_SELINUX 0
 %endif
 
+# XCP-ng sub release number
+%define xcpng_subrel 1
+
 # OpenSSH privilege separation requires a user & group ID
 %define sshd_uid    74
 %define sshd_gid    74
@@ -75,7 +78,7 @@
 Summary: An open source implementation of SSH protocol versions 1 and 2
 Name: openssh
 Version: %{openssh_ver}
-Release: %{xsrel}%{?dist}
+Release: %{xsrel}.%{xcpng_subrel}%{?dist}
 URL: http://www.openssh.com/portable.html
 #URL1: http://pamsshagentauth.sourceforge.net
 Source0: openssh-7.4p1.tar.gz
@@ -264,7 +267,7 @@ Requires: openssh = %{version}-%{release}
 Summary: PAM module for authentication with ssh-agent
 Group: System Environment/Base
 Version: %{pam_ssh_agent_ver}
-Release: %{pam_ssh_agent_rel}.%{xsrel}%{?dist}
+Release: %{pam_ssh_agent_rel}.%{xsrel}.%{xcpng_subrel}%{?dist}
 License: BSD
 
 %description
@@ -651,6 +654,12 @@ getent passwd sshd >/dev/null || \
 %endif
 
 %changelog
+* Tue May 07 2024 Thierry Escande <thierry.escande@vates.tech> - 7.4p1-23.2.1 + 0.10.3-2.23.2.1
+- Harden default ciphers and algorithms
+- Disable GSSAPIAuthentication in sshd_config
+- Remove build dependency on xauth (used for X11 forwarding not supported on XCP-ng hosts)
+- Make use of xcpng_subrel macro for versioning
+
 * Wed Jan 24 2024 Alex Brett <alex.brett@cloud.com> - 7.4p1-23.2 + 0.10.3-2
 - Fix for CVE-2023-48795: Add strict key exchange extension
 
