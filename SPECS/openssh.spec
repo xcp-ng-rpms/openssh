@@ -17,7 +17,7 @@
 %define sshd_gid    74
 
 # Do we want to disable building of gnome-askpass? (1=yes 0=no)
-%define no_gnome_askpass 0
+%define no_gnome_askpass 1
 
 # Do we want to link against a static libcrypto? (1=yes 0=no)
 %define static_libcrypto 0
@@ -654,11 +654,12 @@ getent passwd sshd >/dev/null || \
 %endif
 
 %changelog
-* Tue May 07 2024 Thierry Escande <thierry.escande@vates.tech> - 7.4p1-23.2.1 + 0.10.3-2.23.2.1
+* Tue May 13 2024 Thierry Escande <thierry.escande@vates.tech> - 7.4p1-23.2.1 + 0.10.3-2.23.2.1
 - Harden default ciphers and algorithms
 - Disable GSSAPIAuthentication in sshd_config
 - Remove build dependency on xauth (used for X11 forwarding not supported on XCP-ng hosts)
 - Make use of xcpng_subrel macro for versioning
+- Disable gnome_askpass
 
 * Wed Jan 24 2024 Alex Brett <alex.brett@cloud.com> - 7.4p1-23.2 + 0.10.3-2
 - Fix for CVE-2023-48795: Add strict key exchange extension
