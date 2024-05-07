@@ -200,6 +200,7 @@ BuildRequires: fipscheck-devel >= 1.3.0
 BuildRequires: openssl-devel >= 0.9.8j
 BuildRequires: perl-podlators
 BuildRequires: systemd-devel
+BuildRequires: gcc
 
 %if %{kerberos5}
 BuildRequires: krb5-devel
@@ -660,6 +661,7 @@ getent passwd sshd >/dev/null || \
 - Remove build dependency on xauth (used for X11 forwarding not supported on XCP-ng hosts)
 - Make use of xcpng_subrel macro for versioning
 - Disable gnome_askpass
+- Add BuildRequires for gcc
 
 * Wed Jan 24 2024 Alex Brett <alex.brett@cloud.com> - 7.4p1-23.2 + 0.10.3-2
 - Fix for CVE-2023-48795: Add strict key exchange extension
