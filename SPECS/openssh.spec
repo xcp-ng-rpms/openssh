@@ -1,6 +1,6 @@
-%global package_speccommit c13e58105df32e273cc2458e2ae266cdb74e7564
+%global package_speccommit ee60184dd35a7faef65befbbf9f473cb2fefcd62
 %global usver 7.4p1
-%global xsver 23.2
+%global xsver 23.3
 %global xsrel %{xsver}%{?xscount}%{?xshash}
 # Do we want SELinux & Audit
 %if 0%{?!noselinux:1}
@@ -138,34 +138,37 @@ Patch44: openssh-7.4p1-gssKexAlgorithms.patch
 Patch45: openssh-6.6p1-s390-closefrom.patch
 Patch46: openssh-7.4p1-expose-pam.patch
 Patch47: openssh-6.6p1-x11-max-displays.patch
-Patch48: openssh-6.6p1-systemd.patch
-Patch49: openssh-7.4p1-permit-root-login.patch
-Patch50: openssh-7.4p1-debian-restore-tcp-wrappers.patch
-Patch51: openssh-7.4p1-pkcs11-whitelist.patch
-Patch52: openssh-7.4p1-legacy-algorithms.patch
-Patch53: openssh-7.4p1-show-more-fingerprints.patch
-Patch54: openssh-7.4p1-newline-banner.patch
-Patch55: openssh-7.4p1-sha2-signatures.patch
-Patch56: openssh-7.4p1-canonize-pkcs11-provider.patch
-Patch57: openssh-7.4p1-rsa1-segfault.patch
-Patch58: openssh-7.4p1-cbc-weakness.patch
-Patch59: openssh-7.4p1-sandbox-ppc64le.patch
-Patch60: openssh-7.4p1-ControlPath_too_long.patch
-Patch61: openssh-7.4p1-sandbox-ibmca.patch
-Patch62: openssh-7.4p1-usedns-yes.patch
-Patch63: openssh-7.4p1-rekeying-timeouts.patch
-Patch64: openssh-7.4p1-winscp-compat.patch
-Patch65: openssh-7.4p1-authorized_keys_command.patch
-Patch66: openssh-7.5p1-sftp-empty-files.patch
-Patch67: openssh-7.4p1-CVE-2018-15473.patch
-Patch68: openssh-7.4p1-uidswap.patch
-Patch69: openssh-8.7p1-upstream-cve-2021-41617.patch
-Patch70: openssh-7.4p1-audit.patch
-Patch71: openssh-6.6p1-audit-race-condition.patch
-Patch72: openssh-7.4p1-fips.patch
-Patch73: openssh-7.4p1-coverity.patch
-Patch74: openssh-9.3p1-upstream-cve-2023-38408.patch
-Patch75: openssh-8.7p1-CVE-2023-48795.patch
+Patch48: openssh-7.4p1-permit-root-login.patch
+Patch49: openssh-7.4p1-debian-restore-tcp-wrappers.patch
+Patch50: openssh-7.4p1-pkcs11-whitelist.patch
+Patch51: openssh-7.4p1-legacy-algorithms.patch
+Patch52: openssh-7.4p1-show-more-fingerprints.patch
+Patch53: openssh-7.4p1-newline-banner.patch
+Patch54: openssh-7.4p1-sha2-signatures.patch
+Patch55: openssh-7.4p1-canonize-pkcs11-provider.patch
+Patch56: openssh-7.4p1-rsa1-segfault.patch
+Patch57: openssh-7.4p1-cbc-weakness.patch
+Patch58: openssh-7.4p1-sandbox-ppc64le.patch
+Patch59: openssh-7.4p1-ControlPath_too_long.patch
+Patch60: openssh-7.4p1-sandbox-ibmca.patch
+Patch61: openssh-7.4p1-usedns-yes.patch
+Patch62: openssh-7.4p1-rekeying-timeouts.patch
+Patch63: openssh-7.4p1-winscp-compat.patch
+Patch64: openssh-7.4p1-authorized_keys_command.patch
+Patch65: openssh-7.5p1-sftp-empty-files.patch
+Patch66: openssh-7.4p1-CVE-2018-15473.patch
+Patch67: openssh-7.4p1-uidswap.patch
+Patch68: openssh-8.7p1-upstream-cve-2021-41617.patch
+Patch69: openssh-7.4p1-audit.patch
+Patch70: openssh-6.6p1-audit-race-condition.patch
+Patch71: openssh-7.4p1-fips.patch
+Patch72: openssh-7.4p1-coverity.patch
+Patch73: openssh-9.3p1-upstream-cve-2023-38408.patch
+Patch74: openssh-8.7p1-CVE-2023-48795.patch
+Patch75: openssh-9.8p1-systemd-1.patch
+Patch76: openssh-9.8p1-systemd-2.patch
+Patch77: openssh-9.8p1-systemd-3.patch
+Patch78: openssh-9.8p1-cve-2024-6387.patch
 
 License: BSD
 Group: Applications/Internet
@@ -389,7 +392,6 @@ fi
 	--without-zlib-version-check \
 	--with-ssl-engine \
 	--with-ipaddr-display \
-	--with-systemd \
 	--with-ssh1 \
 %if %{ldap}
 	--with-ldap \
@@ -649,6 +651,10 @@ getent passwd sshd >/dev/null || \
 %endif
 
 %changelog
+* Tue Jul 02 2024 Ross Lagerwall <ross.lagerwall@citrix.com> - 7.4p1-23.3 + 0.10.3-2
+- CP-50166: Remove libsystemd integration
+- CA-395182: Fix CVE-2024-6387 - use of non-async-signal-safe fn in sighandler
+
 * Wed Jan 24 2024 Alex Brett <alex.brett@cloud.com> - 7.4p1-23.2 + 0.10.3-2
 - Fix for CVE-2023-48795: Add strict key exchange extension
 

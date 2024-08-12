@@ -1,0 +1,207 @@
+From 08f579231cd38a1c657aaa6ddeb8ab57a1fd4f5c Mon Sep 17 00:00:00 2001
+From: Damien Miller <djm@mindrot.org>
+Date: Wed, 3 Apr 2024 14:40:32 +1100
+Subject: [PATCH] notify systemd on listen and reload
+
+Standalone implementation that does not depend on libsystemd.
+With assistance from Luca Boccassi, and feedback/testing from Colin
+Watson. bz2641
+diff --git a/configure.ac b/configure.ac
+index 21755349dc71..14b5c7701837 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -775,6 +775,7 @@ main() { if (NSVersionOfRunTimeLibrary("System") >= (60 << 16))
+ 	AC_DEFINE([_PATH_BTMP], ["/var/log/btmp"], [log for bad login attempts])
+ 	AC_DEFINE([USE_BTMP])
+ 	AC_DEFINE([LINUX_OOM_ADJUST], [1], [Adjust Linux out-of-memory killer])
++	AC_DEFINE([SYSTEMD_NOTIFY], [1], [Have sshd notify systemd on start/reload])
+ 	inet6_default_4in6=yes
+ 	case `uname -r` in
+ 	1.*|2.0.*)
+diff --git a/openbsd-compat/port-linux.c b/openbsd-compat/port-linux.c
+index ba7e49515ade..8a2835cb6911 100644
+--- a/openbsd-compat/port-linux.c
++++ b/openbsd-compat/port-linux.c
+@@ -21,11 +21,17 @@
+ 
+ #include "includes.h"
+ 
+-#if defined(WITH_SELINUX) || defined(LINUX_OOM_ADJUST)
++#if defined(WITH_SELINUX) || defined(LINUX_OOM_ADJUST) || \
++    defined(SYSTEMD_NOTIFY)
++#include <sys/socket.h>
++#include <sys/un.h>
++
+ #include <errno.h>
++#include <inttypes.h>
+ #include <stdarg.h>
+ #include <string.h>
+ #include <stdio.h>
++#include <time.h>
+ 
+ #include "log.h"
+ #include "xmalloc.h"
+@@ -398,4 +404,94 @@ get_canonical_hostname(struct ssh *ssh, int use_dns)
+ 		return dnsname;
+ 	}
+ }
+-#endif /* WITH_SELINUX || LINUX_OOM_ADJUST */
++
++#ifdef SYSTEMD_NOTIFY
++
++static void ssh_systemd_notify(const char *, ...)
++    __attribute__((__format__ (printf, 1, 2))) __attribute__((__nonnull__ (1)));
++
++static void
++ssh_systemd_notify(const char *fmt, ...)
++{
++	char *s = NULL;
++	const char *path;
++	struct stat sb;
++	struct sockaddr_un addr;
++	int fd = -1;
++	va_list ap;
++
++	if ((path = getenv("NOTIFY_SOCKET")) == NULL || strlen(path) == 0)
++		return;
++
++	va_start(ap, fmt);
++	xvasprintf(&s, fmt, ap);
++	va_end(ap);
++
++	/* Only AF_UNIX is supported, with path or abstract sockets */
++	if (path[0] != '/' && path[0] != '@') {
++		error("%s: socket \"%s\" is not compatible with AF_UNIX", __func__, path);
++		goto out;
++	}
++
++	if (path[0] == '/' && stat(path, &sb) != 0) {
++		error("%s: socket \"%s\" stat: %s", __func__, path, strerror(errno));
++		goto out;
++	}
++
++	memset(&addr, 0, sizeof(addr));
++	addr.sun_family = AF_UNIX;
++	if (strlcpy(addr.sun_path, path,
++	    sizeof(addr.sun_path)) >= sizeof(addr.sun_path)) {
++		error("%s: socket path \"%s\" too long", __func__, path);
++		goto out;
++	}
++	/* Support for abstract socket */
++	if (addr.sun_path[0] == '@')
++		addr.sun_path[0] = 0;
++	if ((fd = socket(PF_UNIX, SOCK_DGRAM, 0)) == -1) {
++		error("%s: socket \"%s\": %s", __func__, path, strerror(errno));
++		goto out;
++	}
++	if (connect(fd, &addr, sizeof(addr)) != 0) {
++		error("%s: socket \"%s\" connect: %s", __func__, path, strerror(errno));
++		goto out;
++	}
++	if (write(fd, s, strlen(s)) != (ssize_t)strlen(s)) {
++		error("%s: socket \"%s\" write: %s", __func__, path, strerror(errno));
++		goto out;
++	}
++	debug("%s: socket \"%s\" notified %s", __func__, path, s);
++ out:
++	if (fd != -1)
++		close(fd);
++	free(s);
++}
++
++void
++ssh_systemd_notify_ready(void)
++{
++	ssh_systemd_notify("READY=1");
++}
++
++void
++ssh_systemd_notify_reload(void)
++{
++	struct timespec now;
++	int ret;
++
++	ret = clock_gettime(CLOCK_MONOTONIC, &now);
++	if (ret) {
++		error("%s: monotime failed: %s", __func__, strerror(errno));
++		ssh_systemd_notify("RELOADING=1");
++	} else if (now.tv_sec < 0 || now.tv_nsec < 0) {
++		error("%s: monotime returned negative value", __func__);
++		ssh_systemd_notify("RELOADING=1");
++	} else {
++		ssh_systemd_notify("RELOADING=1\nMONOTONIC_USEC=%llu",
++		    ((uint64_t)now.tv_sec * 1000000ULL) +
++		    ((uint64_t)now.tv_nsec / 1000ULL));
++	}
++}
++#endif /* SYSTEMD_NOTIFY */
++
++#endif /* WITH_SELINUX || LINUX_OOM_ADJUST || SYSTEMD_NOTIFY */
+diff --git a/openbsd-compat/port-linux.h b/openbsd-compat/port-linux.h
+index ef6399d0af84..ed376ac85281 100644
+--- a/openbsd-compat/port-linux.h
++++ b/openbsd-compat/port-linux.h
+@@ -40,5 +40,9 @@ void linux_seed(void);
+ const char *get_canonical_hostname(struct ssh *, int);
+ char *remote_hostname(struct ssh *);
+ 
++#ifdef SYSTEMD_NOTIFY
++void ssh_systemd_notify_ready(void);
++void ssh_systemd_notify_reload(void);
++#endif
+ 
+ #endif /* ! _PORT_LINUX_H */
+diff --git a/platform.c b/platform.c
+index 78cfc6ee172c..0fd8520695de 100644
+--- a/platform.c
++++ b/platform.c
+@@ -43,6 +43,14 @@ platform_pre_listen(void)
+ #endif
+ }
+ 
++void
++platform_post_listen(void)
++{
++#ifdef SYSTEMD_NOTIFY
++	ssh_systemd_notify_ready();
++#endif
++}
++
+ void
+ platform_pre_fork(void)
+ {
+@@ -54,6 +62,9 @@ platform_pre_fork(void)
+ void
+ platform_pre_restart(void)
+ {
++#ifdef SYSTEMD_NOTIFY
++	ssh_systemd_notify_reload();
++#endif
+ #ifdef LINUX_OOM_ADJUST
+ 	oom_adjust_restore();
+ #endif
+diff --git a/platform.h b/platform.h
+index ea4f9c584924..4cbdf1f8c990 100644
+--- a/platform.h
++++ b/platform.h
+@@ -21,6 +21,7 @@
+ void platform_pre_listen(void);
+ void platform_pre_fork(void);
+ void platform_pre_restart(void);
++void platform_post_listen(void);
+ void platform_post_fork_parent(pid_t child_pid);
+ void platform_post_fork_child(void);
+ int  platform_privileged_uidswap(void);
+diff --git a/sshd.c b/sshd.c
+index 8c109bb8f91c..c55446e76b4f 100644
+--- a/sshd.c
++++ b/sshd.c
+@@ -1990,6 +1990,8 @@ main(int ac, char **av)
+ 		signal(SIGTERM, sigterm_handler);
+ 		signal(SIGQUIT, sigterm_handler);
+ 
++		platform_post_listen();
++
+ 		/*
+ 		 * Write out the pid file after the sigterm handler
+ 		 * is setup and the listen sockets are bound
