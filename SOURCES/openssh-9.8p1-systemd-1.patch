@@ -1,0 +1,60 @@
+From 166927fd410823eec8a7b2472463db51e0e6fef5 Mon Sep 17 00:00:00 2001
+From: "djm@openbsd.org" <djm@openbsd.org>
+Date: Tue, 12 Nov 2019 22:32:48 +0000
+Subject: [PATCH] upstream: add xvasprintf()
+
+OpenBSD-Commit-ID: e5e3671c05c121993b034db935bce1a7aa372247
+---
+ xmalloc.c | 21 ++++++++++++++-------
+ xmalloc.h |  4 +++-
+ 2 files changed, 17 insertions(+), 8 deletions(-)
+
+diff --git a/xmalloc.c b/xmalloc.c
+index 9cd0127dd3c7..b48d33bbf68c 100644
+--- a/xmalloc.c
++++ b/xmalloc.c
+@@ -95,6 +95,17 @@ xstrdup(const char *str)
+ 	return cp;
+ }
+ 
++int
++xvasprintf(char **ret, const char *fmt, va_list ap)
++{
++	int i;
++
++	i = vasprintf(ret, fmt, ap);
++	if (i < 0 || *ret == NULL)
++		fatal("xvasprintf: could not allocate memory");
++	return i;
++}
++
+ int
+ xasprintf(char **ret, const char *fmt, ...)
+ {
+@@ -102,11 +113,7 @@ xasprintf(char **ret, const char *fmt, ...)
+ 	int i;
+ 
+ 	va_start(ap, fmt);
+-	i = vasprintf(ret, fmt, ap);
++	i = xvasprintf(ret, fmt, ap);
+ 	va_end(ap);
+-
+-	if (i < 0 || *ret == NULL)
+-		fatal("xasprintf: could not allocate memory");
+-
+-	return (i);
++	return i;
+ }
+diff --git a/xmalloc.h b/xmalloc.h
+index 1d5f62df77a3..abaf7ada2c6c 100644
+--- a/xmalloc.h
++++ b/xmalloc.h
+@@ -24,3 +24,5 @@ char	*xstrdup(const char *);
+ int	 xasprintf(char **, const char *, ...)
+                 __attribute__((__format__ (printf, 2, 3)))
+                 __attribute__((__nonnull__ (2)));
++int	 xvasprintf(char **, const char *, va_list)
++		__attribute__((__nonnull__ (2)));
+-- 
+2.45.2
+
