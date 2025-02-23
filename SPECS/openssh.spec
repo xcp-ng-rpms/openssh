@@ -10,7 +10,7 @@
 %endif
 
 # XCP-ng sub release number
-%define xcpng_subrel 1
+%define xcpng_subrel 2
 
 # OpenSSH privilege separation requires a user & group ID
 %define sshd_uid    74
@@ -176,6 +176,7 @@ Patch78: openssh-9.8p1-cve-2024-6387.patch
 # XCP-ng patches
 Patch1000: xcpng-harden-default-ciphers-and-algorithms.patch
 Patch1001: xcpng-disable-gssapiauth-in-sshd_config.patch
+Patch1002: openssh-7.4p1-CVE-2025-26465-Fix-cases-where-error-codes-were-not-correc.patch
 
 License: BSD
 Group: Applications/Internet
@@ -657,6 +658,9 @@ getent passwd sshd >/dev/null || \
 %endif
 
 %changelog
+* Mon Mar 17 2025 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 7.4p1-23.3.2 + 0.10.3-2.23.3.2
+- Fix CVE-2025-26465 - Fix cases where error codes were not correctly set
+
 * Mon Aug 12 2024 Samuel Verschelde <stormi-xcp@ylix.fr> - 7.4p1-23.3.1 + 0.10.3-2.23.3.1
 - Sync with 7.4p1-23.3 + 0.10.3-2.23.3
 - *** Upstream changelog ***
