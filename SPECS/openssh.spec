@@ -10,7 +10,7 @@
 %endif
 
 # XCP-ng sub release number
-%define xcpng_subrel 2
+%define xcpng_subrel 3
 
 # OpenSSH privilege separation requires a user & group ID
 %define sshd_uid    74
@@ -658,6 +658,9 @@ getent passwd sshd >/dev/null || \
 %endif
 
 %changelog
+* Mon Apr 28 2025 Yann Dirson <yann.dirson@vates.tech> - 7.4p1-23.3.3 + 0.10.3-2.23.3.3
+- Rebuild against ncurses 6.4-6.20240309 to pull abi5 (compat) libs
+
 * Mon Mar 17 2025 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 7.4p1-23.3.2 + 0.10.3-2.23.3.2
 - Fix CVE-2025-26465 - Fix cases where error codes were not correctly set
 
