@@ -1,0 +1,76 @@
+From a2468a3ab4568abb674b206a273b56d1941bd954 Mon Sep 17 00:00:00 2001
+From: Lucas RAVAGNIER <ravagnierlucas@gmail.com>
+Date: Thu, 1 May 2025 00:06:57 +0200
+Subject: [PATCH] fix-xcpng-harden-default-ciphers-and-algorithms
+
+---
+ myproposal.h | 28 +++++-----------------------
+ 1 file changed, 5 insertions(+), 23 deletions(-)
+
+diff --git a/myproposal.h b/myproposal.h
+index 1bf072d..ca3a0e2 100644
+--- a/myproposal.h
++++ b/myproposal.h
+@@ -92,18 +92,13 @@
+ # endif
+ #define KEX_COMMON_KEX \
+ 	KEX_CURVE25519_METHODS \
+-	KEX_ECDH_METHODS \
+-	KEX_SHA2_METHODS
++	KEX_ECDH_METHODS
+ 
+ #define KEX_SERVER_KEX KEX_COMMON_KEX \
+-	"diffie-hellman-group-exchange-sha1," \
+-	KEX_SHA2_GROUP14 \
+ 	"diffie-hellman-group14-sha1," \
+ 	"diffie-hellman-group1-sha1"
+ 
+ #define KEX_CLIENT_KEX KEX_COMMON_KEX \
+-	"diffie-hellman-group-exchange-sha1," \
+-	KEX_SHA2_GROUP14 \
+ 	"diffie-hellman-group14-sha1," \
+ 	"diffie-hellman-group1-sha1"
+ 
+@@ -111,13 +106,9 @@
+ 	HOSTKEY_ECDSA_CERT_METHODS \
+ 	"ssh-ed25519-cert-v01@openssh.com," \
+ 	"ssh-rsa-cert-v01@openssh.com," \
+-	"ssh-dss-cert-v01@openssh.com," \
+ 	HOSTKEY_ECDSA_METHODS \
+ 	"ssh-ed25519," \
+-	"rsa-sha2-512," \
+-	"rsa-sha2-256," \
+-	"ssh-rsa," \
+-	"ssh-dss"
++	"ssh-rsa"
+ 
+ #define	KEX_FIPS_PK_ALG	\
+ 	HOSTKEY_ECDSA_CERT_METHODS \
+@@ -131,21 +122,12 @@
+ 
+ #define KEX_CLIENT_ENCRYPT \
+ 	"chacha20-poly1305@openssh.com," \
+-	"aes128-ctr,aes192-ctr,aes256-ctr" \
+-	AESGCM_CIPHER_MODES "," \
+-	"aes128-cbc,aes192-cbc,aes256-cbc"
++	"aes128-ctr,aes256-ctr" \
++	AESGCM_CIPHER_MODES
+ 
+-#define KEX_SERVER_ENCRYPT KEX_CLIENT_ENCRYPT "," \
+-	"blowfish-cbc,cast128-cbc,3des-cbc"
++#define KEX_SERVER_ENCRYPT KEX_CLIENT_ENCRYPT
+ 
+ #define KEX_SERVER_MAC \
+-	"umac-64-etm@openssh.com," \
+-	"umac-128-etm@openssh.com," \
+-	"hmac-sha2-256-etm@openssh.com," \
+-	"hmac-sha2-512-etm@openssh.com," \
+-	"hmac-sha1-etm@openssh.com," \
+-	"umac-64@openssh.com," \
+-	"umac-128@openssh.com," \
+ 	"hmac-sha2-256," \
+ 	"hmac-sha2-512," \
+ 	"hmac-sha1"
+-- 
+2.47.0
+
