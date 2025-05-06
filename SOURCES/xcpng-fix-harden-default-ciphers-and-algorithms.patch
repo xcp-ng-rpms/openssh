@@ -1,0 +1,62 @@
+From 68c7d5447818bf4fc8862af6c352f462dad216db Mon Sep 17 00:00:00 2001
+From: Lucas RAVAGNIER <ravagnierlucas@gmail.com>
+Date: Tue, 6 May 2025 16:27:58 +0200
+Subject: [PATCH] Fix for xcpng-harden-default-ciphers-and-algorithms
+
+- Completely disabled chacha20-poly1305 to prevent the terrapin attack.
+- Re-enabled similar curves.
+
+Signed-off-by: Lucas RAVAGNIER <ravagnierlucas@gmail.com>
+---
+ myproposal.h      |   8 +-
+ regress/dhgex.sh  |   2 +-
+ 2 files changed, 7 insertions(+), 3 deletions(-)
+
+diff --git a/myproposal.h b/myproposal.h
+index 6a92111..e013b2e 100644
+--- a/myproposal.h
++++ b/myproposal.h
+@@ -85,7 +85,8 @@
+ #ifdef WITH_OPENSSL
+ # ifdef HAVE_EVP_SHA256
+ #  define KEX_CURVE25519_METHODS \
+-	"curve25519-sha256,"
++	"curve25519-sha256," \
++	"curve25519-sha256@libssh.org,"
+ # else
+ #  define KEX_CURVE25519_METHODS ""
+ # endif
+@@ -100,8 +101,12 @@
+ 	"diffie-hellman-group14-sha1"
+ 
+ #define	KEX_DEFAULT_PK_ALG	\
++	"ssh-ed25519-cert-v01@openssh.com," \
++	"ssh-rsa-cert-v01@openssh.com," \
+ 	HOSTKEY_ECDSA_METHODS \
+ 	"ssh-ed25519," \
++	"rsa-sha2-512," \
++	"rsa-sha2-256," \
+ 	"ssh-rsa"
+ 
+ #define	KEX_FIPS_PK_ALG	\
+@@ -168,7 +173,6 @@
+ 	"ssh-ed25519-cert-v01@openssh.com," \
+ 	"ssh-ed25519"
+ #define	KEX_SERVER_ENCRYPT \
+-	"chacha20-poly1305@openssh.com," \
+ 	"aes128-ctr,aes192-ctr,aes256-ctr"
+ #define	KEX_SERVER_MAC \
+ 	"umac-64-etm@openssh.com," \
+diff --git a/regress/dhgex.sh b/regress/dhgex.sh
+index e7c5733..fafa1df 100644
+--- a/regress/dhgex.sh
++++ b/regress/dhgex.sh
+@@ -57,4 +57,4 @@ check 3072 `${SSH} -Q cipher | grep 128`
+ check 3072 arcfour blowfish-cbc
+ check 7680 `${SSH} -Q cipher | grep 192`
+ check 8192 `${SSH} -Q cipher | grep 256`
+-check 8192 rijndael-cbc@lysator.liu.se chacha20-poly1305@openssh.com
++#check 8192 rijndael-cbc@lysator.liu.se chacha20-poly1305@openssh.com
+-- 
+2.47.0
+
