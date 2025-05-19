@@ -673,9 +673,12 @@ getent passwd sshd >/dev/null || \
 %endif
 
 %changelog
-* Tue May 06 2025 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 7.4p1-23.3.3 + 0.10.3-2.23.3.3
+* Mon May 19 2025 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 7.4p1-23.3.3 + 0.10.3-2.23.3.3
 - Enabled testsuite by default
 - Better handle of terrapin attack (CVE-2023-48795) 
+
+* Mon Apr 28 2025 Yann Dirson <yann.dirson@vates.tech> - 7.4p1-23.3.3 + 0.10.3-2.23.3.3
+- Rebuild against ncurses 6.4-6.20240309 to pull abi5 (compat) libs
 
 * Mon Mar 17 2025 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 7.4p1-23.3.2 + 0.10.3-2.23.3.2
 - Fix CVE-2025-26465 - Fix cases where error codes were not correctly set
