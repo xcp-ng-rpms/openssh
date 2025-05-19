@@ -1,0 +1,31 @@
+From a0adc619b1dd7e67b3b8f3f1dabcf77bdc0d31c8 Mon Sep 17 00:00:00 2001
+From: Lucas RAVAGNIER <ravagnierlucas@gmail.com>
+Date: Tue, 6 May 2025 16:37:31 +0200
+Subject: [PATCH] Disable chacha20 utilisation ciphers
+
+Completely disabled the chacha20-poly1305 cipher to prevent
+ users from attempting to brute-force the use of this cipher.
+(This protects against terrapin attacks with a MiTM)
+
+Signed-off-by: Lucas RAVAGNIER <ravagnierlucas@gmail.com>
+---
+ cipher.c | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/cipher.c b/cipher.c
+index df78358..54a9f7d 100644
+--- a/cipher.c
++++ b/cipher.c
+@@ -112,9 +112,6 @@ static const struct sshcipher ciphers[] = {
+ 	{ "aes256-ctr",	SSH_CIPHER_SSH2, 16, 32, 0, 0, 0, CFLAG_AESCTR, NULL },
+ 	{ "none",	SSH_CIPHER_NONE, 8, 0, 0, 0, 0, CFLAG_NONE, NULL },
+ #endif /* WITH_OPENSSL */
+-	{ "chacha20-poly1305@openssh.com",
+-			SSH_CIPHER_SSH2, 8, 64, 0, 16, 0, CFLAG_CHACHAPOLY, NULL },
+-
+ 	{ NULL,		SSH_CIPHER_INVALID, 0, 0, 0, 0, 0, 0, NULL }
+ };
+ 
+-- 
+2.47.0
+
