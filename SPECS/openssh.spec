@@ -177,6 +177,9 @@ Patch78: openssh-9.8p1-cve-2024-6387.patch
 Patch1000: xcpng-harden-default-ciphers-and-algorithms.patch
 Patch1001: xcpng-disable-gssapiauth-in-sshd_config.patch
 Patch1002: openssh-7.4p1-CVE-2025-26465-Fix-cases-where-error-codes-were-not-correc.patch
+# Enabled testsuite by default.
+Patch1003: remove_failed_userkey_test.patch
+Patch1004: suppressed_failed_hostkey_test.patch
 
 License: BSD
 Group: Applications/Internet
@@ -471,9 +474,17 @@ popd
 
 %check
 #to run tests use "--with check"
-%if %{?_with_check:1}%{!?_with_check:0}
-make tests
-%endif
+#%if %{?_with_check:1}%{!?_with_check:0}
+if ! command -v sudo >/dev/null 2>&1; then
+	echo "WARNING: sudo not available, tests skipped."
+else
+	sudo useradd -r -M -s /sbin/nologin sshd
+	sudo mkdir -p /var/empty/sshd
+	sudo chown root:root /var/empty/sshd
+	make tests
+	sudo userdel sshd
+fi
+#%endif
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -658,6 +669,9 @@ getent passwd sshd >/dev/null || \
 %endif
 
 %changelog
+* Mon Aug 04 2025 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 7.4p1-23.3.3 + 0.10.3-2.23.3.3
+- Enabled testsuite by default
+
 * Mon Apr 28 2025 Yann Dirson <yann.dirson@vates.tech> - 7.4p1-23.3.3 + 0.10.3-2.23.3.3
 - Rebuild against ncurses 6.4-6.20240309 to pull abi5 (compat) libs
 

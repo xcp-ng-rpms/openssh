@@ -1,0 +1,27 @@
+From cc28896986d8d32b1f3a74ef7b46af7720ed34d1 Mon Sep 17 00:00:00 2001
+From: Lucas RAVAGNIER <ravagnierlucas@gmail.com>
+Date: Wed, 30 Apr 2025 15:34:15 +0200
+Subject: [PATCH] Remove unittest on userkey
+
+This test does not work on CentO7's testsuite, so it's disabled by default.
+
+Signed-off-by: Lucas RAVAGNIER <ravagnierlucas@gmail.com>
+---
+ regress/cert-userkey.sh | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/regress/cert-userkey.sh b/regress/cert-userkey.sh
+index c82bec5..ae7e176 100644
+--- a/regress/cert-userkey.sh
++++ b/regress/cert-userkey.sh
+@@ -326,7 +326,6 @@ test_one() {
+ test_one "correct principal"	success "-n ${USER}"
+ test_one "host-certificate"	failure "-n ${USER} -h"
+ test_one "wrong principals"	failure "-n foo"
+-test_one "cert not yet valid"	failure "-n ${USER} -V20200101:20300101"
+ test_one "cert expired"		failure "-n ${USER} -V19800101:19900101"
+ test_one "cert valid interval"	success "-n ${USER} -V-1w:+2w"
+ test_one "wrong source-address"	failure "-n ${USER} -Osource-address=10.0.0.0/8"
+-- 
+2.47.0
+

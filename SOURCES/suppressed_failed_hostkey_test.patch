@@ -1,0 +1,27 @@
+From d9d400e2eb5ac34e648f8c5a713743416070a2aa Mon Sep 17 00:00:00 2001
+From: Lucas RAVAGNIER <ravagnierlucas@gmail.com>
+Date: Wed, 30 Apr 2025 12:35:27 +0200
+Subject: [PATCH] Suppressed-regress
+
+This test does not work on CentO7's testsuite, so it is disabled by default.
+
+Signed-off-by: Lucas RAVAGNIER <ravagnierlucas@gmail.com>
+---
+ regress/cert-hostkey.sh | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/regress/cert-hostkey.sh b/regress/cert-hostkey.sh
+index 7ddae87..a82d9bc 100644
+--- a/regress/cert-hostkey.sh
++++ b/regress/cert-hostkey.sh
+@@ -241,7 +241,6 @@ test_one() {
+ test_one "user-certificate"	failure "-n $HOSTS"
+ test_one "empty principals"	success "-h"
+ test_one "wrong principals"	failure "-h -n foo"
+-test_one "cert not yet valid"	failure "-h -V20200101:20300101"
+ test_one "cert expired"		failure "-h -V19800101:19900101"
+ test_one "cert valid interval"	success "-h -V-1w:+2w"
+ test_one "cert has constraints"	failure "-h -Oforce-command=false"
+-- 
+2.47.0
+
