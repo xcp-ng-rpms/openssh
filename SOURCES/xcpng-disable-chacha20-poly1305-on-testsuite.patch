@@ -1,0 +1,26 @@
+From 56782de1af6460e2f0f14c9c1809af58eb3b199e Mon Sep 17 00:00:00 2001
+From: Lucas RAVAGNIER <ravagnierlucas@gmail.com>
+Date: Mon, 19 May 2025 14:19:58 +0200
+Subject: [PATCH] Disable chacha20-poly1305 on the testsuite
+
+The chacha20-poly1305 cipher is completely disabled to avoid the MiTM terrapin attack,
+therefore disabling it is necessary in the regression in order to avoid regression errors.
+
+Signed-off-by: Lucas RAVAGNIER <ravagnierlucas@gmail.com>
+---
+ regress/dhgex.sh | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/regress/dhgex.sh b/regress/dhgex.sh
+index e7c5733..fafa1df 100644
+--- a/regress/dhgex.sh
++++ b/regress/dhgex.sh
+@@ -57,4 +57,4 @@ check 3072 `${SSH} -Q cipher | grep 128`
+ check 3072 arcfour blowfish-cbc
+ check 7680 `${SSH} -Q cipher | grep 192`
+ check 8192 `${SSH} -Q cipher | grep 256`
+-check 8192 rijndael-cbc@lysator.liu.se chacha20-poly1305@openssh.com
++#check 8192 rijndael-cbc@lysator.liu.se chacha20-poly1305@openssh.com
+-- 
+2.47.0
+

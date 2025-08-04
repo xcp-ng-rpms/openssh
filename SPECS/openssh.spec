@@ -180,6 +180,10 @@ Patch1002: openssh-7.4p1-CVE-2025-26465-Fix-cases-where-error-codes-were-not-cor
 # Enabled testsuite by default.
 Patch1003: remove_failed_userkey_test.patch
 Patch1004: suppressed_failed_hostkey_test.patch
+# Fix testsuite & cipher list (Better handle of Patch1000)
+Patch1005: xcpng-disable-chacha20-utilisation-ciphers.patch
+Patch1006: xcpng-fix-harden-default-ciphers-and-algorithms.patch
+Patch1007: xcpng-disable-chacha20-poly1305-on-testsuite.patch
 
 License: BSD
 Group: Applications/Internet
@@ -671,6 +675,7 @@ getent passwd sshd >/dev/null || \
 %changelog
 * Mon Aug 04 2025 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 7.4p1-23.3.3 + 0.10.3-2.23.3.3
 - Enabled testsuite by default
+- Better handling of terrapin attack (CVE-2023-48795)
 
 * Mon Apr 28 2025 Yann Dirson <yann.dirson@vates.tech> - 7.4p1-23.3.3 + 0.10.3-2.23.3.3
 - Rebuild against ncurses 6.4-6.20240309 to pull abi5 (compat) libs
