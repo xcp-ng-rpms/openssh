@@ -1,9 +1,19 @@
-diff --git a/openbsd-compat/port-linux-sshd.c b/openbsd-compat/port-linux-sshd.c
-index c18524e..d04f4ed 100644
---- a/openbsd-compat/port-linux-sshd.c
-+++ b/openbsd-compat/port-linux-sshd.c
-@@ -409,6 +409,25 @@ sshd_selinux_setup_exec_context(char *pwname)
- 	debug3("%s: done", __func__);
+diff -up openssh-7.4p1/openbsd-compat/port-linux.h.privsep-selinux openssh-7.4p1/openbsd-compat/port-linux.h
+--- openssh-7.4p1/openbsd-compat/port-linux.h.privsep-selinux	2016-12-23 18:58:52.972122201 +0100
++++ openssh-7.4p1/openbsd-compat/port-linux.h	2016-12-23 18:58:52.974122201 +0100
+@@ -23,6 +23,7 @@ void ssh_selinux_setup_pty(char *, const
+ void ssh_selinux_change_context(const char *);
+ void ssh_selinux_setfscreatecon(const char *);
+ 
++void sshd_selinux_copy_context(void);
+ void sshd_selinux_setup_exec_context(char *);
+ #endif
+ 
+diff -up openssh-7.4p1/openbsd-compat/port-linux-sshd.c.privsep-selinux openssh-7.4p1/openbsd-compat/port-linux-sshd.c
+--- openssh-7.4p1/openbsd-compat/port-linux-sshd.c.privsep-selinux	2016-12-23 18:58:52.973122201 +0100
++++ openssh-7.4p1/openbsd-compat/port-linux-sshd.c	2016-12-23 18:58:52.974122201 +0100
+@@ -419,6 +419,28 @@ sshd_selinux_setup_exec_context(char *pw
+ 	debug3_f("done");
  }
  
 +void
@@ -15,12 +25,15 @@ index c18524e..d04f4ed 100644
 +		return;
 +
 +	if (getexeccon((security_context_t *)&ctx) != 0) {
-+		logit("%s: getcon failed with %s", __func__, strerror (errno));
++		logit_f("getexeccon failed with %s", strerror(errno));
 +		return;
 +	}
 +	if (ctx != NULL) {
++		/* unset exec context before we will lose this capabililty */
++		if (setexeccon(NULL) != 0)
++			fatal_f("setexeccon failed with %s", strerror(errno));
 +		if (setcon(ctx) != 0)
-+			logit("%s: setcon failed with %s", __func__, strerror (errno));
++			fatal_f("setcon failed with %s", strerror(errno));
 +		freecon(ctx);
 +	}
 +}
@@ -28,46 +41,51 @@ index c18524e..d04f4ed 100644
  #endif
  #endif
  
-diff --git a/openbsd-compat/port-linux.h b/openbsd-compat/port-linux.h
-index 8ef6cc4..b18893c 100644
---- a/openbsd-compat/port-linux.h
-+++ b/openbsd-compat/port-linux.h
-@@ -25,6 +25,7 @@ void ssh_selinux_setup_pty(char *, const char *);
- void ssh_selinux_change_context(const char *);
- void ssh_selinux_setfscreatecon(const char *);
+diff -up openssh-7.4p1/session.c.privsep-selinux openssh-7.4p1/session.c
+--- openssh-7.4p1/session.c.privsep-selinux	2016-12-19 05:59:41.000000000 +0100
++++ openssh-7.4p1/session.c	2016-12-23 18:58:52.974122201 +0100
+@@ -1331,7 +1331,7 @@ do_setusercontext(struct passwd *pw)
  
-+void sshd_selinux_copy_context(void);
- void sshd_selinux_setup_exec_context(char *);
- #endif
+ 	platform_setusercontext(pw);
  
-diff --git a/session.c b/session.c
-index 2bcf818..b5dc144 100644
---- a/session.c
-+++ b/session.c
-@@ -1538,6 +1538,9 @@ do_setusercontext(struct passwd *pw)
- 			    pw->pw_uid);
- 			chroot_path = percent_expand(tmp, "h", pw->pw_dir,
- 			    "u", pw->pw_name, (char *)NULL);
+-	if (platform_privileged_uidswap()) {
++	if (platform_privileged_uidswap() && !is_child) {
+ #ifdef HAVE_LOGIN_CAP
+ 		if (setusercontext(lc, pw, pw->pw_uid,
+ 		    (LOGIN_SETALL & ~(LOGIN_SETPATH|LOGIN_SETUSER))) < 0) {
+@@ -1361,6 +1361,9 @@ do_setusercontext(struct passwd *pw)
+			    (unsigned long long)pw->pw_uid);
+			chroot_path = percent_expand(tmp, "h", pw->pw_dir,
+			    "u", pw->pw_name, "U", uidstr, (char *)NULL);
 +#ifdef WITH_SELINUX
 +			sshd_selinux_copy_context();
 +#endif
  			safely_chroot(chroot_path, pw->pw_uid);
  			free(tmp);
  			free(chroot_path);
-@@ -1565,6 +1568,12 @@ do_setusercontext(struct passwd *pw)
+@@ -1396,6 +1399,11 @@ do_setusercontext(struct passwd *pw)
  		/* Permanently switch to the desired uid. */
  		permanently_set_uid(pw);
  #endif
 +
 +#ifdef WITH_SELINUX
-+		if (options.chroot_directory == NULL ||
-+		    strcasecmp(options.chroot_directory, "none") == 0)
++		if (in_chroot == 0)
 +			sshd_selinux_copy_context();
 +#endif
  	} else if (options.chroot_directory != NULL &&
  	    strcasecmp(options.chroot_directory, "none") != 0) {
  		fatal("server lacks privileges to chroot to ChrootDirectory");
-@@ -1826,9 +1835,6 @@ do_child(Session *s, const char *command)
+@@ -1413,9 +1421,6 @@ do_pwchange(Session *s)
+ 	if (s->ttyfd != -1) {
+ 		fprintf(stderr,
+ 		    "You must change your password now and login again!\n");
+-#ifdef WITH_SELINUX
+-		setexeccon(NULL);
+-#endif
+ #ifdef PASSWD_NEEDS_USERNAME
+ 		execl(_PATH_PASSWD_PROG, "passwd", s->pw->pw_name,
+ 		    (char *)NULL);
+@@ -1625,9 +1630,6 @@ do_child(Session *s, const char *command
  		argv[i] = NULL;
  		optind = optreset = 1;
  		__progname = argv[0];
@@ -77,11 +95,10 @@ index 2bcf818..b5dc144 100644
  		exit(sftp_server_main(i, argv, s->pw));
  	}
  
-diff --git a/sshd.c b/sshd.c
-index 07f9926..a97f8b7 100644
---- a/sshd.c
-+++ b/sshd.c
-@@ -632,6 +632,10 @@ privsep_preauth_child(void)
+diff -up openssh-7.4p1/sshd.c.privsep-selinux openssh-7.4p1/sshd.c
+--- openssh-7.4p1/sshd-session.c.privsep-selinux	2016-12-23 18:58:52.973122201 +0100
++++ openssh-7.4p1/sshd-session.c	2016-12-23 18:59:13.808124269 +0100
+@@ -540,6 +540,10 @@ privsep_preauth_child(void)
  	/* Demote the private keys to public keys. */
  	demote_sensitive_data();
  
@@ -90,19 +107,14 @@ index 07f9926..a97f8b7 100644
 +#endif
 +
  	/* Demote the child */
- 	if (getuid() == 0 || geteuid() == 0) {
+ 	if (privsep_chroot) {
  		/* Change our root directory */
-@@ -768,6 +772,13 @@ privsep_postauth(Authctxt *authctxt)
- 	do_setusercontext(authctxt->pw);
- 
-  skip:
-+#ifdef WITH_SELINUX
-+	/* switch SELinux content for root too */
-+	if (authctxt->pw->pw_uid == 0) {
-+		sshd_selinux_copy_context();
-+	}
-+#endif
-+
- 	/* It is safe now to apply the key state */
- 	monitor_apply_keystate(pmonitor);
+@@ -403,7 +403,7 @@ privsep_postauth(struct ssh *ssh, Authct
+ 	 * fd passing, as AFAIK PTY allocation on this platform doesn't require
+ 	 * special privileges to begin with.
+ 	 */
+-#if defined(DISABLE_FD_PASSING) && !defined(HAVE_CYGWIN)
++#if defined(DISABLE_FD_PASSING) && !defined(HAVE_CYGWIN) && !defined(WITH_SELINUX)
+ 	skip_privdrop = 1;
+ #endif
  
