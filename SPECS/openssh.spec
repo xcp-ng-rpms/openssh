@@ -122,9 +122,7 @@ Patch51: openssh-9.6p1-pam-rhost.patch
 Patch52: openssh-6.7p1-coverity.patch
 
 # XCP-ng patches
-Patch1000: xcpng-harden-default-ciphers-and-algorithms.patch
-Patch1001: xcpng-disable-gssapiauth-in-sshd_config.patch
-Patch1002: openssh-7.4p1-CVE-2025-26465-Fix-cases-where-error-codes-were-not-correc.patch
+Patch1000: openssh-7.4p1-CVE-2025-26465-Fix-cases-where-error-codes-were-not-correc.patch
 
 Source24: ssh_config
 Source25: sshd_config
@@ -510,7 +508,10 @@ cat %{_sysconfdir}/ssh/ssh_config.dup > %{_sysconfdir}/ssh/ssh_config
 %endif
 
 %changelog
-* Mon Jan 19 2026 Philippe Coval <philippe.coval@vates.tech> - 9.8p1-1.2.1
+* Tue Feb 03 2026 Philippe Coval <philippe.coval@vates.tech> - 9.8p1-1.2.1
+- Refresh XCP-ng patches:
+  - Drop unnecessary hardening and gssapi patches
+  - Replace CVE-2025-26465 backport with upstream patch from 9.9p1
 - Sync with 9.8p1-1.2
 - *** Upstream changelog ***
 - * Fri Nov 07 2025 Alex Brett <alex.brett@citrix.com> - 9.8p1-1.2
