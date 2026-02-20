@@ -49,7 +49,7 @@
 Summary: An open source implementation of SSH protocol version 2
 Name:    openssh
 Version: %{openssh_ver}
-Release: %{?xsrel}.%{xcpng_subrel}%{?dist}
+Release: %{?xsrel}.%{xcpng_subrel}~XCPNG2710.4%{?dist}
 URL: http://www.openssh.com/portable.html
 #URL1: https://github.com/jbeverly/pam_ssh_agent_auth/
 Source0: openssh-9.8p1.tar.gz
