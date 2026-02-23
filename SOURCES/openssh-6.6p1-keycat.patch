@@ -1,10 +1,10 @@
-diff -up openssh-7.4p1/auth2-pubkey.c.keycat openssh-7.4p1/auth2-pubkey.c
---- openssh-7.4p1/auth2-pubkey.c.keycat	2017-02-08 14:32:33.015581448 +0100
-+++ openssh-7.4p1/auth2-pubkey.c	2017-02-08 14:40:26.125216292 +0100
-@@ -1043,6 +1043,14 @@ user_key_command_allowed2(struct passwd
- 		xasprintf(&command, "%s %s", av[0], av[1]);
- 	}
- 
+diff -up openssh/misc.c.keycat openssh/misc.c
+--- openssh/misc.c.keycat	2015-06-24 10:57:50.158849606 +0200
++++ openssh/misc.c	2015-06-24 11:04:23.989868638 +0200
+@@ -966,6 +966,13 @@ subprocess(const char *tag, struct passw
+ 			error("%s: dup2: %s", tag, strerror(errno));
+ 			_exit(1);
+ 		}
 +#ifdef WITH_SELINUX
 +		if (sshd_selinux_setup_env_variables() < 0) {
 +			error ("failed to copy environment:  %s",
@@ -12,50 +12,12 @@ diff -up openssh-7.4p1/auth2-pubkey.c.keycat openssh-7.4p1/auth2-pubkey.c
 +			_exit(127);
 +		}
 +#endif
-+
- 	if ((pid = subprocess("AuthorizedKeysCommand", pw, command,
- 	    ac, av, &f)) == 0)
- 		goto out;
-diff -up openssh-7.4p1/configure.ac.keycat openssh-7.4p1/configure.ac
---- openssh-7.4p1/configure.ac.keycat	2017-02-08 14:32:33.011581451 +0100
-+++ openssh-7.4p1/configure.ac	2017-02-08 14:32:33.016581448 +0100
-@@ -3129,6 +3129,7 @@ AC_ARG_WITH([pam],
- 			PAM_MSG="yes"
- 
- 			SSHDLIBS="$SSHDLIBS -lpam"
-+			KEYCATLIBS="$KEYCATLIBS -lpam"
- 			AC_DEFINE([USE_PAM], [1],
- 				[Define if you want to enable PAM support])
- 
-@@ -3139,6 +3140,7 @@ AC_ARG_WITH([pam],
- 					;;
- 				*)
- 					SSHDLIBS="$SSHDLIBS -ldl"
-+					KEYCATLIBS="$KEYCATLIBS -ldl"
- 					;;
- 				esac
- 			fi
-@@ -4255,6 +4257,7 @@ AC_ARG_WITH([selinux],
- )
- AC_SUBST([SSHLIBS])
- AC_SUBST([SSHDLIBS])
-+AC_SUBST([KEYCATLIBS])
- 
- # Check whether user wants Kerberos 5 support
- KRB5_MSG="no"
-@@ -5206,6 +5209,9 @@ fi
- if test ! -z "${SSHLIBS}"; then
- echo "          +for ssh: ${SSHLIBS}"
- fi
-+if test ! -z "${KEYCATLIBS}"; then
-+echo "   +for ssh-keycat: ${KEYCATLIBS}"
-+fi
- 
- echo ""
- 
-diff -up openssh-7.4p1/HOWTO.ssh-keycat.keycat openssh-7.4p1/HOWTO.ssh-keycat
---- openssh-7.4p1/HOWTO.ssh-keycat.keycat	2017-02-08 14:32:33.014581449 +0100
-+++ openssh-7.4p1/HOWTO.ssh-keycat	2017-02-08 14:32:33.014581449 +0100
+ 		if (env != NULL)
+ 			execve(av[0], av, env);
+ 		else
+diff -up openssh/HOWTO.ssh-keycat.keycat openssh/HOWTO.ssh-keycat
+--- openssh/HOWTO.ssh-keycat.keycat	2015-06-24 10:57:50.157849608 +0200
++++ openssh/HOWTO.ssh-keycat	2015-06-24 10:57:50.157849608 +0200
 @@ -0,0 +1,12 @@
 +The ssh-keycat retrieves the content of the ~/.ssh/authorized_keys
 +of an user in any environment. This includes environments with
@@ -69,56 +31,56 @@ diff -up openssh-7.4p1/HOWTO.ssh-keycat.keycat openssh-7.4p1/HOWTO.ssh-keycat
 +        PubkeyAuthentication yes
 +
 +
-diff -up openssh-7.4p1/Makefile.in.keycat openssh-7.4p1/Makefile.in
---- openssh-7.4p1/Makefile.in.keycat	2017-02-08 14:32:33.012581451 +0100
-+++ openssh-7.4p1/Makefile.in	2017-02-08 14:38:28.839306815 +0100
+diff -up openssh/Makefile.in.keycat openssh/Makefile.in
+--- openssh/Makefile.in.keycat	2015-06-24 10:57:50.152849621 +0200
++++ openssh/Makefile.in	2015-06-24 10:57:50.157849608 +0200
 @@ -27,6 +27,7 @@ SFTP_SERVER=$(libexecdir)/sftp-server
+ ASKPASS_PROGRAM=$(libexecdir)/ssh-askpass
+ SFTP_SERVER=$(libexecdir)/sftp-server
  SSH_KEYSIGN=$(libexecdir)/ssh-keysign
- SSH_LDAP_HELPER=$(libexecdir)/ssh-ldap-helper
- SSH_LDAP_WRAPPER=$(libexecdir)/ssh-ldap-wrapper
 +SSH_KEYCAT=$(libexecdir)/ssh-keycat
+ SSHD_SESSION=$(libexecdir)/sshd-session
  SSH_PKCS11_HELPER=$(libexecdir)/ssh-pkcs11-helper
- PRIVSEP_PATH=@PRIVSEP_PATH@
- SSH_PRIVSEP_USER=@SSH_PRIVSEP_USER@
-@@ -51,6 +52,7 @@ K5LIBS=@K5LIBS@
+ SSH_SK_HELPER=$(libexecdir)/ssh-sk-helper
+@@ -52,6 +52,7 @@ K5LIBS=@K5LIBS@
+ K5LIBS=@K5LIBS@
  GSSLIBS=@GSSLIBS@
- SSHLIBS=@SSHLIBS@
  SSHDLIBS=@SSHDLIBS@
 +KEYCATLIBS=@KEYCATLIBS@
  LIBEDIT=@LIBEDIT@
+ LIBFIDO2=@LIBFIDO2@
  AR=@AR@
- AWK=@AWK@
-@@ -65,7 +67,7 @@ EXEEXT=@EXEEXT@
- MANFMT=@MANFMT@
- INSTALL_SSH_LDAP_HELPER=@INSTALL_SSH_LDAP_HELPER@
+@@ -65,7 +66,7 @@ EXEEXT=@EXEEXT@
  
--TARGETS=ssh$(EXEEXT) sshd$(EXEEXT) ssh-add$(EXEEXT) ssh-keygen$(EXEEXT) ssh-keyscan${EXEEXT} ssh-keysign${EXEEXT} ssh-pkcs11-helper$(EXEEXT) ssh-agent$(EXEEXT) scp$(EXEEXT) sftp-server$(EXEEXT) sftp$(EXEEXT) ssh-ldap-helper$(EXEEXT)
-+TARGETS=ssh$(EXEEXT) sshd$(EXEEXT) ssh-add$(EXEEXT) ssh-keygen$(EXEEXT) ssh-keyscan${EXEEXT} ssh-keysign${EXEEXT} ssh-pkcs11-helper$(EXEEXT) ssh-agent$(EXEEXT) scp$(EXEEXT) sftp-server$(EXEEXT) sftp$(EXEEXT) ssh-ldap-helper$(EXEEXT) ssh-keycat$(EXEEXT)
+ .SUFFIXES: .lo
  
- LIBOPENSSH_OBJS=\
- 	ssh_api.o \
-@@ -190,6 +192,9 @@ ssh-pkcs11-helper$(EXEEXT): $(LIBCOMPAT)
- ssh-ldap-helper$(EXEEXT): $(LIBCOMPAT) libssh.a ldapconf.o ldapbody.o ldapmisc.o ldap-helper.o
- 	$(LD) -o $@ ldapconf.o ldapbody.o ldapmisc.o ldap-helper.o $(LDFLAGS) -lssh -lopenbsd-compat -lssh -lopenbsd-compat -lfipscheck $(LIBS)
+-TARGETS=ssh$(EXEEXT) sshd$(EXEEXT) sshd-session$(EXEEXT) ssh-add$(EXEEXT) ssh-keygen$(EXEEXT) ssh-keyscan${EXEEXT} ssh-keysign${EXEEXT} ssh-pkcs11-helper$(EXEEXT) ssh-agent$(EXEEXT) scp$(EXEEXT) sftp-server$(EXEEXT) sftp$(EXEEXT) ssh-sk-helper$(EXEEXT)
++TARGETS=ssh$(EXEEXT) sshd$(EXEEXT) sshd-session$(EXEEXT) ssh-add$(EXEEXT) ssh-keygen$(EXEEXT) ssh-keyscan${EXEEXT} ssh-keysign${EXEEXT} ssh-pkcs11-helper$(EXEEXT) ssh-agent$(EXEEXT) scp$(EXEEXT) sftp-server$(EXEEXT) sftp$(EXEEXT) ssh-sk-helper$(EXEEXT) ssh-keycat$(EXEEXT)
  
-+ssh-keycat$(EXEEXT): $(LIBCOMPAT) $(SSHDOBJS) libssh.a ssh-keycat.o
-+	$(LD) -o $@ ssh-keycat.o bufaux.o $(LDFLAGS) -lssh -lopenbsd-compat -lfipscheck $(KEYCATLIBS) $(SSHLIBS)
+ XMSS_OBJS=\
+ 	ssh-xmss.o \
+@@ -190,6 +191,9 @@ ssh-pkcs11-helper$(EXEEXT): $(LIBCOMPAT)
+ ssh-sk-helper$(EXEEXT): $(LIBCOMPAT) libssh.a $(SKHELPER_OBJS)
+ 	$(LD) -o $@ $(SKHELPER_OBJS) $(LDFLAGS) -lssh -lopenbsd-compat -lssh -lopenbsd-compat $(LIBS) $(LIBFIDO2) $(CHANNELLIBS)
+ 
++ssh-keycat$(EXEEXT): $(LIBCOMPAT) $(SSHDOBJS) libssh.a ssh-keycat.o uidswap.o
++	$(LD) -o $@ ssh-keycat.o uidswap.o $(LDFLAGS) -lssh -lopenbsd-compat $(KEYCATLIBS) $(LIBS)
 +
- ssh-keyscan$(EXEEXT): $(LIBCOMPAT) libssh.a ssh-keyscan.o
- 	$(LD) -o $@ ssh-keyscan.o $(LDFLAGS) -lssh -lopenbsd-compat -lssh $(LIBS)
+ ssh-keyscan$(EXEEXT): $(LIBCOMPAT) libssh.a $(SSHKEYSCAN_OBJS)
+ 	$(LD) -o $@ $(SSHKEYSCAN_OBJS) $(LDFLAGS) -lssh -lopenbsd-compat -lssh $(LIBS) $(CHANNELLIBS)
  
-@@ -332,6 +337,7 @@ install-files:
- 		$(INSTALL) -m 0700 $(STRIP_OPT) ssh-ldap-helper $(DESTDIR)$(SSH_LDAP_HELPER) ; \
- 		$(INSTALL) -m 0700 ssh-ldap-wrapper $(DESTDIR)$(SSH_LDAP_WRAPPER) ; \
- 	fi
+@@ -321,6 +325,7 @@ install-files:
+ 	$(INSTALL) -m 4711 $(STRIP_OPT) ssh-keysign$(EXEEXT) $(DESTDIR)$(SSH_KEYSIGN)$(EXEEXT)
+ 	$(INSTALL) -m 0755 $(STRIP_OPT) ssh-pkcs11-helper$(EXEEXT) $(DESTDIR)$(SSH_PKCS11_HELPER)$(EXEEXT)
+ 	$(INSTALL) -m 0755 $(STRIP_OPT) ssh-sk-helper$(EXEEXT) $(DESTDIR)$(SSH_SK_HELPER)$(EXEEXT)
 +	$(INSTALL) -m 0755 $(STRIP_OPT) ssh-keycat$(EXEEXT) $(DESTDIR)$(libexecdir)/ssh-keycat$(EXEEXT)
  	$(INSTALL) -m 0755 $(STRIP_OPT) sftp$(EXEEXT) $(DESTDIR)$(bindir)/sftp$(EXEEXT)
  	$(INSTALL) -m 0755 $(STRIP_OPT) sftp-server$(EXEEXT) $(DESTDIR)$(SFTP_SERVER)$(EXEEXT)
  	$(INSTALL) -m 644 ssh.1.out $(DESTDIR)$(mandir)/$(mansubdir)1/ssh.1
-diff -up openssh-7.4p1/openbsd-compat/port-linux.h.keycat openssh-7.4p1/openbsd-compat/port-linux.h
---- openssh-7.4p1/openbsd-compat/port-linux.h.keycat	2017-02-08 14:32:33.009581453 +0100
-+++ openssh-7.4p1/openbsd-compat/port-linux.h	2017-02-08 14:32:33.015581448 +0100
-@@ -23,8 +23,10 @@ void ssh_selinux_setup_pty(char *, const
+diff -up openssh/openbsd-compat/port-linux.h.keycat openssh/openbsd-compat/port-linux.h
+--- openssh/openbsd-compat/port-linux.h.keycat	2015-06-24 10:57:50.150849626 +0200
++++ openssh/openbsd-compat/port-linux.h	2015-06-24 10:57:50.160849601 +0200
+@@ -25,8 +25,10 @@ void ssh_selinux_setup_pty(char *, const
  void ssh_selinux_change_context(const char *);
  void ssh_selinux_setfscreatecon(const char *);
  
@@ -129,12 +91,12 @@ diff -up openssh-7.4p1/openbsd-compat/port-linux.h.keycat openssh-7.4p1/openbsd-
  #endif
  
  #ifdef LINUX_OOM_ADJUST
-diff -up openssh-7.4p1/openbsd-compat/port-linux-sshd.c.keycat openssh-7.4p1/openbsd-compat/port-linux-sshd.c
---- openssh-7.4p1/openbsd-compat/port-linux-sshd.c.keycat	2017-02-08 14:32:33.008581454 +0100
-+++ openssh-7.4p1/openbsd-compat/port-linux-sshd.c	2017-02-08 14:32:33.015581448 +0100
-@@ -53,6 +53,20 @@ extern Authctxt *the_authctxt;
+diff -up openssh/openbsd-compat/port-linux-sshd.c.keycat openssh/openbsd-compat/port-linux-sshd.c
+--- openssh/openbsd-compat/port-linux-sshd.c.keycat	2015-06-24 10:57:50.150849626 +0200
++++ openssh/openbsd-compat/port-linux-sshd.c	2015-06-24 10:57:50.159849603 +0200
+@@ -54,6 +54,20 @@ extern Authctxt *the_authctxt;
+ extern Authctxt *the_authctxt;
  extern int inetd_flag;
- extern int rexeced_flag;
  
 +/* Wrapper around is_selinux_enabled() to log its return value once only */
 +int
@@ -153,7 +115,7 @@ diff -up openssh-7.4p1/openbsd-compat/port-linux-sshd.c.keycat openssh-7.4p1/ope
  /* Send audit message */
  static int
  sshd_selinux_send_audit_message(int success, security_context_t default_context,
-@@ -307,7 +321,7 @@ sshd_selinux_getctxbyname(char *pwname,
+@@ -308,7 +322,7 @@ sshd_selinux_getctxbyname(char *pwname,
  
  /* Setup environment variables for pam_selinux */
  static int
@@ -162,14 +124,14 @@ diff -up openssh-7.4p1/openbsd-compat/port-linux-sshd.c.keycat openssh-7.4p1/ope
  {
  	const char *reqlvl;
  	char *role;
-@@ -318,16 +332,16 @@ sshd_selinux_setup_pam_variables(void)
+@@ -319,16 +333,16 @@ sshd_selinux_setup_pam_variables(void)
  
  	ssh_selinux_get_role_level(&role, &reqlvl);
  
 -	rv = do_pam_putenv("SELINUX_ROLE_REQUESTED", role ? role : "");
 +	rv = set_it("SELINUX_ROLE_REQUESTED", role ? role : "");
  
- 	if (inetd_flag && !rexeced_flag) {
+ 	if (inetd_flag) {
  		use_current = "1";
  	} else {
  		use_current = "";
@@ -182,7 +144,7 @@ diff -up openssh-7.4p1/openbsd-compat/port-linux-sshd.c.keycat openssh-7.4p1/ope
  
  	if (role != NULL)
  		free(role);
-@@ -335,6 +349,24 @@ sshd_selinux_setup_pam_variables(void)
+@@ -336,6 +350,24 @@ sshd_selinux_setup_pam_variables(void)
  	return rv;
  }
  
@@ -207,7 +169,7 @@ diff -up openssh-7.4p1/openbsd-compat/port-linux-sshd.c.keycat openssh-7.4p1/ope
  /* Set the execution context to the default for the specified user */
  void
  sshd_selinux_setup_exec_context(char *pwname)
-@@ -343,7 +375,7 @@ sshd_selinux_setup_exec_context(char *pw
+@@ -344,7 +376,7 @@ sshd_selinux_setup_exec_context(char *pw
  	int r = 0;
  	security_context_t default_ctx = NULL;
  
@@ -216,7 +178,7 @@ diff -up openssh-7.4p1/openbsd-compat/port-linux-sshd.c.keycat openssh-7.4p1/ope
  		return;
  
  	if (options.use_pam) {
-@@ -414,7 +446,7 @@ sshd_selinux_copy_context(void)
+@@ -415,7 +447,7 @@ sshd_selinux_copy_context(void)
  {
  	security_context_t *ctx;
  
@@ -225,10 +187,10 @@ diff -up openssh-7.4p1/openbsd-compat/port-linux-sshd.c.keycat openssh-7.4p1/ope
  		return;
  
  	if (getexeccon((security_context_t *)&ctx) != 0) {
-diff -up openssh-7.4p1/platform.c.keycat openssh-7.4p1/platform.c
---- openssh-7.4p1/platform.c.keycat	2017-02-08 14:32:33.007581455 +0100
-+++ openssh-7.4p1/platform.c	2017-02-08 14:32:33.015581448 +0100
-@@ -99,7 +99,7 @@ platform_setusercontext(struct passwd *p
+diff -up openssh/platform.c.keycat openssh/platform.c
+--- openssh/platform.c.keycat	2015-06-24 10:57:50.147849633 +0200
++++ openssh/platform.c	2015-06-24 10:57:50.160849601 +0200
+@@ -103,7 +103,7 @@ platform_setusercontext(struct passwd *p
  {
  #ifdef WITH_SELINUX
  	/* Cache selinux status for later use */
@@ -237,10 +199,10 @@ diff -up openssh-7.4p1/platform.c.keycat openssh-7.4p1/platform.c
  #endif
  
  #ifdef USE_SOLARIS_PROJECTS
-diff -up openssh-7.4p1/ssh-keycat.c.keycat openssh-7.4p1/ssh-keycat.c
---- openssh-7.4p1/ssh-keycat.c.keycat	2017-02-08 14:32:33.015581448 +0100
-+++ openssh-7.4p1/ssh-keycat.c	2017-02-08 14:32:33.015581448 +0100
-@@ -0,0 +1,238 @@
+diff -up openssh/ssh-keycat.c.keycat openssh/ssh-keycat.c
+--- openssh/ssh-keycat.c.keycat	2015-06-24 10:57:50.161849599 +0200
++++ openssh/ssh-keycat.c	2015-06-24 10:57:50.161849599 +0200
+@@ -0,0 +1,241 @@
 +/*
 + * Redistribution and use in source and binary forms, with or without
 + * modification, are permitted provided that the following conditions
@@ -290,6 +252,9 @@ diff -up openssh-7.4p1/ssh-keycat.c.keycat openssh-7.4p1/ssh-keycat.c
 +#include <pwd.h>
 +#include <fcntl.h>
 +#include <unistd.h>
++#ifdef HAVE_STDINT_H
++#include <stdint.h>
++#endif
 +
 +#include <security/pam_appl.h>
 +
@@ -479,3 +444,41 @@ diff -up openssh-7.4p1/ssh-keycat.c.keycat openssh-7.4p1/ssh-keycat.c
 +	}
 +	return ev;
 +}
+diff --git a/configure.ac b/configure.ac
+index 3bbccfd..6481f1f 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -2952,6 +2952,7 @@ AC_ARG_WITH([pam],
+ 			PAM_MSG="yes"
+ 
+ 			SSHDLIBS="$SSHDLIBS -lpam"
++			KEYCATLIBS="$KEYCATLIBS -lpam"
+ 			AC_DEFINE([USE_PAM], [1],
+ 				[Define if you want to enable PAM support])
+ 
+@@ -3105,6 +3106,7 @@
+ 					;;
+ 				*)
+ 					SSHDLIBS="$SSHDLIBS -ldl"
++					KEYCATLIBS="$KEYCATLIBS -ldl"
+ 					;;
+ 				esac
+ 			fi
+@@ -4042,6 +4044,7 @@ AC_ARG_WITH([selinux],
+ 	fi ]
+ )
+ AC_SUBST([SSHDLIBS])
++AC_SUBST([KEYCATLIBS])
+ 
+ # Check whether user wants Kerberos 5 support
+ KRB5_MSG="no"
+@@ -5031,6 +5034,9 @@ fi
+ if test ! -z "${SSHDLIBS}"; then
+ echo "         +for sshd: ${SSHDLIBS}"
+ fi
++if test ! -z "${KEYCATLIBS}"; then
++echo "   +for ssh-keycat: ${KEYCATLIBS}"
++fi
+ 
+ echo ""
+ 
