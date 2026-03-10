@@ -509,7 +509,7 @@ cat %{_sysconfdir}/ssh/ssh_config.dup > %{_sysconfdir}/ssh/ssh_config
 %endif
 
 %changelog
-* Tue Mar 10 2026 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 9.8p1-1.2.2
+* Thu Mar 12 2026 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 9.8p1-1.2.2
 - Temporally enabled ssh-rsa with warning.
   Docs: https://datatracker.ietf.org/doc/html/rfc8332
 

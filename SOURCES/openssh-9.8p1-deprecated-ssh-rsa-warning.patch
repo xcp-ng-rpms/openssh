@@ -9,12 +9,12 @@ Docs: https://datatracker.ietf.org/doc/html/rfc8332
 
 Signed-off-by: Lucas RAVAGNIER <lucas.ravagnier@vates.tech>
 ---
- auth2-pubkey.c       | 12 ++++++++++++
- kex.c                |  7 +++++++
- myproposal.h         |  7 +++++--
- ssh-rsa-deprecated.h | 46 ++++++++++++++++++++++++++++++++++++++++++++
- sshconnect2.c        |  6 ++++++
- 5 files changed, 76 insertions(+), 2 deletions(-)
+ auth2-pubkey.c       | 12 ++++++++++
+ kex.c                |  7 ++++++
+ myproposal.h         |  7 ++++--
+ ssh-rsa-deprecated.h | 53 ++++++++++++++++++++++++++++++++++++++++++++
+ sshconnect2.c        |  6 +++++
+ 5 files changed, 83 insertions(+), 2 deletions(-)
  create mode 100644 ssh-rsa-deprecated.h
 
 diff --git a/auth2-pubkey.c b/auth2-pubkey.c
@@ -109,7 +109,7 @@ new file mode 100644
 index 0000000..1ba4cae
 --- /dev/null
 +++ b/ssh-rsa-deprecated.h
-@@ -0,0 +1,46 @@
+@@ -0,0 +1,53 @@
 +/*
 + * XCP-ng: ssh-rsa (SHA-1) deprecation warnings.
 + *
@@ -138,6 +138,9 @@ index 0000000..1ba4cae
 +	"  ssh-keygen -t ed25519\n" \
 +	"or update your OpenSSH client to version >= 7.2 which\n" \
 +	"supports rsa-sha2-256/rsa-sha2-512 (RFC 8332).\n" \
++	"\n" \
++	"Related announcement:\n" \
++	"https://xcp-ng.org/blog/2026/03/10/march-2026-maintenance-updates-for-xcp-ng-8-3-lts/" \
 +	"\n"
 +
 +/* Format string: expects a single %s argument for the algorithm name */
@@ -153,7 +156,11 @@ index 0000000..1ba4cae
 +	"\n" \
 +	"This will be REMOVED in a future update of XCP-ng.\n" \
 +	"Please configure a stronger host key (e.g. Ed25519).\n" \
++	"\n" \
++	"Related announcement:\n" \
++	"https://xcp-ng.org/blog/2026/03/10/march-2026-maintenance-updates-for-xcp-ng-8-3-lts/" \
 +	"\n"
++
 +
 +#endif /* SSH_RSA_DEPRECATED_H */
 diff --git a/sshconnect2.c b/sshconnect2.c
