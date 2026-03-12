@@ -5,7 +5,7 @@
 # start the release from openssh_rel as other packages requires
 
 # XCP-ng sub release number
-%define xcpng_subrel 1
+%define xcpng_subrel 2
 
 %global WITH_SELINUX 0
 
@@ -123,6 +123,7 @@ Patch52: openssh-6.7p1-coverity.patch
 
 # XCP-ng patches
 Patch1000: openssh-7.4p1-CVE-2025-26465-Fix-cases-where-error-codes-were-not-correc.patch
+Patch1001: openssh-9.8p1-deprecated-ssh-rsa-warning.patch
 
 Source24: ssh_config
 Source25: sshd_config
@@ -508,6 +509,10 @@ cat %{_sysconfdir}/ssh/ssh_config.dup > %{_sysconfdir}/ssh/ssh_config
 %endif
 
 %changelog
+* Thu Mar 12 2026 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 9.8p1-1.2.2
+- Temporally enabled ssh-rsa with warning.
+  Docs: https://datatracker.ietf.org/doc/html/rfc8332
+
 * Tue Feb 03 2026 Philippe Coval <philippe.coval@vates.tech> - 9.8p1-1.2.1
 - Refresh XCP-ng patches:
   - Drop unnecessary hardening and gssapi patches

@@ -1,0 +1,192 @@
+From 876b8619f12585f0f2f2719e3b67bd74c19f2259 Mon Sep 17 00:00:00 2001
+From: Lucas RAVAGNIER <lucas.ravagnier@vates.tech>
+Date: Tue, 10 Mar 2026 10:29:06 +0100
+Subject: [PATCH] Add: Warning deprecated ssh-rsa (SHA1)
+
+Prior to OpenSSH client version 7.2, ssh-rsa could only use SHA1, which is vulnerable to collisions.
+Adding a warning alerts users that they need to migrate to a more recent solution or generate an ed25519 SSH key.
+Docs: https://datatracker.ietf.org/doc/html/rfc8332
+
+Signed-off-by: Lucas RAVAGNIER <lucas.ravagnier@vates.tech>
+---
+ auth2-pubkey.c       | 12 ++++++++++
+ kex.c                |  7 ++++++
+ myproposal.h         |  7 ++++--
+ ssh-rsa-deprecated.h | 53 ++++++++++++++++++++++++++++++++++++++++++++
+ sshconnect2.c        |  6 +++++
+ 5 files changed, 83 insertions(+), 2 deletions(-)
+ create mode 100644 ssh-rsa-deprecated.h
+
+diff --git a/auth2-pubkey.c b/auth2-pubkey.c
+index f569e4c..ed1bc14 100644
+--- a/auth2-pubkey.c
++++ b/auth2-pubkey.c
+@@ -48,6 +48,7 @@
+ #include "packet.h"
+ #include "kex.h"
+ #include "sshbuf.h"
++#include "ssh-rsa-deprecated.h"
+ #include "log.h"
+ #include "misc.h"
+ #include "servconf.h"
+@@ -165,6 +166,17 @@ userauth_pubkey(struct ssh *ssh, const char *method)
+ 		    "PubkeyAcceptedAlgorithms", pkalg);
+ 		goto done;
+ 	}
++	if (strcmp(pkalg, "ssh-rsa") == 0 ||
++	    strcmp(pkalg, "ssh-rsa-cert-v01@openssh.com") == 0) {
++		int wr;
++		if ((wr = sshpkt_start(ssh, SSH2_MSG_USERAUTH_BANNER)) != 0 ||
++		    (wr = sshpkt_put_cstring(ssh, SSH_RSA_DEPRECATED_AUTH_WARNING)) != 0 ||
++		    (wr = sshpkt_put_cstring(ssh, "")) != 0 ||
++		    (wr = sshpkt_send(ssh)) != 0 ||
++		    (wr = ssh_packet_write_wait(ssh)) != 0)
++			error_f("send ssh-rsa deprecation banner: %s",
++			    ssh_err(wr));
++	}
+ 	if ((r = sshkey_check_cert_sigtype(key,
+ 	    options.ca_sign_algorithms)) != 0) {
+ 		logit_fr(r, "certificate signature algorithm %s",
+diff --git a/kex.c b/kex.c
+index f6cbbbe..13c2a4a 100644
+--- a/kex.c
++++ b/kex.c
+@@ -48,6 +48,7 @@
+ #endif
+ 
+ #include "ssh.h"
++#include "ssh-rsa-deprecated.h"
+ #include "ssh2.h"
+ #include "atomicio.h"
+ #include "version.h"
+@@ -926,6 +927,12 @@ choose_hostkeyalg(struct kex *k, char *client, char *server)
+ 	    k->hostkey_alg ? k->hostkey_alg : "(no match)");
+ 	if (k->hostkey_alg == NULL)
+ 		return SSH_ERR_NO_HOSTKEY_ALG_MATCH;
++	if (strcmp(k->hostkey_alg, "ssh-rsa") == 0 ||
++	    strcmp(k->hostkey_alg, "ssh-rsa-cert-v01@openssh.com") == 0) {
++		fprintf(stderr,
++		    SSH_RSA_DEPRECATED_HOSTKEY_WARNING,
++		    k->hostkey_alg);
++	}
+ 	k->hostkey_type = sshkey_type_from_name(k->hostkey_alg);
+ 	if (k->hostkey_type == KEY_UNSPEC) {
+ 		error_f("unsupported hostkey algorithm %s", k->hostkey_alg);
+diff --git a/myproposal.h b/myproposal.h
+index c7581c7..717590e 100644
+--- a/myproposal.h
++++ b/myproposal.h
+@@ -47,6 +47,7 @@
+ 	"sk-ecdsa-sha2-nistp256-cert-v01@openssh.com," \
+ 	"rsa-sha2-512-cert-v01@openssh.com," \
+ 	"rsa-sha2-256-cert-v01@openssh.com," \
++	"ssh-rsa-cert-v01@openssh.com," \
+ 	"ssh-ed25519," \
+ 	"ecdsa-sha2-nistp256," \
+ 	"ecdsa-sha2-nistp384," \
+@@ -54,7 +55,8 @@
+ 	"sk-ssh-ed25519@openssh.com," \
+ 	"sk-ecdsa-sha2-nistp256@openssh.com," \
+ 	"rsa-sha2-512," \
+-	"rsa-sha2-256"
++	"rsa-sha2-256," \
++	"ssh-rsa"
+ 
+ #define	KEX_FIPS_PK_ALG	\
+ 	"ecdsa-sha2-nistp256-cert-v01@openssh.com," \
+@@ -119,7 +121,8 @@
+ 	"sk-ssh-ed25519@openssh.com," \
+ 	"sk-ecdsa-sha2-nistp256@openssh.com," \
+ 	"rsa-sha2-512," \
+-	"rsa-sha2-256"
++	"rsa-sha2-256," \
++	"ssh-rsa"
+ 
+ #define	KEX_DEFAULT_COMP	"none,zlib@openssh.com"
+ #define	KEX_DEFAULT_LANG	""
+diff --git a/ssh-rsa-deprecated.h b/ssh-rsa-deprecated.h
+new file mode 100644
+index 0000000..1ba4cae
+--- /dev/null
++++ b/ssh-rsa-deprecated.h
+@@ -0,0 +1,53 @@
++/*
++ * XCP-ng: ssh-rsa (SHA-1) deprecation warnings.
++ *
++ * SHA-1 is cryptographically broken and its use for SSH signatures
++ * is deprecated per RFC 8332. These banners warn users so they can
++ * migrate to rsa-sha2-256/512 or Ed25519 before support is removed.
++ */
++
++#ifndef SSH_RSA_DEPRECATED_H
++#define SSH_RSA_DEPRECATED_H
++
++#define SSH_RSA_DEPRECATED_AUTH_WARNING \
++    "\r\n" \
++	"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n" \
++	"@	WARNING: DEPRECATED SSH-RSA (SHA-1) ALGORITHM!		@\n" \
++	"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n" \
++	"You are authenticating using the ssh-rsa algorithm which\n" \
++	"relies on SHA-1 signatures. SHA-1 is cryptographically\n" \
++	"broken (practical collision attacks exist) and its use\n" \
++	"in SSH is deprecated per RFC 8332.\n" \
++	"\n" \
++	"This algorithm will be REMOVED in a future update of\n" \
++	"XCP-ng.\n" \
++	"\n" \
++	"Please upgrade your key by generating a new one with:\n" \
++	"  ssh-keygen -t ed25519\n" \
++	"or update your OpenSSH client to version >= 7.2 which\n" \
++	"supports rsa-sha2-256/rsa-sha2-512 (RFC 8332).\n" \
++	"\n" \
++	"Related announcement:\n" \
++	"https://xcp-ng.org/blog/2026/03/10/march-2026-maintenance-updates-for-xcp-ng-8-3-lts/" \
++	"\n"
++
++/* Format string: expects a single %s argument for the algorithm name */
++#define SSH_RSA_DEPRECATED_HOSTKEY_WARNING \
++    "\r\n" \
++	"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n" \
++	"@	WARNING: DEPRECATED SSH-RSA (SHA-1) HOST KEY!		@\n" \
++	"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n" \
++	"The host key algorithm %s relies on SHA-1 signatures.\n" \
++	"SHA-1 is cryptographically broken (practical collision\n" \
++	"attacks exist) and its use in SSH is deprecated per\n" \
++	"RFC 8332.\n" \
++	"\n" \
++	"This will be REMOVED in a future update of XCP-ng.\n" \
++	"Please configure a stronger host key (e.g. Ed25519).\n" \
++	"\n" \
++	"Related announcement:\n" \
++	"https://xcp-ng.org/blog/2026/03/10/march-2026-maintenance-updates-for-xcp-ng-8-3-lts/" \
++	"\n"
++
++
++#endif /* SSH_RSA_DEPRECATED_H */
+diff --git a/sshconnect2.c b/sshconnect2.c
+index 8b3cccb..bacc2f9 100644
+--- a/sshconnect2.c
++++ b/sshconnect2.c
+@@ -47,6 +47,8 @@
+ 
+ #include <openssl/fips.h>
+ 
++#include "ssh-rsa-deprecated.h"
++
+ #include "openbsd-compat/sys-queue.h"
+ 
+ #include "xmalloc.h"
+@@ -1569,6 +1571,10 @@ sign_and_send_pubkey(struct ssh *ssh, Identity *id)
+ 			error_f("no mutual signature supported");
+ 			goto out;
+ 		}
++		if (strcmp(alg, "ssh-rsa") == 0) {
++			fprintf(stderr, "%s",
++			    SSH_RSA_DEPRECATED_AUTH_WARNING);
++		}
+ 		debug3_f("signing using %s %s", alg, fp);
+ 
+ 		sshbuf_free(b);
+-- 
+2.53.0
+
