@@ -5,7 +5,7 @@
 # start the release from openssh_rel as other packages requires
 
 # XCP-ng sub release number
-%define xcpng_subrel 2
+%define xcpng_subrel 3
 
 %global WITH_SELINUX 0
 
@@ -124,6 +124,11 @@ Patch52: openssh-6.7p1-coverity.patch
 # XCP-ng patches
 Patch1000: openssh-7.4p1-CVE-2025-26465-Fix-cases-where-error-codes-were-not-correc.patch
 Patch1001: openssh-9.8p1-deprecated-ssh-rsa-warning.patch
+Patch1002: openssh-9.8p1-upstream-when-refusing-a-certificate-for-user-authen.patch
+Patch1003: openssh-9.8p1-CVE-2026-35414-when-certificate-support-was-added.patch
+Patch1004: openssh-9.8p1-CVE-2026-35414-regression-test-for-certificates.patch
+Patch1005: openssh-9.8p1-upstream-correctly-match-ECDSA-signature-algorithms.patch
+Patch1006: openssh-9.8p1-upstream-correctly-quote-wildcard-host-certificate.patch
 
 Source24: ssh_config
 Source25: sshd_config
@@ -509,6 +514,12 @@ cat %{_sysconfdir}/ssh/ssh_config.dup > %{_sysconfdir}/ssh/ssh_config
 %endif
 
 %changelog
+* Fri Apr 17 2026 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 9.8p1-1.2.3
+- Add patch upstream log when refusing a certificate as dependency for CVE-2026-35414 patch
+- Fix CVE-2026-35414 (Bypass of authorized_keys)
+- Test for CVE-2026-35414 (with a fix for this test)
+- Fix ECDSA Bypass
+
 * Thu Mar 12 2026 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 9.8p1-1.2.2
 - Temporally enabled ssh-rsa with warning.
   Docs: https://datatracker.ietf.org/doc/html/rfc8332
