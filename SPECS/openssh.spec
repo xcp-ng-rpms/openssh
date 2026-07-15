@@ -5,7 +5,7 @@
 # start the release from openssh_rel as other packages requires
 
 # XCP-ng sub release number
-%define xcpng_subrel 4
+%define xcpng_subrel 5
 
 %global WITH_SELINUX 0
 
@@ -128,6 +128,7 @@ Patch1003: openssh-9.8p1-CVE-2026-35414-when-certificate-support-was-added.patch
 Patch1004: openssh-9.8p1-CVE-2026-35414-regression-test-for-certificates.patch
 Patch1005: openssh-9.8p1-upstream-correctly-match-ECDSA-signature-algorithms.patch
 Patch1006: openssh-9.8p1-upstream-correctly-quote-wildcard-host-certificate.patch
+Patch1007: openssh-9.8p1-CVE-2025-32728-Fix-logic-error-in-DisableForwarding-option.patch
 
 Source24: ssh_config
 Source25: sshd_config
@@ -513,6 +514,10 @@ cat %{_sysconfdir}/ssh/ssh_config.dup > %{_sysconfdir}/ssh/ssh_config
 %endif
 
 %changelog
+* Wed Jul 15 2026 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 9.8p1-1.2.5
+- Fix CVE-2025-32728 (X11 and agent forwarding were not disabled by the
+  DisableForwarding option due to a logic error)
+
 * Wed Apr 29 2026 Vincent Michel <vincent.michel@vates.tech> - 9.8p1-1.2.4
 - Disable the use of ssh-rsa with SHA-1 (temporarily enabled in 9.8p1-1.2.2)
 
