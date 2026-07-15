@@ -131,6 +131,7 @@ Patch1006: openssh-9.8p1-upstream-correctly-quote-wildcard-host-certificate.patc
 Patch1007: openssh-9.8p1-CVE-2025-32728-Fix-logic-error-in-DisableForwarding-option.patch
 Patch1008: openssh-9.8p1-CVE-2025-61984-Improve-rules-for-expansion-of-username.patch
 Patch1009: openssh-9.8p1-CVE-2025-61985-don-t-allow-0-characters-in-url-encoded-str.patch
+Patch1010: openssh-9.8p1-CVE-2026-35385-when-downloading-files-as-root-in-legacy-O-.patch
 
 Source24: ssh_config
 Source25: sshd_config
@@ -525,6 +526,9 @@ cat %{_sysconfdir}/ssh/ssh_config.dup > %{_sysconfdir}/ssh/ssh_config
 - Fix CVE-2025-61985 ('\0' characters were not rejected in url-encoded
   strings such as ssh:// URIs, which could allow NUL-byte smuggling into
   values used by ProxyCommand, potentially leading to code execution)
+- Fix CVE-2026-35385 (files downloaded as root with scp's legacy -O mode
+  but without -p did not have their setuid/setgid bits cleared, allowing
+  privilege escalation)
 
 * Wed Apr 29 2026 Vincent Michel <vincent.michel@vates.tech> - 9.8p1-1.2.4
 - Disable the use of ssh-rsa with SHA-1 (temporarily enabled in 9.8p1-1.2.2)
