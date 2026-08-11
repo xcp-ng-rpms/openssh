@@ -10,6 +10,10 @@
 # possible, but leave them commented.  Uncommented options override the
 # default value.
 
+# To modify the system-wide sshd configuration, create *.conf file(s) under
+#  /etc/ssh/sshd_config.d/  which will be automatically included below
+Include /etc/ssh/sshd_config.d/*.conf
+
 #Port 22
 #AddressFamily any
 #ListenAddress 0.0.0.0

@@ -5,7 +5,7 @@
 # start the release from openssh_rel as other packages requires
 
 # XCP-ng sub release number
-%define xcpng_subrel 5
+%define xcpng_subrel 6
 
 %global WITH_SELINUX 0
 
@@ -518,6 +518,10 @@ cat %{_sysconfdir}/ssh/ssh_config.dup > %{_sysconfdir}/ssh/ssh_config
 %endif
 
 %changelog
+* Mon Aug 10 2026 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 9.8p1-1.2.6
+- Add "Include /etc/ssh/sshd_config.d/*.conf" to sshd_config so drop-in
+  files placed in /etc/ssh/sshd_config.d/ will be loaded by sshd.
+
 * Wed Jul 15 2026 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 9.8p1-1.2.5
 - Fix CVE-2025-32728 (X11 and agent forwarding were not disabled by the
   DisableForwarding option due to a logic error)
