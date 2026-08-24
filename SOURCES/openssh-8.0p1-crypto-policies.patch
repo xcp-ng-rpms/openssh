@@ -166,8 +166,8 @@ diff --color -ru -x regress -x autom4te.cache -x '*.o' -x '*.lo' -x Makefile -x 
 +.Pp
  Specifies the permitted KEX (Key Exchange) algorithms that will be used and
  their preference order.
- The selected algorithm will the the first algorithm in this list that
-@@ -1338,28 +1343,17 @@ Multiple algorithms must be comma-separa
+ The selected algorithm will be the first algorithm in this list that
+@@ -1338,29 +1343,17 @@ Multiple algorithms must be comma-separa
  .Pp
  If the specified list begins with a
  .Sq +
@@ -187,7 +187,8 @@ diff --color -ru -x regress -x autom4te.cache -x '*.o' -x '*.lo' -x Makefile -x 
 -.Pp
 -The default is:
 -.Bd -literal -offset indent
--sntrup761x25519-sha512@openssh.com,
+-sntrup761x25519-sha512,sntrup761x25519-sha512@openssh.com,
+-mlkem768x25519-sha256,
 -curve25519-sha256,curve25519-sha256@libssh.org,
 -ecdh-sha2-nistp256,ecdh-sha2-nistp384,ecdh-sha2-nistp521,
 -diffie-hellman-group-exchange-sha256,
@@ -517,13 +518,14 @@ diff --color -ru -x regress -x autom4te.cache -x '*.o' -x '*.lo' -x Makefile -x 
  .Pp
  The supported algorithms are:
  .Pp
-@@ -1075,16 +1080,6 @@ ecdh-sha2-nistp521
+@@ -1075,17 +1080,6 @@ ecdh-sha2-nistp521
  sntrup761x25519-sha512@openssh.com
  .El
  .Pp
 -The default is:
 -.Bd -literal -offset indent
--sntrup761x25519-sha512@openssh.com,
+-sntrup761x25519-sha512,sntrup761x25519-sha512@openssh.com,
+-mlkem768x25519-sha256,
 -curve25519-sha256,curve25519-sha256@libssh.org,
 -ecdh-sha2-nistp256,ecdh-sha2-nistp384,ecdh-sha2-nistp521,
 -diffie-hellman-group-exchange-sha256,
