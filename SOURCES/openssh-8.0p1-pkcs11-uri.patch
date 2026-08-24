@@ -1353,9 +1353,17 @@ diff -up openssh-9.6p1/ssh-pkcs11-client.c.pkcs11-uri openssh-9.6p1/ssh-pkcs11-c
  		for (i = 0; i < nkeys; i++) {
  			/* XXX clean up properly instead of fatal() */
  			if ((r = sshbuf_get_string(msg, &blob, &blen)) != 0 ||
-diff -up openssh-9.6p1/ssh-pkcs11.c.pkcs11-uri openssh-9.6p1/ssh-pkcs11.c
---- openssh-9.6p1/ssh-pkcs11.c.pkcs11-uri	2023-12-18 15:59:50.000000000 +0100
-+++ openssh-9.6p1/ssh-pkcs11.c	2024-01-12 14:28:09.170975480 +0100
+diff -up openssh-9.9p1/ssh-pkcs11.c.xxx openssh-9.9p1/ssh-pkcs11.c
+--- openssh-9.9p1/ssh-pkcs11.c.xxx	2024-10-09 11:56:35.890126144 +0200
++++ openssh-9.9p1/ssh-pkcs11.c	2024-10-09 11:56:48.528459585 +0200
+@@ -38,6 +38,7 @@
+ #include <openssl/ecdsa.h>
+ #include <openssl/x509.h>
+ #include <openssl/err.h>
++#include <openssl/evp.h>
+ 
+ #define CRYPTOKI_COMPAT
+ #include "pkcs11.h"
 @@ -55,8 +55,8 @@ struct pkcs11_slotinfo {
  	int			logged_in;
  };
@@ -1556,7 +1564,7 @@ diff -up openssh-9.6p1/ssh-pkcs11.c.pkcs11-uri openssh-9.6p1/ssh-pkcs11.c
  }
  
  static RSA_METHOD *rsa_method;
-@@ -195,6 +286,56 @@ static EC_KEY_METHOD *ec_key_method;
+@@ -195,6 +286,60 @@ static EC_KEY_METHOD *ec_key_method;
  static int ec_key_idx = 0;
  #endif /* OPENSSL_HAS_ECC && HAVE_EC_KEY_METHOD_NEW */
  
@@ -1573,13 +1581,17 @@ diff -up openssh-9.6p1/ssh-pkcs11.c.pkcs11-uri openssh-9.6p1/ssh-pkcs11.c
 +
 +	/* sanity - is it a RSA key with associated app_data? */
 +	switch (key->type) {
-+	case KEY_RSA:
-+		k11 = RSA_get_ex_data(key->rsa, rsa_idx);
++	case KEY_RSA: {
++               const RSA *rsa = EVP_PKEY_get0_RSA(key->pkey);
++		k11 = RSA_get_ex_data(rsa, rsa_idx);
 +		break;
++		}
 +#ifdef HAVE_EC_KEY_METHOD_NEW
-+	case KEY_ECDSA:
-+		k11 = EC_KEY_get_ex_data(key->ecdsa, ec_key_idx);
++	case KEY_ECDSA: {
++               const EC_KEY * ecdsa = EVP_PKEY_get0_EC_KEY(key->pkey);
++		k11 = EC_KEY_get_ex_data(ecdsa, ec_key_idx);
 +		break;
++		}
 +#endif
 +	default:
 +		error("Unknown key type %d", key->type);
@@ -1733,9 +1745,9 @@ diff -up openssh-9.6p1/ssh-pkcs11.c.pkcs11-uri openssh-9.6p1/ssh-pkcs11.c
 +		k11->label[label_attrib->ulValueLen] = 0;
 +	}
 +
- 	RSA_set_method(rsa, rsa_method);
- 	RSA_set_ex_data(rsa, rsa_idx, k11);
- 	return (0);
+ 	if (RSA_set_method(rsa, rsa_method) != 1)
+ 		fatal_f("RSA_set_method failed");
+ 	if (RSA_set_ex_data(rsa, rsa_idx, k11) != 1)
 @@ -532,8 +683,8 @@ ecdsa_do_sign(const unsigned char *dgst,
  		return (NULL);
  	}
@@ -1766,9 +1778,9 @@ diff -up openssh-9.6p1/ssh-pkcs11.c.pkcs11-uri openssh-9.6p1/ssh-pkcs11.c
 +		k11->label[label_attrib->ulValueLen] = 0;
 +	}
 +
- 	EC_KEY_set_method(ec, ec_key_method);
- 	EC_KEY_set_ex_data(ec, ec_key_idx, k11);
- 
+ 	if (EC_KEY_set_method(ec, ec_key_method) != 1)
+ 		fatal_f("EC_KEY_set_method failed");
+ 	if (EC_KEY_set_ex_data(ec, ec_key_idx, k11) != 1)
 @@ -622,7 +779,8 @@ pkcs11_ecdsa_wrap(struct pkcs11_provider
  }
  #endif /* OPENSSL_HAS_ECC && HAVE_EC_KEY_METHOD_NEW */
@@ -1895,7 +1907,7 @@ diff -up openssh-9.6p1/ssh-pkcs11.c.pkcs11-uri openssh-9.6p1/ssh-pkcs11.c
  
  	key = sshkey_new(KEY_UNSPEC);
 @@ -810,7 +970,7 @@ pkcs11_fetch_ecdsa_pubkey(struct pkcs11_
- 	ec = NULL;	/* now owned by key */
+ 	key->flags |= SSHKEY_FLAG_EXT;
  
  fail:
 -	for (i = 0; i < 3; i++)
@@ -1979,7 +1991,7 @@ diff -up openssh-9.6p1/ssh-pkcs11.c.pkcs11-uri openssh-9.6p1/ssh-pkcs11.c
  
  	key = sshkey_new(KEY_UNSPEC);
 @@ -905,7 +1067,7 @@ pkcs11_fetch_rsa_pubkey(struct pkcs11_pr
- 	rsa = NULL;	/* now owned by key */
+ 	key->flags |= SSHKEY_FLAG_EXT;
  
  fail:
 -	for (i = 0; i < 3; i++)
