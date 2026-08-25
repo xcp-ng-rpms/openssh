@@ -1,5 +1,5 @@
 # XCP-ng sub release number
-%define xcpng_subrel 1
+%define xcpng_subrel 2
 
 # Do we want SELinux & Audit
 %if 0%{?!noselinux:1}
@@ -20,7 +20,6 @@
 %global sshd_gid    74
 %endif
 # XCP-ng END
-
 
 
 # Do we want to disable building of gnome-askpass? (1=yes 0=no)
@@ -83,6 +82,10 @@ Source20: ssh-host-keys-migration.sh
 Source21: ssh-host-keys-migration.service
 Source22: parallel_test.sh
 Source23: parallel_test.Makefile
+# XCP-ng BEGIN Mainted files
+Source24: sshd_config
+Source25: ssh_config
+# XCP-ng END
 
 #https://bugzilla.mindrot.org/show_bug.cgi?id=2581
 Patch100: openssh-6.7p1-coverity.patch
@@ -212,7 +215,9 @@ Patch1014: openssh-8.7p1-nohostsha1proof.patch
 
 Patch1015: openssh-9.6p1-pam-rhost.patch
 Patch1016: openssh-9.9p1-separate-keysign.patch
+# XCP-ng BEGIN XCP-ng does not have this file in the tarball.
 #Patch1017: openssh-8.7p1-redhat-help.patch
+# XCP-ng END
 Patch1018: openssh-8.7p1-openssl-log.patch
 # upstream cf3e48ee8ba1beeccddd2f203b558fa102be67a2
 # upstream 0c3927c45f8a57b511c874c4d51a8c89414f74ef
@@ -275,6 +280,7 @@ Patch1044: openssh-9.9p1-proxyjump-username-validity-checks.patch
 Patch1045: openssh-9.9p1-scp-remote-glob.patch
 # upstream e8bdfb151a356d0171fea4194dd205fbb252be23
 Patch1046: openssh-9.9p1-cve-2026-60002.patch
+# XCP-ng backports of upstream patches
 # upstream 8b05bbeb293c5f777915e37e9ed43a06fb8e7614
 # upstream 5a5e47740b6466d58242aca28b9e584bab4ccf1d
 Patch1047: openssh-9.9p1-copy-data-ext-self-copy.patch
@@ -317,7 +323,14 @@ BuildRequires: autoconf, automake, perl-interpreter, perl-generators, zlib-devel
 BuildRequires: audit-libs-devel >= 2.0.5
 BuildRequires: util-linux, groff
 BuildRequires: pam-devel
-BuildRequires: openssl-devel >= 0.9.8j
+# XCP-ng BEGIN
+# OpenSSL >= 3.5.5-1.3 is required by the test suite run at build time, and at
+# runtime for ML-KEM: our sshd_config enables mlkem768x25519-sha256, which
+# relies on OpenSSL's ML-KEM implementation (openssh-9.9p1-openssl-mlkem.patch);
+# without it sshd rejects the KexAlgorithms line and refuses to start.
+BuildRequires: openssl-devel >= 3.5.5-1.3
+Requires: openssl-libs >= 3.5.5-1.3
+# XCP-ng END
 BuildRequires: perl-podlators
 BuildRequires: systemd-devel
 # XCP-ng BEGIN XCP-ng doesn't have this package
@@ -353,7 +366,11 @@ BuildRequires: gnupg2
 %package clients
 Summary: An open source SSH client applications
 Requires: openssh = %{version}-%{release}
-Requires: crypto-policies >= 20220824-1
+# XCP-ng BEGIN XCP-ng does not have that, and we don't support it.
+# This is used to set a global policies for all the platform.
+# This is not mandatory as we do the custom config
+#Requires: crypto-policies >= 20220824-1
+# XCP-ng END
 
 %package keysign
 Summary: A helper program used for host-based authentication
@@ -364,7 +381,11 @@ Summary: An open source SSH server daemon
 Requires: openssh = %{version}-%{release}
 Requires(pre): /usr/sbin/useradd
 Requires: pam >= 1.0.1-3
-Requires: crypto-policies >= 20220824-1
+# XCP-ng BEGIN XCP-ng does not have that, and we don't support it.
+# This is used to set a global policies for all the platform.
+# This is not mandatory as we do the custom config
+#Requires: crypto-policies >= 20220824-1
+# XCP-ng END
 %{?systemd_requires}
 
 %package keycat
@@ -484,7 +505,9 @@ gpgv2 --quiet --keyring %{SOURCE3} %{SOURCE1} %{SOURCE0}
 %patch -P 1014 -p1 -b .nosha1hostproof
 %patch -P 1015 -p1 -b .pam-rhost
 %patch -P 1016 -p1 -b .sep-keysign
-#%patch -P 1017 -p1 -b .help
+# XCP-ng BEGIN XCP-ng does not have this file in the tarball.
+#%%patch -P 1017 -p1 -b .help
+# XCP-ng END
 %patch -P 1018 -p1 -b .openssl-log
 %patch -P 1019 -p1 -b .mlkembe
 %patch -P 1020 -p1 -b .match
@@ -639,9 +662,16 @@ install -d $RPM_BUILD_ROOT%{_libexecdir}/openssh
 install -m644 %{SOURCE2} $RPM_BUILD_ROOT/etc/pam.d/sshd
 install -m644 %{SOURCE6} $RPM_BUILD_ROOT/etc/pam.d/ssh-keycat
 install -m644 %{SOURCE7} $RPM_BUILD_ROOT/etc/sysconfig/sshd
-install -m644 ssh_config_redhat $RPM_BUILD_ROOT%{_sysconfdir}/ssh/ssh_config.d/50-redhat.conf
-install -m644 sshd_config_redhat_cp $RPM_BUILD_ROOT%{_sysconfdir}/ssh/sshd_config.d/40-redhat-crypto-policies.conf
-install -m644 sshd_config_redhat $RPM_BUILD_ROOT%{_sysconfdir}/ssh/sshd_config.d/50-redhat.conf
+# XCP-ng BEGIN XCP-ng has its own rules; let's not package rules that could conflict with them.
+#install -m644 ssh_config_redhat $RPM_BUILD_ROOT%%{_sysconfdir}/ssh/ssh_config.d/50-redhat.conf
+#install -m644 sshd_config_redhat_cp $RPM_BUILD_ROOT%%{_sysconfdir}/ssh/sshd_config.d/40-redhat-crypto-policies.conf
+#install -m644 sshd_config_redhat $RPM_BUILD_ROOT%%{_sysconfdir}/ssh/sshd_config.d/50-redhat.conf
+# XCP-ng ships its own hardened sshd_config/ssh_config in place of the
+# upstream defaults; these fully replace them and are
+# reinstalled on every package upgrade.
+install -m644 %{SOURCE25} $RPM_BUILD_ROOT%{_sysconfdir}/ssh/ssh_config
+install -m600 %{SOURCE24} $RPM_BUILD_ROOT%{_sysconfdir}/ssh/sshd_config
+# XCP-ng END
 install -d -m755 $RPM_BUILD_ROOT/%{_unitdir}
 install -m644 %{SOURCE9} $RPM_BUILD_ROOT/%{_unitdir}/sshd@.service
 install -m644 %{SOURCE10} $RPM_BUILD_ROOT/%{_unitdir}/sshd.socket
@@ -756,9 +786,15 @@ fi
 %attr(0644,root,root) %{_mandir}/man1/ssh.1*
 %attr(0755,root,root) %{_bindir}/scp
 %attr(0644,root,root) %{_mandir}/man1/scp.1*
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ssh/ssh_config
+# XCP-ng BEGIN Not marked %%config on purpose: this is the XCP-ng policy file and
+# must be unconditionally overwritten on every upgrade
+#%%attr(0644,root,root) %%config(noreplace) %%{_sysconfdir}/ssh/ssh_config
+%attr(0644,root,root) %{_sysconfdir}/ssh/ssh_config
+# XCP-ng END
 %dir %attr(0755,root,root) %{_sysconfdir}/ssh/ssh_config.d/
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ssh/ssh_config.d/50-redhat.conf
+# XCP-ng BEGIN XCP-ng has its own rules; let's not package rules that could conflict with them.
+#%%attr(0644,root,root) %%config(noreplace) %%{_sysconfdir}/ssh/ssh_config.d/50-redhat.conf
+# XCP-ng END
 %attr(0644,root,root) %{_mandir}/man5/ssh_config.5*
 %attr(0755,root,root) %{_bindir}/ssh-agent
 %attr(0755,root,root) %{_bindir}/ssh-add
@@ -791,10 +827,16 @@ fi
 %attr(0644,root,root) %{_mandir}/man5/moduli.5*
 %attr(0644,root,root) %{_mandir}/man8/sshd.8*
 %attr(0644,root,root) %{_mandir}/man8/sftp-server.8*
-%attr(0600,root,root) %config(noreplace) %{_sysconfdir}/ssh/sshd_config
+# XCP-ng BEGIN Not marked %%config on purpose: this is the XCP-ng policy file and
+# must be unconditionally overwritten on every upgrade
+#%%attr(0600,root,root) %%config(noreplace) %%{_sysconfdir}/ssh/sshd_config
+%attr(0600,root,root) %{_sysconfdir}/ssh/sshd_config
+# XCP-ng END
 %dir %attr(0700,root,root) %{_sysconfdir}/ssh/sshd_config.d/
-%attr(0600,root,root) %config(noreplace) %{_sysconfdir}/ssh/sshd_config.d/40-redhat-crypto-policies.conf
-%attr(0600,root,root) %config(noreplace) %{_sysconfdir}/ssh/sshd_config.d/50-redhat.conf
+# XCP-ng BEGIN XCP-ng has its own rules; let's not package rules that could conflict with them.
+#%%attr(0600,root,root) %%config(noreplace) %%{_sysconfdir}/ssh/sshd_config.d/40-redhat-crypto-policies.conf
+#%%attr(0600,root,root) %%config(noreplace) %%{_sysconfdir}/ssh/sshd_config.d/50-redhat.conf
+# XCP-ng END
 %attr(0644,root,root) %config(noreplace) /etc/pam.d/sshd
 %attr(0640,root,root) %config(noreplace) /etc/sysconfig/sshd
 %attr(0644,root,root) %{_unitdir}/sshd.service
@@ -823,6 +865,25 @@ fi
 %attr(0755,root,root) %{_libdir}/sshtest/sk-dummy.so
 
 %changelog
+* Wed Sep 30 2026 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 9.9p1-30.2
+- XCP-ng must not package redhat confs and must apply its own.
+- Create the initial XCP-ng configuration with post-quantum support.
+- Harden the cryptographic algorithms to reduce the attack surface.
+- Only accept plain ed25519, ecdsa and rsa-sha2 public keys: SSH user
+  certificates and FIDO keys must be enabled through a drop-in in
+  /etc/ssh/sshd_config.d/.
+- Disable PrintMotd because PAM now manage it.
+- Set MaxAuthTries to 3 to mitigate brute-force attacks. (CIS recommendation)
+- Set LoginGraceTime to 60 seconds to mitigate brute-force attacks. (CIS recommendation)
+- Re-enable PerSourcePenalties (OpenSSH default) to mitigate brute-force attacks.
+- Explicitly set PermitEmptyPasswords to no.
+- Enable DisableForwarding to disable all forwarding features (TCP, agent,
+  Unix socket and X11).
+- Disable GSSAPIAuthentication since Kerberos is not supported in dom0.
+- Link against the actual sftp-server implementation.
+- Require OpenSSL >= 3.5.5-1.3, needed by the test suite and by the
+  ML-KEM key exchange (mlkem768x25519-sha256) enabled in sshd_config.
+
 * Wed Aug 26 2026 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 9.9p1-30.1
 - CVE-2026-59998 is only a documentation update.
 - Fix of CVE-2026-60000
