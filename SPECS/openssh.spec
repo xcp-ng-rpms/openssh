@@ -276,6 +276,20 @@ Patch1044: openssh-9.9p1-proxyjump-username-validity-checks.patch
 Patch1045: openssh-9.9p1-scp-remote-glob.patch
 # upstream e8bdfb151a356d0171fea4194dd205fbb252be23
 Patch1046: openssh-9.9p1-cve-2026-60002.patch
+# upstream 8b05bbeb293c5f777915e37e9ed43a06fb8e7614
+# upstream 5a5e47740b6466d58242aca28b9e584bab4ccf1d
+Patch1047: openssh-9.9p1-copy-data-ext-self-copy.patch
+# upstream 6a57081dc35acf3ee298108d4bc3580489608d5f
+Patch1048: openssh-10.4p1-CVE-2026-59995.patch
+# upstream 8dfe7ed6e2fd988de08df508355a196b956b2753
+# upstream d322f2ccf7da095ce94d1d99cb563246f61487b0
+# combines CVE-2026-59999 and CVE-2026-73283
+# downstream specific fix, drop on rebase
+Patch1049: openssh-10.4p1-CVE-2026-59999.patch
+# upstream 6a57081dc35acf3ee298108d4bc3580489608d5f
+Patch1050: openssh-10.5p1-CVE-2026-73281.patch
+# upstream 9910d5ef53124ce1157d57bc11e222658aa41299
+Patch1051: openssh-10.5p1-CVE-2026-73282.patch
 
 # XCP-ng patches
 # Name the parameters of the ssh_gss_* stub functions that
@@ -283,6 +297,9 @@ Patch1046: openssh-9.9p1-cve-2026-60002.patch
 # definition; our build compiler rejects them with "parameter name
 # omitted").
 Patch2000: openssh-9.9p1-xcpng-gsskex-named-params.patch
+# Fix CVE-2026-59997
+Patch2001: openssh-10.4p1-XCPNG-CVE-2026-60000.patch
+Patch2002: openssh-10.4p1-XCPNG-CVE-2026-60001.patch
 
 License: BSD-3-Clause AND BSD-2-Clause AND ISC AND SSH-OpenSSH AND ssh-keyscan AND snprintf AND LicenseRef-Fedora-Public-Domain AND X11-distribute-modifications-variant
 Requires: /sbin/nologin
@@ -499,11 +516,18 @@ gpgv2 --quiet --keyring %{SOURCE3} %{SOURCE1} %{SOURCE0}
 %patch -P 1044 -p1 -b .proxyjump-username-validity-checks
 %patch -P 1045 -p1 -b .scp-remote-glob
 %patch -P 1046 -p1 -b .cve-2026-60002
+%patch -P 1047 -p1 -b .copy-data-ext-self-copy
+%patch -P 1048 -p1 -b .CVE-2026-59995
+%patch -P 1049 -p1 -b .CVE-2026-59999
+%patch -P 1050 -p1 -b .CVE-2026-73281
+%patch -P 1051 -p1 -b .CVE-2026-73282
 
 %patch -P 100 -p1 -b .coverity
 
 # XCP-ng patches
 %patch -P 2000 -p1 -b .gsskex-named-params
+%patch -P 2001 -p1 -b .cve-2026-60000
+%patch -P 2002 -p1 -b .cve-2026-60001
 
 autoreconf
 
@@ -803,6 +827,43 @@ fi
 %attr(0755,root,root) %{_libdir}/sshtest/sk-dummy.so
 
 %changelog
+* Wed Aug 26 2026 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 9.9p1-30.1
+- CVE-2026-59998 is only a documentation update.
+- Fix of CVE-2026-60000
+- Fix of CVE-2026-60001
+- Backport fixes from Alma (See below)
+- *** UPSTREAM CHANGELOG ***
+  * Tue Aug 25 2026 Koichiro Iwao <meta@almalinux.org> - 9.9p1-30.alma.1
+  - Unpatch Red Hat help message
+
+  * Fri Aug 21 2026 Zoltan Fridrich <zfridric@redhat.com> - 9.9p1-30
+  - CVE-2026-73283: Complete the fix of security bypass due to incorrect
+    handling of forwarding and tunneling options
+    Resolves: RHEL-242759
+  - CVE-2026-73281: Fix misinteraction between agent locking and
+    the session-bind@openssh.com extension
+    Resolves: RHEL-245421
+  - CVE-2026-73282: Fix information disclosure and data corruption
+    via use-after-free in ssh client
+    Resolves: RHEL-245417
+
+  * Wed Aug 12 2026 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.9p1-29
+  - Fix CVE-2026-59995 OpenSSH: sftp client allows attacker to control downloaded
+    file location
+    Resolves: RHEL-236323
+  - Fix CVE-2026-59999 and CVE-2026-73283: Security bypass due to incorrect
+    handling of forwarding and tunneling options
+    Resolves: RHEL-236275
+
+  * Thu Jul 16 2026 Zoltan Fridrich <zfridric@redhat.com> - 9.9p1-28
+  - Fix GSSAPI indicators check ignoring subsequent deny rules if
+    allow rule matched first
+    Resolves: RHEL-182151
+  - Add default value for GSSAPIDelegateCredentials property in sshd_config manpage
+    Resolves: RHEL-211135
+  - Fix self-copy guard bypass in copy-data extension
+    Resolves: RHEL-191388
+
 * Tue Aug 25 2026 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 9.9p1-27.1
 - Import OpenSSH 9.9p1 from Alma 10
 - Drop systemd-rpm-macros BuildRequires (not shipped in XCP-ng 8.3 repos);
