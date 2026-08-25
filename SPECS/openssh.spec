@@ -1,7 +1,7 @@
 # XCP-ng build condition
 %bcond_without xcpng
 # XCP-ng sub release number
-%define xcpng_subrel 1
+%define xcpng_subrel 2
 
 # Do we want SELinux & Audit
 %if 0%{?!noselinux:1}
@@ -84,6 +84,8 @@ Source20: ssh-host-keys-migration.sh
 Source21: ssh-host-keys-migration.service
 Source22: parallel_test.sh
 Source23: parallel_test.Makefile
+Source24: sshd_config
+Source25: ssh_config
 
 #https://bugzilla.mindrot.org/show_bug.cgi?id=2581
 Patch100: openssh-6.7p1-coverity.patch
@@ -355,7 +357,12 @@ BuildRequires: gnupg2
 %package clients
 Summary: An open source SSH client applications
 Requires: openssh = %{version}-%{release}
+# XCP-ng does not have that, and we don't support it.
+# This is used to set a global policies for all the platform.
+# This is not mandatory as we do the custom config
+%if %{without xcpng}
 Requires: crypto-policies >= 20220824-1
+%endif
 
 %package keysign
 Summary: A helper program used for host-based authentication
@@ -366,7 +373,12 @@ Summary: An open source SSH server daemon
 Requires: openssh = %{version}-%{release}
 Requires(pre): /usr/sbin/useradd
 Requires: pam >= 1.0.1-3
+# XCP-ng does not have that, and we don't support it.
+# This is used to set a global policies for all the platform.
+# This is not mandatory as we do the custom config
+%if %{without xcpng}
 Requires: crypto-policies >= 20220824-1
+%endif
 %{?systemd_requires}
 
 %package keycat
@@ -641,9 +653,18 @@ install -d $RPM_BUILD_ROOT%{_libexecdir}/openssh
 install -m644 %{SOURCE2} $RPM_BUILD_ROOT/etc/pam.d/sshd
 install -m644 %{SOURCE6} $RPM_BUILD_ROOT/etc/pam.d/ssh-keycat
 install -m644 %{SOURCE7} $RPM_BUILD_ROOT/etc/sysconfig/sshd
+# XCP-ng has its own rules; let's not package rules that could conflict with them.
+%if %{without xcpng}
 install -m644 ssh_config_redhat $RPM_BUILD_ROOT%{_sysconfdir}/ssh/ssh_config.d/50-redhat.conf
 install -m644 sshd_config_redhat_cp $RPM_BUILD_ROOT%{_sysconfdir}/ssh/sshd_config.d/40-redhat-crypto-policies.conf
 install -m644 sshd_config_redhat $RPM_BUILD_ROOT%{_sysconfdir}/ssh/sshd_config.d/50-redhat.conf
+%else
+# XCP-ng ships its own hardened sshd_config/ssh_config in place of the
+# upstream defaults; these fully replace them and are
+# reinstalled on every package upgrade.
+install -m644 %{SOURCE25} $RPM_BUILD_ROOT%{_sysconfdir}/ssh/ssh_config
+install -m600 %{SOURCE24} $RPM_BUILD_ROOT%{_sysconfdir}/ssh/sshd_config
+%endif
 install -d -m755 $RPM_BUILD_ROOT/%{_unitdir}
 install -m644 %{SOURCE9} $RPM_BUILD_ROOT/%{_unitdir}/sshd@.service
 install -m644 %{SOURCE10} $RPM_BUILD_ROOT/%{_unitdir}/sshd.socket
@@ -760,9 +781,18 @@ fi
 %attr(0644,root,root) %{_mandir}/man1/ssh.1*
 %attr(0755,root,root) %{_bindir}/scp
 %attr(0644,root,root) %{_mandir}/man1/scp.1*
+%if %{with xcpng}
+# Not marked %%config on purpose: this is the XCP-ng policy file and
+# must be unconditionally overwritten on every upgrade
+%attr(0644,root,root) %{_sysconfdir}/ssh/ssh_config
+%else
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ssh/ssh_config
+%endif
 %dir %attr(0755,root,root) %{_sysconfdir}/ssh/ssh_config.d/
+# XCP-ng has its own rules; let's not package rules that could conflict with them.
+%if %{without xcpng}
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ssh/ssh_config.d/50-redhat.conf
+%endif
 %attr(0644,root,root) %{_mandir}/man5/ssh_config.5*
 %attr(0755,root,root) %{_bindir}/ssh-agent
 %attr(0755,root,root) %{_bindir}/ssh-add
@@ -795,10 +825,19 @@ fi
 %attr(0644,root,root) %{_mandir}/man5/moduli.5*
 %attr(0644,root,root) %{_mandir}/man8/sshd.8*
 %attr(0644,root,root) %{_mandir}/man8/sftp-server.8*
+%if %{with xcpng}
+# Not marked %%config on purpose: this is the XCP-ng policy file and
+# must be unconditionally overwritten on every upgrade
+%attr(0600,root,root) %{_sysconfdir}/ssh/sshd_config
+%else
 %attr(0600,root,root) %config(noreplace) %{_sysconfdir}/ssh/sshd_config
+%endif
 %dir %attr(0700,root,root) %{_sysconfdir}/ssh/sshd_config.d/
+# XCP-ng has its own rules; let's not package rules that could conflict with them.
+%if %{without xcpng}
 %attr(0600,root,root) %config(noreplace) %{_sysconfdir}/ssh/sshd_config.d/40-redhat-crypto-policies.conf
 %attr(0600,root,root) %config(noreplace) %{_sysconfdir}/ssh/sshd_config.d/50-redhat.conf
+%endif
 %attr(0644,root,root) %config(noreplace) /etc/pam.d/sshd
 %attr(0640,root,root) %config(noreplace) /etc/sysconfig/sshd
 %attr(0644,root,root) %{_unitdir}/sshd.service
@@ -827,6 +866,11 @@ fi
 %attr(0755,root,root) %{_libdir}/sshtest/sk-dummy.so
 
 %changelog
+* Mon Aug 31 2026 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 9.9p1-30.2
+- XCP-ng must not package redhat confs and must apply its own.
+- Create first xcpng conf with pq (post-quantum) support,
+  protection from bruteforce is by default.
+
 * Wed Aug 26 2026 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 9.9p1-30.1
 - CVE-2026-59998 is only a documentation update.
 - Fix of CVE-2026-60000
