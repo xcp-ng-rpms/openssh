@@ -1,24 +1,40 @@
-%global package_speccommit 8bc30558bfd6de018b6aeed060eb61a266877bb0
-%global usver 9.8p1
-%global xsver 1.2
-%global xsrel %{xsver}%{?xscount}%{?xshash}
-# start the release from openssh_rel as other packages requires
-
+# XCP-ng build condition
+%bcond_without xcpng
 # XCP-ng sub release number
-%define xcpng_subrel 6
+%define xcpng_subrel 2
 
+# Do we want SELinux & Audit
+%if 0%{?!noselinux:1}
+%global WITH_SELINUX 1
+%else
 %global WITH_SELINUX 0
+%endif
+
+%if %{with xcpng}
+%global WITH_SELINUX 0
+# Since we do not have the %sysusers_create_compat macro in 8.3, we have to perform the creation manually.
+# OpenSSH privilege separation requires a user & group ID
+%if 0%{?xenserver} < 9
+%global sshd_uid    74
+%global sshd_gid    74
+%endif
+%endif
 
 %global _hardened_build 1
 
-%if 0%{?xenserver} < 9
-# OpenSSH privilege separation requires a user & group ID
-%global sshd_uid    74
-%global sshd_gid    74
+# Do we want to disable building of gnome-askpass? (1=yes 0=no)
+# XCP-ng does not have gnome, so we disable it in previous version.
+%if %{with xcpng}
+%global no_gnome_askpass 1
+%else
+%global no_gnome_askpass 0
 %endif
 
 # Do we want to link against a static libcrypto? (1=yes 0=no)
 %global static_libcrypto 0
+
+# Use GTK3 instead of GTK2 in gnome-ssh-askpass
+%global gtk3 1
 
 # Build position-independent executables (requires toolchain support)?
 %global pie 1
@@ -29,33 +45,30 @@
 # Do we want libedit support
 %global libedit 1
 
-# Whether to build pam_ssh_agent_auth
-%global pam_ssh_agent 0
-
 # Reserve options to override askpass settings with:
 # rpm -ba|--rebuild --define 'skip_xxx 1'
-%global no_gnome_askpass 1
+%{?skip_gnome_askpass:%global no_gnome_askpass 1}
+
+# Add option to build without GTK2 for older platforms with only GTK+.
+# Red Hat Linux <= 7.2 and Red Hat Advanced Server 2.1 are examples.
+# rpm -ba|--rebuild --define 'no_gtk3 1'
+%{?no_gtk3:%global gtk3 0}
 
 # Options for static OpenSSL link:
 # rpm -ba|--rebuild --define "static_openssl 1"
 %{?static_openssl:%global static_libcrypto 1}
 
-# Do not forget to bump pam_ssh_agent_auth release if you rewind the main package release to 1
-%global openssh_ver 9.8p1
-%global openssh_rel 4
-%global pam_ssh_agent_ver 0.10.4
-%global pam_ssh_agent_rel 10
+%global openssh_ver 9.9p1
 
 Summary: An open source implementation of SSH protocol version 2
-Name:    openssh
+Name: openssh
 Version: %{openssh_ver}
-Release: %{?xsrel}.%{xcpng_subrel}%{?dist}
+Release: 27.%{xcpng_subrel}%{?dist}
 URL: http://www.openssh.com/portable.html
-#URL1: https://github.com/jbeverly/pam_ssh_agent_auth/
-Source0: openssh-9.8p1.tar.gz
+Source0: ftp://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-%{version}.tar.gz
+Source1: ftp://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-%{version}.tar.gz.asc
 Source2: sshd.pam
-Source4: pam_ssh_agent_auth-0.10.4.tar.gz
-Source5: pam_ssh_agent-rmheaders
+Source3: gpgkey-736060BA.gpg
 Source6: ssh-keycat.pam
 Source7: sshd.sysconfig
 Source9: sshd@.service
@@ -64,81 +77,243 @@ Source11: sshd.service
 Source12: sshd-keygen@.service
 Source13: sshd-keygen
 Source15: sshd-keygen.target
+Source16: ssh-agent.service
+Source17: ssh-agent.socket
 Source19: openssh-server-systemd-sysusers.conf
+Source20: ssh-host-keys-migration.sh
+Source21: ssh-host-keys-migration.service
 Source22: parallel_test.sh
 Source23: parallel_test.Makefile
-Patch0: openssh-7.8p1-role-mls.patch
-Patch1: openssh-6.6p1-privsep-selinux.patch
-Patch2: openssh-6.6p1-keycat.patch
-Patch3: openssh-6.6p1-allow-ip-opts.patch
-Patch4: openssh-5.9p1-ipv6man.patch
-Patch5: openssh-5.8p2-sigpipe.patch
-Patch6: openssh-7.2p2-x11.patch
-Patch7: openssh-5.1p1-askpass-progress.patch
-Patch8: openssh-4.3p2-askpass-grab-info.patch
-Patch9: openssh-7.7p1-redhat.patch
-Patch10: openssh-7.8p1-UsePAM-warning.patch
-Patch11: openssh-8.0p1-gssapi-keyex.patch
-Patch12: openssh-6.6p1-force_krb.patch
-Patch13: openssh-7.7p1-gssapi-new-unique.patch
-Patch14: openssh-7.2p2-k5login_directory.patch
-Patch15: openssh-9.6p1-gsskex-new-api.patch
-Patch16: openssh-6.6p1-kuserok.patch
-Patch17: openssh-6.4p1-fromto-remote.patch
-Patch18: openssh-6.6.1p1-selinux-contexts.patch
-Patch19: openssh-6.6.1p1-log-in-chroot.patch
-Patch20: openssh-6.6.1p1-scp-non-existing-directory.patch
-Patch21: openssh-6.6p1-GSSAPIEnablek5users.patch
-Patch22: openssh-6.8p1-sshdT-output.patch
-Patch23: openssh-6.7p1-sftp-force-permission.patch
-Patch24: openssh-7.2p2-s390-closefrom.patch
-Patch25: openssh-7.3p1-x11-max-displays.patch
-Patch26: openssh-7.6p1-cleanup-selinux.patch
-Patch27: openssh-7.5p1-sandbox.patch
-Patch28: openssh-8.0p1-pkcs11-uri.patch
-Patch29: openssh-7.8p1-scp-ipv6.patch
-Patch30: openssh-8.0p1-crypto-policies.patch
-Patch31: openssh-9.3p1-merged-openssl-evp.patch
-Patch32: openssh-8.0p1-openssl-kdf.patch
-Patch33: openssh-8.2p1-visibility.patch
-Patch34: openssh-8.2p1-x11-without-ipv6.patch
-Patch35: openssh-8.0p1-keygen-strip-doseol.patch
-Patch36: openssh-8.0p1-preserve-pam-errors.patch
-Patch37: openssh-8.7p1-scp-kill-switch.patch
-Patch38: openssh-8.7p1-recursive-scp.patch
-Patch39: openssh-8.7p1-minrsabits.patch
-Patch40: openssh-8.7p1-ibmca.patch
-Patch41: openssh-7.6p1-audit.patch
-Patch42: openssh-7.1p2-audit-race-condition.patch
-Patch43: openssh-9.0p1-audit-log.patch
-Patch44: openssh-8.7p1-audit-hostname.patch
-Patch45: openssh-7.7p1-fips.patch
-Patch46: openssh-8.7p1-ssh-manpage.patch
-Patch47: openssh-8.7p1-negotiate-supported-algs.patch
-Patch48: openssh-9.0p1-evp-fips-dh.patch
-Patch49: openssh-9.0p1-evp-fips-ecdh.patch
-Patch50: openssh-8.7p1-nohostsha1proof.patch
-Patch51: openssh-9.6p1-pam-rhost.patch
-Patch52: openssh-6.7p1-coverity.patch
+Source24: sshd_config
+Source25: ssh_config
+
+#https://bugzilla.mindrot.org/show_bug.cgi?id=2581
+Patch100: openssh-6.7p1-coverity.patch
+
+#https://bugzilla.mindrot.org/show_bug.cgi?id=1402
+# https://bugzilla.redhat.com/show_bug.cgi?id=1171248
+# record pfs= field in CRYPTO_SESSION audit event
+Patch200: openssh-7.6p1-audit.patch
+# Audit race condition in forked child (#1310684)
+Patch201: openssh-7.1p2-audit-race-condition.patch
+# https://bugzilla.redhat.com/show_bug.cgi?id=2049947
+Patch202: openssh-9.0p1-audit-log.patch
+
+#https://bugzilla.mindrot.org/show_bug.cgi?id=1641 (WONTFIX)
+Patch400: openssh-7.8p1-role-mls.patch
+#https://bugzilla.redhat.com/show_bug.cgi?id=781634
+Patch404: openssh-6.6p1-privsep-selinux.patch
+#?
+Patch502: openssh-6.6p1-keycat.patch
+
+#https://bugzilla.mindrot.org/show_bug.cgi?id=1644
+Patch601: openssh-6.6p1-allow-ip-opts.patch
+#(drop?) https://bugzilla.mindrot.org/show_bug.cgi?id=1925
+Patch606: openssh-5.9p1-ipv6man.patch
+#?
+Patch607: openssh-5.8p2-sigpipe.patch
+#https://bugzilla.mindrot.org/show_bug.cgi?id=1789
+Patch609: openssh-7.2p2-x11.patch
+
+#?
+Patch700: openssh-7.7p1-fips.patch
+#?
+Patch702: openssh-5.1p1-askpass-progress.patch
+#https://bugzilla.redhat.com/show_bug.cgi?id=198332
+Patch703: openssh-4.3p2-askpass-grab-info.patch
+#https://bugzilla.mindrot.org/show_bug.cgi?id=1635 (WONTFIX)
+Patch707: openssh-7.7p1-redhat.patch
+# warn users for unsupported UsePAM=no (#757545)
+Patch711: openssh-7.8p1-UsePAM-warning.patch
+
+# GSSAPI Key Exchange (RFC 4462 + RFC 8732)
+# from https://github.com/openssh-gsskex/openssh-gsskex/tree/fedora/master
+# and
+# Reenable MONITOR_REQ_GSSCHECKMIC after gssapi-with-mic failures
+# upstream MR:
+# https://github.com/openssh-gsskex/openssh-gsskex/pull/21
+Patch800: openssh-9.6p1-gssapi-keyex.patch
+#http://www.mail-archive.com/kerberos@mit.edu/msg17591.html
+Patch801: openssh-6.6p1-force_krb.patch
+# add new option GSSAPIEnablek5users and disable using ~/.k5users by default (#1169843)
+# CVE-2014-9278
+Patch802: openssh-6.6p1-GSSAPIEnablek5users.patch
+# Improve ccache handling in openssh (#991186, #1199363, #1566494)
+# https://bugzilla.mindrot.org/show_bug.cgi?id=2775
+Patch804: openssh-7.7p1-gssapi-new-unique.patch
+# Respect k5login_directory option in krk5.conf (#1328243)
+Patch805: openssh-7.2p2-k5login_directory.patch
+
+#https://bugzilla.mindrot.org/show_bug.cgi?id=1780
+Patch901: openssh-6.6p1-kuserok.patch
+# Use tty allocation for a remote scp (#985650)
+Patch906: openssh-6.4p1-fromto-remote.patch
+# privsep_preauth: use SELinux context from selinux-policy (#1008580)
+Patch916: openssh-6.6.1p1-selinux-contexts.patch
+# log via monitor in chroots without /dev/log (#2681)
+Patch918: openssh-6.6.1p1-log-in-chroot.patch
+# scp file into non-existing directory (#1142223)
+Patch919: openssh-6.6.1p1-scp-non-existing-directory.patch
+# apply upstream patch and make sshd -T more consistent (#1187521)
+Patch922: openssh-6.8p1-sshdT-output.patch
+# Add sftp option to force mode of created files (#1191055)
+Patch926: openssh-6.7p1-sftp-force-permission.patch
+# make s390 use /dev/ crypto devices -- ignore closefrom
+Patch939: openssh-7.2p2-s390-closefrom.patch
+# Move MAX_DISPLAYS to a configuration option (#1341302)
+Patch944: openssh-7.3p1-x11-max-displays.patch
+# Pass inetd flags for SELinux down to openbsd compat level
+Patch949: openssh-7.6p1-cleanup-selinux.patch
+# Sandbox adjustments for s390 and audit
+Patch950: openssh-7.5p1-sandbox.patch
+# PKCS#11 URIs (upstream #2817, 2nd iteration)
+# https://github.com/Jakuje/openssh-portable/commits/jjelen-pkcs11
+# git show > ~/devel/fedora/openssh/openssh-8.0p1-pkcs11-uri.patch
+Patch951: openssh-8.0p1-pkcs11-uri.patch
+# Unbreak scp between two IPv6 hosts (#1620333)
+Patch953: openssh-7.8p1-scp-ipv6.patch
+# Mention crypto-policies in manual pages (#1668325)
+# clarify rhbz#2068423 on the man page of ssh_config
+Patch962: openssh-8.0p1-crypto-policies.patch
+# Use OpenSSL KDF (#1631761)
+Patch964: openssh-8.0p1-openssl-kdf.patch
+# sk-dummy.so built with -fvisibility=hidden does not work
+Patch965: openssh-8.2p1-visibility.patch
+# Do not break X11 without IPv6
+Patch966: openssh-8.2p1-x11-without-ipv6.patch
+# ssh-keygen printing fingerprint issue with Windows keys (#1901518)
+Patch974: openssh-8.0p1-keygen-strip-doseol.patch
+# sshd provides PAM an incorrect error code (#1879503)
+Patch975: openssh-8.0p1-preserve-pam-errors.patch
+
+# Implement kill switch for SCP protocol
+Patch977: openssh-8.7p1-scp-kill-switch.patch
+
+# Workaround for lack of sftp_realpath in older versions of RHEL
+# https://bugzilla.redhat.com/show_bug.cgi?id=2038854
+# https://github.com/openssh/openssh-portable/pull/299
+# downstream only
+Patch981: openssh-8.7p1-recursive-scp.patch
+# https://github.com/djmdjm/openssh-wip/pull/13
+Patch982: openssh-8.7p1-minrsabits.patch
+# downstream only, IBMCA tentative fix
+# From https://bugzilla.redhat.com/show_bug.cgi?id=1976202#c14
+Patch984: openssh-8.7p1-ibmca.patch
+
+# Add missing options from ssh_config into ssh manpage
+# upstream bug:
+# https://bugzilla.mindrot.org/show_bug.cgi?id=3455
+Patch1002: openssh-8.7p1-ssh-manpage.patch
+
+# Don't propose disallowed algorithms during hostkey negotiation
+# upstream MR:
+# https://github.com/openssh/openssh-portable/pull/323
+Patch1006: openssh-8.7p1-negotiate-supported-algs.patch
+
+Patch1012: openssh-9.0p1-evp-fips-kex.patch
+Patch1014: openssh-8.7p1-nohostsha1proof.patch
+
+Patch1015: openssh-9.6p1-pam-rhost.patch
+Patch1016: openssh-9.9p1-separate-keysign.patch
+#Patch1017: openssh-8.7p1-redhat-help.patch
+Patch1018: openssh-8.7p1-openssl-log.patch
+# upstream cf3e48ee8ba1beeccddd2f203b558fa102be67a2
+# upstream 0c3927c45f8a57b511c874c4d51a8c89414f74ef
+Patch1019: openssh-9.9p1-mlkembe.patch
+# upstream 3f02368e8e9121847727c46b280efc280e5eb615
+# upstream 67a115e7a56dbdc3f5a58c64b29231151f3670f5
+Patch1020: openssh-9.9p1-match-regression.patch
+# upstream 6ce00f0c2ecbb9f75023dbe627ee6460bcec78c2
+# upstream 0832aac79517611dd4de93ad0a83577994d9c907
+Patch1021: openssh-9.9p2-error_processing.patch
+# Downstream patch, OpenSSL based MLKEM implementation
+Patch1022: openssh-9.9p1-openssl-mlkem.patch
+# upstream 8eabd2ae2ca1d7756417a1ee5b41f09c5d997634
+Patch1023: openssh-9.9p1-compression-directive.patch
+# upstream fc86875e6acb36401dfc1dfb6b628a9d1460f367
+Patch1024: openssh-9.9p1-disable-forwarding.patch
+Patch1025: openssh-9.9p1-non-supported-keys-err-msg.patch
+Patch1026: openssh-9.9p1-bad-hostkey.patch
+# https://github.com/openssh/openssh-portable/pull/500
+Patch1027: openssh-9.9p1-support-authentication-indicators-in-GSSAPI.patch
+#
+Patch1028: openssh-9.9p1-fips-gss.patch
+#upstream 6432b9f6a216d0f5fb43df500e9bc30bebb3f58b
+#upstream 4f14ca8633a2c8c0a1a19165663421f0ab32f6ab
+Patch1029: openssh-9.9p1-scp-traversing.patch
+Patch1030: openssh-9.9p1-canonical-match-user.patch
+Patch1031: openssh-10.0-mlkem-nist.patch
+# upstream 35d5917652106aede47621bb3f64044604164043
+Patch1032: openssh-9.9p1-reject-cntrl-chars-in-username.patch
+# upstream 43b3bff47bb029f2299bacb6a36057981b39fdb0
+Patch1033: openssh-9.9p1-reject-null-char-in-url-string.patch
+Patch1034: openssh-9.9p1-sshd-no-delegate-credentials.patch
+Patch1035: openssh-10.0-mlkem-nist-fips.patch
+Patch1036: openssh-9.9p1-gssapi-s4u.patch
+# upstream 683d0abe596b069a896f1688f86256f1beeb0cdc
+# upstream 9313233a735733821dfd170b70782fb7da492962
+# upstream 2b0f4a72bd87bef7cc9f0a1889cfc98545cbb158
+# upstream 19f7cb39eecb4b8f768f37e8294dc3a9142e022b
+# upstream 97b32fa2af25c16aec4de85c5cbb63fd038b4dfa
+Patch1037: openssh-9.9p1-first-match-wins.patch
+# upstream eddd1d2daa64a6ab1a915ca88436fa41aede44d4
+# upstream bc328144f149af07139a0f2c1329018cd85b86b7
+Patch1038: openssh-9.9p1-maxstartups-mistracking.patch
+# https://github.com/openssh/openssh-portable/pull/649
+Patch1039: openssh-9.9p1-fill-default-options-error.patch
+# upstream 487e8ac146f7d6616f65c125d5edb210519b833a
+Patch1040: openssh-9.9p1-scp-clear-setuid.patch
+# upstream c805b97b67c774e0bf922ffb29dfbcda9d7b5add
+Patch1041: openssh-9.9p1-mux-askpass-check.patch
+# upstream fd1c7e131f331942d20f42f31e79912d570081fa
+Patch1042: openssh-9.9p1-ecdsa-incomplete-application.patch
+# upstream fd1c7e131f331942d20f42f31e79912d570081fa
+Patch1043: openssh-9.9p1-authorized-keys-principles-option.patch
+# upstream 76685c9b09a66435cd2ad8373246adf1c53976d3
+# upstream 0a0ef4515361143cad21afa072319823854c1cf6
+# upstream 607bd871ec029e9aa22e632a22547250f3cae223
+# upstream 1340d3fa8e4bb122906a82159c4c9b91584d65ce
+Patch1044: openssh-9.9p1-proxyjump-username-validity-checks.patch
+# upstream 36480181fa22f98e180b4f9e10203480c0346c78
+Patch1045: openssh-9.9p1-scp-remote-glob.patch
+# upstream e8bdfb151a356d0171fea4194dd205fbb252be23
+Patch1046: openssh-9.9p1-cve-2026-60002.patch
+# upstream 8b05bbeb293c5f777915e37e9ed43a06fb8e7614
+# upstream 5a5e47740b6466d58242aca28b9e584bab4ccf1d
+Patch1047: openssh-9.9p1-copy-data-ext-self-copy.patch
+# upstream 6a57081dc35acf3ee298108d4bc3580489608d5f
+Patch1048: openssh-10.4p1-CVE-2026-59995.patch
+# upstream 8dfe7ed6e2fd988de08df508355a196b956b2753
+# upstream d322f2ccf7da095ce94d1d99cb563246f61487b0
+# combines CVE-2026-59999 and CVE-2026-73283
+# downstream specific fix, drop on rebase
+Patch1049: openssh-10.4p1-CVE-2026-59999.patch
+# upstream 6a57081dc35acf3ee298108d4bc3580489608d5f
+Patch1050: openssh-10.5p1-CVE-2026-73281.patch
+# upstream 9910d5ef53124ce1157d57bc11e222658aa41299
+Patch1051: openssh-10.5p1-CVE-2026-73282.patch
 
 # XCP-ng patches
-Patch1000: openssh-7.4p1-CVE-2025-26465-Fix-cases-where-error-codes-were-not-correc.patch
-Patch1002: openssh-9.8p1-upstream-when-refusing-a-certificate-for-user-authen.patch
-Patch1003: openssh-9.8p1-CVE-2026-35414-when-certificate-support-was-added.patch
-Patch1004: openssh-9.8p1-CVE-2026-35414-regression-test-for-certificates.patch
-Patch1005: openssh-9.8p1-upstream-correctly-match-ECDSA-signature-algorithms.patch
-Patch1006: openssh-9.8p1-upstream-correctly-quote-wildcard-host-certificate.patch
-Patch1007: openssh-9.8p1-CVE-2025-32728-Fix-logic-error-in-DisableForwarding-option.patch
-Patch1008: openssh-9.8p1-CVE-2025-61984-Improve-rules-for-expansion-of-username.patch
-Patch1009: openssh-9.8p1-CVE-2025-61985-don-t-allow-0-characters-in-url-encoded-str.patch
-Patch1010: openssh-9.8p1-CVE-2026-35385-when-downloading-files-as-root-in-legacy-O-.patch
-Patch1011: openssh-9.8p1-CVE-2026-35388-add-missing-askpass-check-when-using.patch
+# Name the parameters of the ssh_gss_* stub functions that
+# Patch800 adds to sshkey.c (unnamed params are invalid in a C function
+# definition; our build compiler rejects them with "parameter name
+# omitted").
+Patch2000: openssh-9.9p1-xcpng-gsskex-named-params.patch
+# Fix CVE-2026-59997
+Patch2001: openssh-10.4p1-XCPNG-CVE-2026-60000.patch
+Patch2002: openssh-10.4p1-XCPNG-CVE-2026-60001.patch
 
-Source24: ssh_config
-Source25: sshd_config
-
-License: BSD-3-Clause AND BSD-2-Clause AND ISC AND SSH-OpenSSH AND ssh-keyscan AND sprintf AND LicenseRef-Fedora-Public-Domain AND X11-distribute-modifications-variant
+License: BSD-3-Clause AND BSD-2-Clause AND ISC AND SSH-OpenSSH AND ssh-keyscan AND snprintf AND LicenseRef-Fedora-Public-Domain AND X11-distribute-modifications-variant
 Requires: /sbin/nologin
+
+%if ! %{no_gnome_askpass}
+BuildRequires: libX11-devel
+%if %{gtk3}
+BuildRequires: gtk3-devel
+%else
+BuildRequires: gtk2-devel
+%endif
+%endif
 
 BuildRequires: autoconf, automake, perl-interpreter, perl-generators, zlib-devel
 BuildRequires: audit-libs-devel >= 2.0.5
@@ -147,8 +322,13 @@ BuildRequires: pam-devel
 BuildRequires: openssl-devel >= 0.9.8j
 BuildRequires: perl-podlators
 BuildRequires: systemd-devel
+# XCP-ng doesn't have this package
+%if %{without xcpng}
+BuildRequires: systemd-rpm-macros
+%endif
 BuildRequires: gcc make
 BuildRequires: p11-kit-devel
+BuildRequires: libfido2-devel
 Obsoletes: openssh-ldap < 8.3p1-4
 Obsoletes: openssh-cavs < 8.4p1-5
 
@@ -167,11 +347,25 @@ Requires: audit-libs >= 1.0.8
 BuildRequires: audit-libs >= 1.0.8
 %endif
 
+# Remove this BuildRequires as we don't use x11 forwarding
+%if %{without xcpng}
+BuildRequires: xauth
+%endif
 # for tarball signature verification
 BuildRequires: gnupg2
 
 %package clients
 Summary: An open source SSH client applications
+Requires: openssh = %{version}-%{release}
+# XCP-ng does not have that, and we don't support it.
+# This is used to set a global policies for all the platform.
+# This is not mandatory as we do the custom config
+%if %{without xcpng}
+Requires: crypto-policies >= 20220824-1
+%endif
+
+%package keysign
+Summary: A helper program used for host-based authentication
 Requires: openssh = %{version}-%{release}
 
 %package server
@@ -179,6 +373,12 @@ Summary: An open source SSH server daemon
 Requires: openssh = %{version}-%{release}
 Requires(pre): /usr/sbin/useradd
 Requires: pam >= 1.0.1-3
+# XCP-ng does not have that, and we don't support it.
+# This is used to set a global policies for all the platform.
+# This is not mandatory as we do the custom config
+%if %{without xcpng}
+Requires: crypto-policies >= 20220824-1
+%endif
 %{?systemd_requires}
 
 %package keycat
@@ -192,12 +392,6 @@ Requires: openssh = %{version}-%{release}
 %package sk-dummy
 Summary: OpenSSH SK driver for test purposes
 Requires: openssh = %{version}-%{release}
-
-%package -n pam_ssh_agent_auth
-Summary: PAM module for authentication with ssh-agent
-Version: %{pam_ssh_agent_ver}
-Release: %{?xsrel}%{?dist}
-License: BSD-3-Clause AND BSD-2-Clause AND ISC AND SSH-OpenSSH AND ssh-keyscan AND sprintf AND LicenseRef-Fedora-Public-Domain AND X11-distribute-modifications-variant AND OpenSSL
 
 %description
 SSH (Secure SHell) is a program for logging into and executing
@@ -218,6 +412,11 @@ OpenSSH is a free version of SSH (Secure SHell), a program for logging
 into and executing commands on a remote machine. This package includes
 the clients necessary to make encrypted connections to SSH servers.
 
+%description keysign
+OpenSSH is a free version of SSH (Secure SHell), a program for logging
+into and executing commands on a remote machine. ssh-keysign is a
+helper program used for host-based authentication disabled by default.
+
 %description server
 OpenSSH is a free version of SSH (Secure SHell), a program for logging
 into and executing commands on a remote machine. This package contains
@@ -236,40 +435,123 @@ an X11 passphrase dialog for OpenSSH.
 %description sk-dummy
 This package contains a test SK driver used for OpenSSH test purposes
 
-%description -n pam_ssh_agent_auth
-This package contains a PAM module which can be used to authenticate
-users using ssh keys stored in a ssh-agent. Through the use of the
-forwarding of ssh-agent connection it also allows to authenticate with
-remote ssh-agent instance.
-
-The module is most useful for su and sudo service stacks.
-
 %prep
-%autosetup -p1 -a 4
+gpgv2 --quiet --keyring %{SOURCE3} %{SOURCE1} %{SOURCE0}
+%setup -q
 
-%if %{pam_ssh_agent}
-pushd pam_ssh_agent_auth-pam_ssh_agent_auth-%{pam_ssh_agent_ver}
-# Remove duplicate headers and library files
-rm -f $(cat %{SOURCE5})
-popd
-%endif
+%patch -P 400 -p1 -b .role-mls
+%patch -P 404 -p1 -b .privsep-selinux
 
-# Override the ssh/sshd configuration
-cp -f %{SOURCE24} %{SOURCE25} .
+%patch -P 502 -p1 -b .keycat
 
+%patch -P 601 -p1 -b .ip-opts
+%patch -P 606 -p1 -b .ipv6man
+%patch -P 607 -p1 -b .sigpipe
+%patch -P 609 -p1 -b .x11
+%patch -P 702 -p1 -b .progress
+%patch -P 703 -p1 -b .grab-info
+%patch -P 707 -p1 -b .redhat
+%patch -P 711 -p1 -b .log-usepam-no
+# 
+%patch -P 800 -p1 -b .gsskex
+%patch -P 801 -p1 -b .force_krb
+%patch -P 804 -p1 -b .ccache_name
+%patch -P 805 -p1 -b .k5login
+# 
+%patch -P 901 -p1 -b .kuserok
+%patch -P 906 -p1 -b .fromto-remote
+%patch -P 916 -p1 -b .contexts
+%patch -P 918 -p1 -b .log-in-chroot
+%patch -P 919 -p1 -b .scp
+%patch -P 802 -p1 -b .GSSAPIEnablek5users
+%patch -P 922 -p1 -b .sshdt
+%patch -P 926 -p1 -b .sftp-force-mode
+%patch -P 939 -p1 -b .s390-dev
+%patch -P 944 -p1 -b .x11max
+%patch -P 949 -p1 -b .refactor
+%patch -P 950 -p1 -b .sandbox
+%patch -P 951 -p1 -b .pkcs11-uri
+%patch -P 953 -p1 -b .scp-ipv6
+%patch -P 962 -p1 -b .crypto-policies
+%patch -P 964 -p1 -b .openssl-kdf
+%patch -P 965 -p1 -b .visibility
+%patch -P 966 -p1 -b .x11-ipv6
+%patch -P 974 -p1 -b .keygen-strip-doseol
+%patch -P 975 -p1 -b .preserve-pam-errors
+
+%patch -P 977 -p1 -b .kill-scp
+
+%patch -P 981 -p1 -b .scp-sftpdirs
+%patch -P 982 -p1 -b .minrsabits
+%patch -P 984 -p1 -b .ibmca
+
+%patch -P 200 -p1 -b .audit
+%patch -P 201 -p1 -b .audit-race
+%patch -P 202 -p1 -b .audit-log
+%patch -P 700 -p1 -b .fips
+
+%patch -P 1002 -p1 -b .ssh-manpage
+
+%patch -P 1006 -p1 -b .negotiate-supported-algs
+
+%patch -P 1012 -p1 -b .evp-fips-dh
+%patch -P 1014 -p1 -b .nosha1hostproof
+%patch -P 1015 -p1 -b .pam-rhost
+%patch -P 1016 -p1 -b .sep-keysign
+#%patch -P 1017 -p1 -b .help
+%patch -P 1018 -p1 -b .openssl-log
+%patch -P 1019 -p1 -b .mlkembe
+%patch -P 1020 -p1 -b .match
+%patch -P 1021 -p1 -b .errcode_set
+%patch -P 1022 -p1 -b .openssl-mlkem
+%patch -P 1023 -p1 -b .compression
+%patch -P 1024 -p1 -b .disable-forwarding
+%patch -P 1025 -p1 -b .non-supported-keys-err-msg
+%patch -P 1026 -p1 -b .bad-hostkey
+%patch -P 1027 -p1 -b .gss-indicators
+%patch -P 1028 -p1 -b .gss-fips
+%patch -P 1029 -p1 -b .scp-traversing
+%patch -P 1030 -p1 -b .canonical-match-user
+%patch -P 1031 -p1 -b .mlkem-nist
+%patch -P 1032 -p1 -b .reject-cntrl-chars-in-username
+%patch -P 1033 -p1 -b .reject-null-char-in-url-string
+%patch -P 1034 -p1 -b .sshd-nogsscreds
+%patch -P 1035 -p1 -b .mlkem-nist-fips
+%patch -P 1036 -p1 -b .gssapi-s4u
+%patch -P 1037 -p1 -b .first-match-wins
+%patch -P 1038 -p1 -b .maxstartups-mistracking
+%patch -P 1039 -p1 -b .fill-default-options-error
+%patch -P 1040 -p1 -b .scp-clear-setuid
+%patch -P 1041 -p1 -b .mux-askpass-check
+%patch -P 1042 -p1 -b .ecdsa-incomplete-application
+%patch -P 1043 -p1 -b .authorized-keys-principles-option
+%patch -P 1044 -p1 -b .proxyjump-username-validity-checks
+%patch -P 1045 -p1 -b .scp-remote-glob
+%patch -P 1046 -p1 -b .cve-2026-60002
+%patch -P 1047 -p1 -b .copy-data-ext-self-copy
+%patch -P 1048 -p1 -b .CVE-2026-59995
+%patch -P 1049 -p1 -b .CVE-2026-59999
+%patch -P 1050 -p1 -b .CVE-2026-73281
+%patch -P 1051 -p1 -b .CVE-2026-73282
+
+%patch -P 100 -p1 -b .coverity
+
+# XCP-ng patches
+%patch -P 2000 -p1 -b .gsskex-named-params
+%patch -P 2001 -p1 -b .cve-2026-60000
+%patch -P 2002 -p1 -b .cve-2026-60001
 
 autoreconf
-pushd pam_ssh_agent_auth-pam_ssh_agent_auth-%{pam_ssh_agent_ver}
-autoreconf
-popd
 
 %build
 %set_build_flags
-# the -fvisibility=hidden is needed for clean build of the pam_ssh_agent_auth
-# it is needed for lib(open)ssh build too since it is linked to the pam module too
-CFLAGS="$CFLAGS -fvisibility=hidden"; export CFLAGS
+CFLAGS="$CFLAGS"; export CFLAGS
 %if %{pie}
+%ifarch s390 s390x sparc sparcv9 sparc64
+CFLAGS="$CFLAGS -fPIC"
+%else
 CFLAGS="$CFLAGS -fpic"
+%endif
 SAVE_LDFLAGS="$LDFLAGS"
 LDFLAGS="$LDFLAGS -pie -z relro -z now"
 
@@ -307,8 +589,7 @@ fi
 	--without-hardening `# The hardening flags are configured by system` \
 	--with-systemd \
 	--with-default-pkcs11-provider=yes \
-	--disable-security-key \
-	--with-security-key-builtin=no \
+	--with-security-key-builtin=yes \
 	--with-pam \
 %if %{WITH_SELINUX}
 	--with-selinux --with-audit=linux \
@@ -332,21 +613,31 @@ perl -pi -e "s|-lcrypto|%{_libdir}/libcrypto.a|g" Makefile
 %make_build
 make regress/misc/sk-dummy/sk-dummy.so
 
+# Define a variable to toggle gtk2/gtk3 building.  This is necessary
+# because RPM doesn't handle nested %%if statements.
+%if %{gtk3}
+	gtk3=yes
+%else
+	gtk3=no
+%endif
 
-%if %{pam_ssh_agent}
-pushd pam_ssh_agent_auth-pam_ssh_agent_auth-%{pam_ssh_agent_ver}
-LDFLAGS="$SAVE_LDFLAGS"
-%configure --without-selinux \
-	--libexecdir=/%{_libdir}/security \
-	--with-mantype=man \
-	--without-ssl-engine \
-	--without-openssl-header-check `# The check is broken`
-%make_build
+%if ! %{no_gnome_askpass}
+pushd contrib
+if [ $gtk3 = yes ] ; then
+	CFLAGS="$CFLAGS %{?__global_ldflags}" \
+	    make gnome-ssh-askpass3
+	mv gnome-ssh-askpass3 gnome-ssh-askpass
+else
+	CFLAGS="$CFLAGS %{?__global_ldflags}" \
+	    make gnome-ssh-askpass2
+	mv gnome-ssh-askpass2 gnome-ssh-askpass
+fi
 popd
 %endif
 
 %check
 %{SOURCE22} %{SOURCE23}  # ./parallel_tests.sh parallel_tests.Makefile
+#make tests
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -356,29 +647,45 @@ mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/ssh/sshd_config.d
 mkdir -p -m755 $RPM_BUILD_ROOT%{_libexecdir}/openssh
 %make_install
 
-# %%config(noreplace) is removed that leads to no .rpmnew file created,
-# so need to duplicate one for writing back to on-disk config file.
-# This is temporary workaround, and can be deleted in future.
-cp -p $RPM_BUILD_ROOT%{_sysconfdir}/ssh/ssh_config $RPM_BUILD_ROOT%{_sysconfdir}/ssh/ssh_config.dup
-cp -p $RPM_BUILD_ROOT%{_sysconfdir}/ssh/sshd_config $RPM_BUILD_ROOT%{_sysconfdir}/ssh/sshd_config.dup
-
 install -d $RPM_BUILD_ROOT/etc/pam.d/
 install -d $RPM_BUILD_ROOT/etc/sysconfig/
 install -d $RPM_BUILD_ROOT%{_libexecdir}/openssh
-install -m644 %{SOURCE6} $RPM_BUILD_ROOT/etc/pam.d/ssh-keycat
 install -m644 %{SOURCE2} $RPM_BUILD_ROOT/etc/pam.d/sshd
+install -m644 %{SOURCE6} $RPM_BUILD_ROOT/etc/pam.d/ssh-keycat
 install -m644 %{SOURCE7} $RPM_BUILD_ROOT/etc/sysconfig/sshd
+# XCP-ng has its own rules; let's not package rules that could conflict with them.
+%if %{without xcpng}
+install -m644 ssh_config_redhat $RPM_BUILD_ROOT%{_sysconfdir}/ssh/ssh_config.d/50-redhat.conf
+install -m644 sshd_config_redhat_cp $RPM_BUILD_ROOT%{_sysconfdir}/ssh/sshd_config.d/40-redhat-crypto-policies.conf
+install -m644 sshd_config_redhat $RPM_BUILD_ROOT%{_sysconfdir}/ssh/sshd_config.d/50-redhat.conf
+%else
+# XCP-ng ships its own hardened sshd_config/ssh_config in place of the
+# upstream defaults; these fully replace them and are
+# reinstalled on every package upgrade.
+install -m644 %{SOURCE25} $RPM_BUILD_ROOT%{_sysconfdir}/ssh/ssh_config
+install -m600 %{SOURCE24} $RPM_BUILD_ROOT%{_sysconfdir}/ssh/sshd_config
+%endif
 install -d -m755 $RPM_BUILD_ROOT/%{_unitdir}
 install -m644 %{SOURCE9} $RPM_BUILD_ROOT/%{_unitdir}/sshd@.service
 install -m644 %{SOURCE10} $RPM_BUILD_ROOT/%{_unitdir}/sshd.socket
 install -m644 %{SOURCE11} $RPM_BUILD_ROOT/%{_unitdir}/sshd.service
 install -m644 %{SOURCE12} $RPM_BUILD_ROOT/%{_unitdir}/sshd-keygen@.service
 install -m644 %{SOURCE15} $RPM_BUILD_ROOT/%{_unitdir}/sshd-keygen.target
+install -d -m755 $RPM_BUILD_ROOT/%{_userunitdir}
+install -m644 %{SOURCE16} $RPM_BUILD_ROOT/%{_userunitdir}/ssh-agent.service
+install -m644 %{SOURCE17} $RPM_BUILD_ROOT/%{_userunitdir}/ssh-agent.socket
 install -m744 %{SOURCE13} $RPM_BUILD_ROOT/%{_libexecdir}/openssh/sshd-keygen
 install -m755 contrib/ssh-copy-id $RPM_BUILD_ROOT%{_bindir}/
 install contrib/ssh-copy-id.1 $RPM_BUILD_ROOT%{_mandir}/man1/
 install -d -m711 ${RPM_BUILD_ROOT}/%{_datadir}/empty.sshd
 install -p -D -m 0644 %{SOURCE19} %{buildroot}%{_sysusersdir}/openssh-server.conf
+# Migration service/script for Fedora 38 change to remove group ownership for standard host keys
+# See https://fedoraproject.org/wiki/Changes/SSHKeySignSuidBit
+install -m744 %{SOURCE20} $RPM_BUILD_ROOT/%{_libexecdir}/openssh/ssh-host-keys-migration.sh
+# Pulled-in via a `Wants=` in `sshd.service` & `sshd@.service`
+install -m644 %{SOURCE21} $RPM_BUILD_ROOT/%{_unitdir}/ssh-host-keys-migration.service
+install -d $RPM_BUILD_ROOT/%{_localstatedir}/lib
+touch $RPM_BUILD_ROOT/%{_localstatedir}/lib/.ssh-host-keys-migration
 
 %if ! %{no_gnome_askpass}
 install contrib/gnome-ssh-askpass $RPM_BUILD_ROOT%{_libexecdir}/openssh/gnome-ssh-askpass
@@ -397,16 +704,11 @@ rm -f $RPM_BUILD_ROOT/etc/profile.d/gnome-ssh-askpass.*
 
 perl -pi -e "s|$RPM_BUILD_ROOT||g" $RPM_BUILD_ROOT%{_mandir}/man*/*
 
-%if %{pam_ssh_agent}
-pushd pam_ssh_agent_auth-pam_ssh_agent_auth-%{pam_ssh_agent_ver}
-%make_install
-popd
-%endif
-
 install -m 755 -d $RPM_BUILD_ROOT%{_libdir}/sshtest/
 install -m 755 regress/misc/sk-dummy/sk-dummy.so $RPM_BUILD_ROOT%{_libdir}/sshtest
 
 %pre server
+# XCP-ng does not have systemd-rpm-macros, so we need this workaround
 %if 0%{?xenserver} < 9
 getent group sshd >/dev/null || groupadd -g %{sshd_uid} -r sshd || :
 getent passwd sshd >/dev/null || \
@@ -420,7 +722,26 @@ find /etc/ssh -maxdepth 1 -name "ssh_host_*_key" -type f -exec chmod g-r {} \; -
 %endif
 
 %post server
+if [ $1 -gt 1 ]; then
+    # In the case of an upgrade (never true on OSTree systems) run the migration
+    # script for Fedora 38 to remove group ownership for host keys.
+    %{_libexecdir}/openssh/ssh-host-keys-migration.sh
+    # Prevent the systemd unit that performs the same service (useful for
+    # OSTree systems) from running.
+    touch /var/lib/.ssh-host-keys-migration
+fi
 %systemd_post sshd.service sshd.socket
+# Migration scriptlet for Fedora 31 and 32 installations to sshd_config
+# drop-in directory (in F32+).
+# Do this only if the file generated by anaconda exists, contains our config
+# directive and sshd_config contains include directive as shipped in our package
+%global sysconfig_anaconda /etc/sysconfig/sshd-permitrootlogin
+test -f %{sysconfig_anaconda} && \
+  test ! -f /etc/ssh/sshd_config.d/01-permitrootlogin.conf && \
+  grep -q '^PERMITROOTLOGIN="-oPermitRootLogin=yes"' %{sysconfig_anaconda} && \
+  grep -q '^Include /etc/ssh/sshd_config.d/\*.conf' /etc/ssh/sshd_config && \
+  echo "PermitRootLogin yes" >> /etc/ssh/sshd_config.d/25-permitrootlogin.conf && \
+  rm %{sysconfig_anaconda} || :
 
 %preun server
 %systemd_preun sshd.service sshd.socket
@@ -428,15 +749,23 @@ find /etc/ssh -maxdepth 1 -name "ssh_host_*_key" -type f -exec chmod g-r {} \; -
 %postun server
 %systemd_postun_with_restart sshd.service
 
-%posttrans server
-cat %{_sysconfdir}/ssh/sshd_config.dup > %{_sysconfdir}/ssh/sshd_config
-systemctl daemon-reload
-if systemctl is-active --quiet sshd; then
-    systemctl restart sshd
+%post clients
+# XCP-ng, It seems that systemd fails when using the macro.
+# So, I ran `rpm --eval %%systemd_user_post`, retrieved
+# the code intended for execution, and adapted it for OpenSSH.
+%if %{with xcpng}
+if [ $1 -eq 1 ]; then
+  systemctl --user --global preset ssh-agent.service >/dev/null 2>&1 || :
+  systemctl --user --global preset ssh-agent.socket >/dev/null 2>&1 || :
 fi
+%else
+%systemd_user_post ssh-agent.service
+%systemd_user_post ssh-agent.socket
+%endif
 
-%posttrans clients
-cat %{_sysconfdir}/ssh/ssh_config.dup > %{_sysconfdir}/ssh/ssh_config
+%preun clients
+%systemd_user_preun ssh-agent.service
+%systemd_user_preun ssh-agent.socket
 
 %files
 %license LICENCE
@@ -446,17 +775,24 @@ cat %{_sysconfdir}/ssh/ssh_config.dup > %{_sysconfdir}/ssh/ssh_config
 %attr(0755,root,root) %{_bindir}/ssh-keygen
 %attr(0644,root,root) %{_mandir}/man1/ssh-keygen.1*
 %attr(0755,root,root) %dir %{_libexecdir}/openssh
-%attr(4555,root,root) %{_libexecdir}/openssh/ssh-keysign
-%attr(0644,root,root) %{_mandir}/man8/ssh-keysign.8*
 
 %files clients
 %attr(0755,root,root) %{_bindir}/ssh
 %attr(0644,root,root) %{_mandir}/man1/ssh.1*
 %attr(0755,root,root) %{_bindir}/scp
 %attr(0644,root,root) %{_mandir}/man1/scp.1*
+%if %{with xcpng}
+# Not marked %%config on purpose: this is the XCP-ng policy file and
+# must be unconditionally overwritten on every upgrade
 %attr(0644,root,root) %{_sysconfdir}/ssh/ssh_config
-%attr(0644,root,root) %{_sysconfdir}/ssh/ssh_config.dup
+%else
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ssh/ssh_config
+%endif
 %dir %attr(0755,root,root) %{_sysconfdir}/ssh/ssh_config.d/
+# XCP-ng has its own rules; let's not package rules that could conflict with them.
+%if %{without xcpng}
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ssh/ssh_config.d/50-redhat.conf
+%endif
 %attr(0644,root,root) %{_mandir}/man5/ssh_config.5*
 %attr(0755,root,root) %{_bindir}/ssh-agent
 %attr(0755,root,root) %{_bindir}/ssh-add
@@ -472,11 +808,12 @@ cat %{_sysconfdir}/ssh/ssh_config.dup > %{_sysconfdir}/ssh/ssh_config
 %attr(0644,root,root) %{_mandir}/man1/ssh-copy-id.1*
 %attr(0644,root,root) %{_mandir}/man8/ssh-pkcs11-helper.8*
 %attr(0644,root,root) %{_mandir}/man8/ssh-sk-helper.8*
+%attr(0644,root,root) %{_userunitdir}/ssh-agent.service
+%attr(0644,root,root) %{_userunitdir}/ssh-agent.socket
 
-%files keycat
-%doc HOWTO.ssh-keycat
-%attr(0755,root,root) %{_libexecdir}/openssh/ssh-keycat
-%attr(0644,root,root) %config(noreplace) /etc/pam.d/ssh-keycat
+%files keysign
+%attr(4555,root,root) %{_libexecdir}/openssh/ssh-keysign
+%attr(0644,root,root) %{_mandir}/man8/ssh-keysign.8*
 
 %files server
 %dir %attr(0711,root,root) %{_datadir}/empty.sshd
@@ -488,17 +825,35 @@ cat %{_sysconfdir}/ssh/ssh_config.dup > %{_sysconfdir}/ssh/ssh_config
 %attr(0644,root,root) %{_mandir}/man5/moduli.5*
 %attr(0644,root,root) %{_mandir}/man8/sshd.8*
 %attr(0644,root,root) %{_mandir}/man8/sftp-server.8*
+%if %{with xcpng}
+# Not marked %%config on purpose: this is the XCP-ng policy file and
+# must be unconditionally overwritten on every upgrade
 %attr(0600,root,root) %{_sysconfdir}/ssh/sshd_config
-%attr(0600,root,root) %{_sysconfdir}/ssh/sshd_config.dup
+%else
+%attr(0600,root,root) %config(noreplace) %{_sysconfdir}/ssh/sshd_config
+%endif
 %dir %attr(0700,root,root) %{_sysconfdir}/ssh/sshd_config.d/
-%attr(0644,root,root) /etc/pam.d/sshd
-%attr(0640,root,root) /etc/sysconfig/sshd
+# XCP-ng has its own rules; let's not package rules that could conflict with them.
+%if %{without xcpng}
+%attr(0600,root,root) %config(noreplace) %{_sysconfdir}/ssh/sshd_config.d/40-redhat-crypto-policies.conf
+%attr(0600,root,root) %config(noreplace) %{_sysconfdir}/ssh/sshd_config.d/50-redhat.conf
+%endif
+%attr(0644,root,root) %config(noreplace) /etc/pam.d/sshd
+%attr(0640,root,root) %config(noreplace) /etc/sysconfig/sshd
 %attr(0644,root,root) %{_unitdir}/sshd.service
 %attr(0644,root,root) %{_unitdir}/sshd@.service
 %attr(0644,root,root) %{_unitdir}/sshd.socket
 %attr(0644,root,root) %{_unitdir}/sshd-keygen@.service
 %attr(0644,root,root) %{_unitdir}/sshd-keygen.target
 %attr(0644,root,root) %{_sysusersdir}/openssh-server.conf
+%attr(0644,root,root) %{_unitdir}/ssh-host-keys-migration.service
+%attr(0744,root,root) %{_libexecdir}/openssh/ssh-host-keys-migration.sh
+%ghost %attr(0644,root,root) %{_localstatedir}/lib/.ssh-host-keys-migration
+
+%files keycat
+%doc HOWTO.ssh-keycat
+%attr(0755,root,root) %{_libexecdir}/openssh/ssh-keycat
+%attr(0644,root,root) %config(noreplace) /etc/pam.d/ssh-keycat
 
 %if ! %{no_gnome_askpass}
 %files askpass
@@ -510,95 +865,2786 @@ cat %{_sysconfdir}/ssh/ssh_config.dup > %{_sysconfdir}/ssh/ssh_config
 %files sk-dummy
 %attr(0755,root,root) %{_libdir}/sshtest/sk-dummy.so
 
-%if %{pam_ssh_agent}
-%files -n pam_ssh_agent_auth
-%license pam_ssh_agent_auth-pam_ssh_agent_auth-%{pam_ssh_agent_ver}/OPENSSH_LICENSE
-%attr(0755,root,root) %{_libdir}/security/pam_ssh_agent_auth.so
-%attr(0644,root,root) %{_mandir}/man8/pam_ssh_agent_auth.8*
-%endif
-
 %changelog
-* Mon Aug 10 2026 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 9.8p1-1.2.6
-- Add "Include /etc/ssh/sshd_config.d/*.conf" to sshd_config so drop-in
-  files placed in /etc/ssh/sshd_config.d/ will be loaded by sshd.
+* Mon Aug 31 2026 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 9.9p1-30.2
+- XCP-ng must not package redhat confs and must apply its own.
+- Create first xcpng conf with pq (post-quantum) support,
+  protection from bruteforce is by default.
 
-* Wed Jul 15 2026 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 9.8p1-1.2.5
-- Fix CVE-2025-32728 (X11 and agent forwarding were not disabled by the
-  DisableForwarding option due to a logic error)
-- Fix CVE-2025-61984 (ssh(1) did not reject control characters in remote
-  usernames supplied on the commandline, which could be abused to inject
-  data into a ProxyCommand relying on %r expansion)
-- Fix CVE-2025-61985 ('\0' characters were not rejected in url-encoded
-  strings such as ssh:// URIs, which could allow NUL-byte smuggling into
-  values used by ProxyCommand, potentially leading to code execution)
-- Fix CVE-2026-35385 (files downloaded as root with scp's legacy -O mode
-  but without -p did not have their setuid/setgid bits cleared, allowing
-  privilege escalation)
-- Fix CVE-2026-35388 (missing askpass confirmation when using
-  ControlMaster=ask/autoask with "ssh -O proxy ...")
+* Wed Aug 26 2026 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 9.9p1-30.1
+- CVE-2026-59998 is only a documentation update.
+- Fix of CVE-2026-60000
+- Fix of CVE-2026-60001
+- Backport fixes from Alma (See below)
+- *** UPSTREAM CHANGELOG ***
+  * Tue Aug 25 2026 Koichiro Iwao <meta@almalinux.org> - 9.9p1-30.alma.1
+  - Unpatch Red Hat help message
 
-* Wed Apr 29 2026 Vincent Michel <vincent.michel@vates.tech> - 9.8p1-1.2.4
-- Disable the use of ssh-rsa with SHA-1 (temporarily enabled in 9.8p1-1.2.2)
+  * Fri Aug 21 2026 Zoltan Fridrich <zfridric@redhat.com> - 9.9p1-30
+  - CVE-2026-73283: Complete the fix of security bypass due to incorrect
+    handling of forwarding and tunneling options
+    Resolves: RHEL-242759
+  - CVE-2026-73281: Fix misinteraction between agent locking and
+    the session-bind@openssh.com extension
+    Resolves: RHEL-245421
+  - CVE-2026-73282: Fix information disclosure and data corruption
+    via use-after-free in ssh client
+    Resolves: RHEL-245417
 
-* Fri Apr 17 2026 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 9.8p1-1.2.3
-- Add patch upstream log when refusing a certificate as dependency for CVE-2026-35414 patch
-- Fix CVE-2026-35414 (Bypass of authorized_keys)
-- Test for CVE-2026-35414 (with a fix for this test)
-- Fix ECDSA Bypass
+  * Wed Aug 12 2026 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.9p1-29
+  - Fix CVE-2026-59995 OpenSSH: sftp client allows attacker to control downloaded
+    file location
+    Resolves: RHEL-236323
+  - Fix CVE-2026-59999 and CVE-2026-73283: Security bypass due to incorrect
+    handling of forwarding and tunneling options
+    Resolves: RHEL-236275
 
-* Thu Mar 12 2026 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 9.8p1-1.2.2
-- Temporally enabled ssh-rsa with warning.
-  Docs: https://datatracker.ietf.org/doc/html/rfc8332
+  * Thu Jul 16 2026 Zoltan Fridrich <zfridric@redhat.com> - 9.9p1-28
+  - Fix GSSAPI indicators check ignoring subsequent deny rules if
+    allow rule matched first
+    Resolves: RHEL-182151
+  - Add default value for GSSAPIDelegateCredentials property in sshd_config manpage
+    Resolves: RHEL-211135
+  - Fix self-copy guard bypass in copy-data extension
+    Resolves: RHEL-191388
 
-* Tue Feb 03 2026 Philippe Coval <philippe.coval@vates.tech> - 9.8p1-1.2.1
-- Refresh XCP-ng patches:
-  - Drop unnecessary hardening and gssapi patches
-  - Replace CVE-2025-26465 backport with upstream patch from 9.9p1
-- Sync with 9.8p1-1.2
-- *** Upstream changelog ***
-- * Fri Nov 07 2025 Alex Brett <alex.brett@citrix.com> - 9.8p1-1.2
-- - CA-420416: Remove diffie-hellman-group14-sha1 KexAlgorithm
-- * Thu Jan 02 2025 Deli Zhang <deli.zhang@cloud.com> - 9.8p1-1.1
-- - CA-400917: Disable PerSourcePenalties
-- - CA-401322: Revert sshd.pam to xs8 default
-- - CA-401322: Ensure new config files applied
-- * Fri Sep 13 2024 Deli Zhang <deli.zhang@citrix.com> - 9.8p1-1
-- - CP-50298: Upgrade to version 9.8p1
-- * Wed Jul 31 2024 Lin Liu <lin.liu@citrix.com> - 8.8p1-3
-- - CP-50477: Customize ssh configurations
-- * Mon Sep 25 2023 Lin Liu <lin.liu@citrix.com> - 8.8p1-2
-- - CP-45435: Permit root ssh login
-- * Thu Jul 20 2023 Lin Liu <lin.liu@citrix.com> - 8.8p1-1
-- - First imported release
+* Tue Aug 25 2026 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 9.9p1-27.1
+- Import OpenSSH 9.9p1 from Alma 10
+- Drop systemd-rpm-macros BuildRequires (not shipped in XCP-ng 8.3 repos);
+- Restore the pre-import xenserver<9 %pre server fallback (manual
+  useradd/groupadd for the sshd user/group) instead of %sysusers_create_compat,
+  which also depends on the unavailable systemd-rpm-macros
+- Some systemd macros seemed to cause issues when used, so I replicated their
+  behavior and hardcoded them.
+- Add Patch2000 (openssh-9.9p1-xcpng-gsskex-named-params.patch),
+  to name the parameters of the ssh_gss_* stub
+  functions it adds to sshkey.c; unnamed parameters are invalid in a C
+  function definition and our build compiler rejects them with
+  "parameter name omitted".
+- *** PREVIOUS CHANGELOG ***
+	* Mon Aug 10 2026 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 9.8p1-1.2.6
+	- Add "Include /etc/ssh/sshd_config.d/*.conf" to sshd_config so drop-in
+	  files placed in /etc/ssh/sshd_config.d/ will be loaded by sshd.
 
-* Mon Apr 28 2025 Yann Dirson <yann.dirson@vates.tech> - 7.4p1-23.3.3 + 0.10.3-2.23.3.3
-- Rebuild against ncurses 6.4-6.20240309 to pull abi5 (compat) libs
+	* Wed Jul 15 2026 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 9.8p1-1.2.5
+	- Fix CVE-2025-32728 (X11 and agent forwarding were not disabled by the
+	  DisableForwarding option due to a logic error)
+	- Fix CVE-2025-61984 (ssh(1) did not reject control characters in remote
+	  usernames supplied on the commandline, which could be abused to inject
+	  data into a ProxyCommand relying on %r expansion)
+	- Fix CVE-2025-61985 ('\0' characters were not rejected in url-encoded
+	  strings such as ssh:// URIs, which could allow NUL-byte smuggling into
+	  values used by ProxyCommand, potentially leading to code execution)
+	- Fix CVE-2026-35385 (files downloaded as root with scp's legacy -O mode
+	  but without -p did not have their setuid/setgid bits cleared, allowing
+	  privilege escalation)
+	- Fix CVE-2026-35388 (missing askpass confirmation when using
+	  ControlMaster=ask/autoask with "ssh -O proxy ...")
 
-* Mon Mar 17 2025 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 7.4p1-23.3.2 + 0.10.3-2.23.3.2
-- Fix CVE-2025-26465 - Fix cases where error codes were not correctly set
+	* Wed Apr 29 2026 Vincent Michel <vincent.michel@vates.tech> - 9.8p1-1.2.4
+	- Disable the use of ssh-rsa with SHA-1 (temporarily enabled in 9.8p1-1.2.2)
 
-* Mon Aug 12 2024 Samuel Verschelde <stormi-xcp@ylix.fr> - 7.4p1-23.3.1 + 0.10.3-2.23.3.1
-- Sync with 7.4p1-23.3 + 0.10.3-2.23.3
-- *** Upstream changelog ***
-- * Tue Jul 02 2024 Ross Lagerwall <ross.lagerwall@citrix.com> - 7.4p1-23.3 + 0.10.3-2
-- - CP-50166: Remove libsystemd integration
-- - CA-395182: Fix CVE-2024-6387 - use of non-async-signal-safe fn in sighandler
+	* Fri Apr 17 2026 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 9.8p1-1.2.3
+	- Add patch upstream log when refusing a certificate as dependency for CVE-2026-35414 patch
+	- Fix CVE-2026-35414 (Bypass of authorized_keys)
+	- Test for CVE-2026-35414 (with a fix for this test)
+	- Fix ECDSA Bypass
 
-* Tue Apr 30 2024 Thierry Escande <thierry.escande@vates.tech> - 7.4p1-23.2.1 + 0.10.3-2.23.2.1
-- Harden default ciphers and algorithms
-- Disable GSSAPIAuthentication in sshd_config
-- Remove build dependency on xauth (used for X11 forwarding not supported on XCP-ng hosts)
-- Make use of xcpng_subrel macro for versioning
-- Disable gnome_askpass
-- Add BuildRequires for gcc
+	* Thu Mar 12 2026 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 9.8p1-1.2.2
+	- Temporally enabled ssh-rsa with warning.
+  	 Docs: https://datatracker.ietf.org/doc/html/rfc8332
 
-* Wed Jan 24 2024 Alex Brett <alex.brett@cloud.com> - 7.4p1-23.2 + 0.10.3-2
-- Fix for CVE-2023-48795: Add strict key exchange extension
+	* Tue Feb 03 2026 Philippe Coval <philippe.coval@vates.tech> - 9.8p1-1.2.1
+	- Refresh XCP-ng patches:
+  		- Drop unnecessary hardening and gssapi patches
+		- Replace CVE-2025-26465 backport with upstream patch from 9.9p1
+	- Sync with 9.8p1-1.2
+	- *** Upstream changelog ***
+	- * Fri Nov 07 2025 Alex Brett <alex.brett@citrix.com> - 9.8p1-1.2
+	- - CA-420416: Remove diffie-hellman-group14-sha1 KexAlgorithm
+	- * Thu Jan 02 2025 Deli Zhang <deli.zhang@cloud.com> - 9.8p1-1.1
+	- - CA-400917: Disable PerSourcePenalties
+	- - CA-401322: Revert sshd.pam to xs8 default
+	- - CA-401322: Ensure new config files applied
+	- * Fri Sep 13 2024 Deli Zhang <deli.zhang@citrix.com> - 9.8p1-1
+	- - CP-50298: Upgrade to version 9.8p1
+	- * Wed Jul 31 2024 Lin Liu <lin.liu@citrix.com> - 8.8p1-3
+	- - CP-50477: Customize ssh configurations
+	- * Mon Sep 25 2023 Lin Liu <lin.liu@citrix.com> - 8.8p1-2
+	- - CP-45435: Permit root ssh login
+	- * Thu Jul 20 2023 Lin Liu <lin.liu@citrix.com> - 8.8p1-1
+	- - First imported release
 
-* Thu Dec 14 2023 Alex Brett <alex.brett@cloud.com> - 7.4p1-23.1 + 0.10.3-2
-- Imported openssh-7.4p1-23.el7_9 from CentOS, including:
-- Fix for CVE-2023-38408
-- Fix for CVE-2021-41617
-- Fix for CVE-2018-15473
-- Fix for CVE-2017-15906
+	* Mon Apr 28 2025 Yann Dirson <yann.dirson@vates.tech> - 7.4p1-23.3.3 + 0.10.3-2.23.3.3
+	- Rebuild against ncurses 6.4-6.20240309 to pull abi5 (compat) libs
 
+	* Mon Mar 17 2025 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 7.4p1-23.3.2 + 0.10.3-2.23.3.2
+	- Fix CVE-2025-26465 - Fix cases where error codes were not correctly set
+
+	* Mon Aug 12 2024 Samuel Verschelde <stormi-xcp@ylix.fr> - 7.4p1-23.3.1 + 0.10.3-2.23.3.1
+	- Sync with 7.4p1-23.3 + 0.10.3-2.23.3
+	- *** Upstream changelog ***
+	- * Tue Jul 02 2024 Ross Lagerwall <ross.lagerwall@citrix.com> - 7.4p1-23.3 + 0.10.3-2
+	- - CP-50166: Remove libsystemd integration
+	- - CA-395182: Fix CVE-2024-6387 - use of non-async-signal-safe fn in sighandler
+
+	* Tue Apr 30 2024 Thierry Escande <thierry.escande@vates.tech> - 7.4p1-23.2.1 + 0.10.3-2.23.2.1
+	- Harden default ciphers and algorithms
+	- Disable GSSAPIAuthentication in sshd_config
+	- Remove build dependency on xauth (used for X11 forwarding not supported on XCP-ng hosts)
+	- Make use of xcpng_subrel macro for versioning
+	- Disable gnome_askpass
+	- Add BuildRequires for gcc
+
+	* Wed Jan 24 2024 Alex Brett <alex.brett@cloud.com> - 7.4p1-23.2 + 0.10.3-2
+	- Fix for CVE-2023-48795: Add strict key exchange extension
+
+	* Thu Dec 14 2023 Alex Brett <alex.brett@cloud.com> - 7.4p1-23.1 + 0.10.3-2
+	- Imported openssh-7.4p1-23.el7_9 from CentOS, including:
+	- Fix for CVE-2023-38408
+	- Fix for CVE-2021-41617
+	- Fix for CVE-2018-15473
+	- Fix for CVE-2017-15906
+
+* Thu Jul 16 2026 Koichiro Iwao <meta@almalinux.org> - 9.9p1-27.alma.1
+- Unpatch Red Hat help message
+
+* Fri Jun 26 2026 Zoltan Fridrich <zfridric@redhat.com> - 9.9p1-27
+- CVE-2026-55653: Fix double free in openssh DH-GEX client path during
+  FIPS known-group validation that leads to client-side denial of service
+  Resolves: RHEL-185776
+- CVE-2026-55654: Fix heap out-of-bounds read during GSSAPI indicator
+  cleanup due to missing NULL terminator
+  Resolves: RHEL-185831
+- CVE-2026-55655: Fix MITM of X11 forwarding via abstract UNIX socket
+  pre-binding
+  Resolves: RHEL-185848
+- CVE-2026-59996: Fix remote glob result of ".." causing files to be placed
+  in unintended parent directories when scp performs remote-to-remote copy
+  via the local host
+  Resolves: RHEL-193172
+- CVE-2026-60002: Fix use-after-free in cached hostkey during key re-exchange
+  Resolves: RHEL-193015
+
+* Tue Apr 14 2026 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.9p1-26
+- Improve keytab detection when obtaining Kerberos tickets on behalf of user on SSH authentication
+  Related: RHEL-92932
+- Add missing NULL check for server key generation in ML-KEM hybrids
+  Resolves: RHEL-168106
+
+* Wed Apr 01 2026 Zoltan Fridrich <zfridric@redhat.com> - 9.9p1-25
+- Fix static analysis issues
+  Resolves: RHEL-163365
+- Ssh should refuse connection when mlkem kex is specified in FIPS
+  Resolves: RHEL-155178
+- CVE-2026-35385: Fix privilege escalation via scp legacy protocol
+  when not in preserving file mode
+  Resolves: RHEL-164740
+- CVE-2026-35388: Add connection multiplexing confirmation for proxy-mode
+  multiplexing sessions
+  Resolves: RHEL-166239
+- CVE-2026-35387: Fix incomplete application of PubkeyAcceptedAlgorithms
+  and HostbasedAcceptedAlgorithms with regard to ECDSA keys
+  Resolves: RHEL-166223
+- CVE-2026-35414: Fix mishandling of authorized_keys principals option
+  Resolves: RHEL-166191
+- CVE-2026-35386: Add validation rules to usernames and hostnames
+  set for ProxyJump/-J on the commandline
+  Resolves: RHEL-166207
+
+* Fri Mar 27 2026 Zoltan Fridrich <zfridric@redhat.com> - 9.9p1-24
+- Fix typo in SPDX license name
+  Resolves: RHEL-161464
+
+* Wed Mar 18 2026 Zoltan Fridrich <zfridric@redhat.com> - 9.9p1-23
+- Don't negotiate non-FIPS algorithms in ssh-keyscan key exchange in FIPS mode
+  Resolves: RHEL-88565
+- Fix duplicate audit log entry when destroying ed25519 private keys
+  Resolves: RHEL-46782
+- Fix typo in GSSAPIProxyS4U2Services
+  Related: RHEL-92932
+
+* Thu Mar 12 2026 Zoltan Fridrich <zfridric@redhat.com> - 9.9p1-22
+- Remove recommendation of p11-kit
+  Resolves: RHEL-139070
+- Only the first value of MaxStartups, PerSourceNetBlockSize and IPQoS
+  in sshd_config should count when defined multiple times
+  Resolves: RHEL-150365
+- Fix mistracking of MaxStartups process exits in some situations
+  Resolves: RHEL-121768
+- Fix GSSAPI authentication indicator issues found by AI
+  Resolves: RHEL-154309
+- CVE-2026-3497: Fix information disclosure or denial of service due
+  to uninitialized variables in gssapi-keyex
+  Resolves: RHEL-155813
+
+* Wed Mar 11 2026 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.9p1-21
+- Implement obtaining Kerberos tickets on behalf of user on SSH authentication
+  Resolves: RHEL-92932
+
+* Wed Feb 25 2026 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.9p1-20
+- Provide a way to skip unsupported ML-KEM hybrid algorithms in FIPS mode
+  Resolves: RHEL-151579
+
+* Thu Dec 11 2025 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.9p1-19
+- Support of hybrid MLKEM key exchange methods in FIPS mode
+  Resolves: RHEL-125929
+
+* Fri Dec 05 2025 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.9p1-18
+- Adding a mechanism to disable GSSAPIDelegateCredentials in sshd_config
+  Resolves: RHEL-5281
+
+* Fri Dec 05 2025 Zoltan Fridrich <zfridric@redhat.com> - 9.9p1-17
+- CVE-2025-61984: Reject usernames with control characters
+  Resolves: RHEL-128399
+- CVE-2025-61985: Reject URL-strings with NULL characters
+  Resolves: RHEL-128388
+
+* Mon Nov 03 2025 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.9p1-16
+- Implement mlkem768nistp256-sha256 and mlkem1024nistp384-sha384 KEX methods
+  Resolves: RHEL-70824
+
+* Mon Oct 27 2025 Zoltan Fridrich <zfridric@redhat.com> - 9.9p1-15
+- Fix implicit destination path selection when source path ends with ".."
+  Resolves: RHEL-118406
+- Canonicalize username when matching a user
+  Resolves: RHEL-101440
+
+* Mon Sep 15 2025 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.9p1-14
+- Relax GSS Kex restriction in FIPS mode
+  Resolves: RHEL-91181
+
+* Mon Sep 01 2025 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.9p1-13
+- Allow non-cryptographical use of MD5 in GSS Kex in FIPS mode
+  Related: RHEL-91181
+
+* Mon Aug 04 2025 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.9p1-12
+- Relax GSS Kex restriction in FIPS mode
+  Resolves: RHEL-91181
+
+* Fri Jul 18 2025 Zoltan Fridrich <zfridric@redhat.com> - 9.9p1-11
+- Move the redhat help message to debug1 log level
+  Resolves: RHEL-93957
+
+* Thu Jun 26 2025 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.9p1-10
+- Support for authentication indicators in OpenSSH
+  Resolves: RHEL-40790
+
+* Tue Apr 29 2025 Zoltan Fridrich <zfridric@redhat.com> - 9.9p1-9
+- CVE-2025-32728: Fix logic error in DisableForwarding option
+  Resolves: RHEL-86819
+- Provide better error for non-supported private keys
+  Resolves: RHEL-68124
+- Ignore bad hostkeys in known_hosts file
+  Resolves: RHEL-83644
+
+* Thu Mar 20 2025 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.9p1-8
+- OpenSSH should not use its own implementation of MLKEM
+  Resolves: RHEL-58252
+- Correct processing of Compression directive
+  Resolves: RHEL-68346
+- Supress systemd warning
+  Resolves: RHEL-84816
+
+* Tue Feb 18 2025 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.9p1-7
+- rebuilt
+  Related: RHEL-78699
+
+* Thu Feb 13 2025 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.9p1-6
+- Fix regression of Match directive processing
+  Related: RHEL-76317
+- Fix missing error codes set and invalid error code checks in OpenSSH. It
+  prevents memory exhaustion attack and a MITM attack when VerifyHostKeyDNS
+  is on (CVE-2025-26465, CVE-2025-26466).
+  Resolves: RHEL-78699
+  Resolves: RHEL-78943
+
+* Mon Jan 27 2025 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.9p1-5
+- Fix regression of Match directive processing
+  Resolves: RHEL-76317
+- Avoid linking issues for openssl logging
+  Related: RHEL-63190
+
+* Tue Oct 29 2024 Troy Dawson <tdawson@redhat.com> - 9.9p1-4.1
+- Bump release for October 2024 mass rebuild:
+  Resolves: RHEL-64018
+
+* Mon Oct 28 2024 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.9p1-4
+- Fix MLKEM for BE platforms
+  Related: RHEL-60564
+
+* Fri Oct 18 2024 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.9p1-3
+- Extra help information should not be printed if stderr is not a TTY
+  Resolves: RHEL-63061
+- Provide details on crypto error instead of "error in libcrypto"
+  Resolves: RHEL-63190
+
+* Tue Oct 15 2024 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.9p1-2
+- Resolve memory management issues after rebase
+  Related: RHEL-60564
+- Add extra help information on ssh early failure
+  Resolves: RHEL-62718
+
+* Thu Oct 10 2024 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.9p1-1
+- Update to OpenSSH 9.9p1
+  Resolves: RHEL-60564
+- Separate ssh-keysign to a dedicated package
+  Resolves: RHEL-62112
+- Use FIPS KEX defaults in FIPS mode
+  Resolves: RHEL-58986
+
+* Mon Sep 16 2024 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.8p1-6
+- rebuilt
+  Related: RHEL-59024
+
+* Mon Aug 26 2024 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.8p1-5
+- Restore GSS connectivity when no hostkeys are present
+  Related: RHEL-42635
+- Add missing gsskeyex authentication method
+  Related: RHEL-42635
+- "publickey-hostbound@openssh.com" extension makes no sense with GSS
+  Related: RHEL-42635
+
+* Fri Aug 16 2024 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.8p1-4
+- Address SAST scan issues
+  Resolves: RHEL-36766
+- Remove obsoleted patches
+  Related: RHEL-42635
+
+* Mon Aug 05 2024 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.8p1-3
+- sshd doesn't propose to enter password again when a non-existing user is specified
+  Resolves: RHEL-11981
+- Reenabling self-test on rpm build
+  Related: RHEL-42635
+
+* Fri Jul 26 2024 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.8p1-2.0
+- Temporary disabling self-test
+  Related: RHEL-42635
+- Change ssh-keygen defaults in FIPS mode
+  Resolves: RHEL-37324
+- Use FIPS-compatible API for key derivation RHEL-10
+  Resolves: RHEL-43592
+
+* Thu Jul 25 2024 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.8p1-1.0
+- Rebase OpenSSH to 9.8p1
+  Resolves: RHEL-42635
+
+* Fri Jul 12 2024 Zoltan Fridrich <zfridric@redhat.com> - 9.6p1-1.5
+- Build OpenSSH without ENGINE API
+  Resolves: RHEL-45507
+- Remove pam_ssh_agent_auth subpackage
+  Resolves: RHEL-45002
+
+* Mon Jun 24 2024 Troy Dawson <tdawson@redhat.com> - 9.6p1-1.4
+- Bump release for June 2024 mass rebuild
+
+* Thu May 09 2024 Zoltan Fridrich <zfridric@redhat.com> - 9.6p1-1.3
+- Correctly audit hostname and IP address (RHEL-22316)
+- Make default key sizes configurable in sshd-keygen (RHEL-26454)
+
+* Thu Jan 25 2024 Fedora Release Engineering <releng@fedoraproject.org> - 9.6p1-1.2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_40_Mass_Rebuild
+
+* Sun Jan 21 2024 Fedora Release Engineering <releng@fedoraproject.org> - 9.6p1-1.1
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_40_Mass_Rebuild
+
+* Tue Dec 26 2023 Daniel Milnes <daniel@daniel-milnes.uk> - 9.6p1-1
+- Update to OpenSSH 9.6
+  Original patches from https://src.fedoraproject.org/rpms/openssh/pull-request/63
+  Tuned by Dmitry Belyavskiy for GSS and PKCS#11 URI processing
+
+* Fri Dec 22 2023 Florian Weimer <fweimer@redhat.com> - 9.3p1-13.1
+- Fix type errors in downstream gssapi-keyex patch
+
+* Mon Oct 16 2023 Mattias Ellert <mattias.ellert@physics.uu.se> - 9.3p1-13
+- Fix issue with read-only ssh buffer during gssapi key exchange (rhbz#1938224)
+- https://github.com/openssh-gsskex/openssh-gsskex/pull/19
+
+* Sun Oct 15 2023 Mattias Ellert <mattias.ellert@physics.uu.se> - 9.3p1-12
+- Fix FTBFS due to implicit declarations (rhbz#2241211)
+
+* Tue Sep 19 2023 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.3p1-11
+- migrated to SPDX license
+
+* Fri Sep 15 2023 Timothée Ravier <tim@siosm.fr> - 9.3p1-10
+- Revert "Remove sshd.socket unit (rhbz#2025716)"
+
+* Thu Aug 03 2023 Norbert Pocs <npocs@redhat.com> - 9.3p1-9
+- pkcs11: Add support for 'serial' in PKCS#11 URI
+- Apply the upstream MR related to the previous pkcs11 issue
+- https://github.com/openssh/openssh-portable/pull/406
+
+* Thu Aug 03 2023 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.3p1-8
+- Split including crypto-policies to a separate config (rhbz#1970566)
+- Disable forking of ssh-agent on startup (rhbz#2148555)
+- Remove sshd.socket unit (rhbz#2025716)
+- Minor optimization of ssh_krb5_kuserok (rhbz#2112501)
+
+* Tue Aug 01 2023 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.3p1-7
+- Relax checks of OpenSSL version
+
+* Wed Jul 26 2023 Mattias Ellert <mattias.ellert@physics.uu.se> - 9.3p1-6
+- Update gssapi-keyex patch for OpenSSH 9.0+
+
+* Fri Jul 21 2023 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.3p1-5
+- Fix remote code execution in ssh-agent PKCS#11 support
+  Resolves: CVE-2023-38408
+
+* Thu Jul 20 2023 Fedora Release Engineering <releng@fedoraproject.org> - 9.3p1-3.1
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_39_Mass_Rebuild
+
+* Thu Jun 08 2023 Norbert Pocs <npocs@redhat.com> - 9.3p1-4
+- Fix deprecated %patchN syntax
+- Reduce the number of patches by merging related patches
+
+* Wed Jun 07 2023 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.3p1-3
+- Fix DSS verification problem
+  Resolves: rhbz#2212937
+
+* Fri Jun 02 2023 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.3p1-2
+- Remove unused patch
+
+* Thu Jun 01 2023 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.3p1-1 + 0.10.4-9
+- Rebase OpenSSH to 9.3p1
+
+* Wed May 24 2023 Norbert Pocs <npocs@redhat.com> - 9.0p1-18
+- Fix pkcs11 issue with the recent changes
+- Clarify HostKeyAlgorithms relation with crypto-policies
+
+* Fri Apr 14 2023 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.0p1-17
+- In case when sha1 signatures are not supported, fallback to sha2 in hostproof
+- Audit logging patch was not applied (rhbz#2177471)
+
+* Thu Apr 13 2023 Norbert Pocs <npocs@redhat.com> - 9.0p1-16
+- Make the sign, dh, ecdh processes FIPS compliant by adopting to
+  openssl 3.0
+
+* Thu Apr 13 2023 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.0p1-15
+- Fix self-DoS
+  Resolves: CVE-2023-25136
+- Remove too aggressive coverity fix causing native tests failure
+
+* Wed Apr 12 2023 Florian Weimer <fweimer@redhat.com> - 9.0p1-14.2
+- C99 compatiblity fixes
+
+* Tue Mar 14 2023 Timothée Ravier <tim@siosm.fr> - 9.0p1-14
+- Make sshd & sshd@ units want ssh-host-keys-migration.service
+
+* Mon Mar 13 2023 Zoltan Fridrich <zfridric@redhat.com> - 9.0p1-13
+- Add sk-dummy subpackage for test purposes (rhbz#2176795)
+
+* Mon Mar 06 2023 Dusty Mabe <dusty@dustymabe.com> - 9.0p1-12
+- Mark /var/lib/.ssh-host-keys-migration as %ghost file
+- Make ssh-host key migration less conditional
+
+* Wed Mar 01 2023 Dusty Mabe <dusty@dustymabe.com> - 9.0p1-11
+- Provide a systemd unit for restoring default host key permissions (rhbz#2172956)
+- Co-Authored by Timothée Ravier <tim@siosm.fr>
+
+* Mon Jan 23 2023 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.0p1-10
+- Restore upstream behaviour and default host key permissions (rhbz#2141272)
+
+* Thu Jan 19 2023 Fedora Release Engineering <releng@fedoraproject.org> - 9.0p1-9.1
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_38_Mass_Rebuild
+
+* Mon Jan 09 2023 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.0p1-9
+- Fix build against updated OpenSSL (rhbz#2158966)
+
+* Mon Oct 24 2022 Norbert Pocs <npocs@redhat.com> - 9.0p1-8
+- Add additional audit logging about ssh key used to login (rhbz#2049947)
+
+* Fri Oct 21 2022 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.0p1-7
+- Check IP opts length (rhbz#1960015)
+
+* Wed Oct 5 2022 Anthony Rabbito <hello@anthonyrabbito.com> - 9.0p1-6
+- Add a socket unit to ssh-agent user unit (rhbz#2125576)
+
+* Thu Sep 29 2022 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.0p1-5
+- RSAMinSize => RequiredRSASize
+
+* Fri Sep 02 2022 Luca BRUNO <lucab@lucabruno.net> - 9.0p1-4
+- Move users/groups creation logic to sysusers.d fragments
+
+* Wed Aug 24 2022 Alexander Sosedkin <asosedkin@redhat.com> - 9.0p1-3
+- State in manpages that HostbasedAcceptedAlgorithms is set by crypto-policies
+
+* Wed Aug 17 2022 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.0p1-2
+- Port patches from CentOS - RSAMinSize (rhbz#2117264)
+
+* Thu Aug 11 2022 Dmitry Belyavskiy <dbelyavs@redhat.com> - 9.0p1-1 + 0.10.4-7
+- Rebase OpenSSH to 9.0p1 (rhbz#2057466)
+
+* Wed Aug 10 2022 Dmitry Belyavskiy <dbelyavs@redhat.com> - 8.8p1-4 + 0.10.4-6
+- Port patches from CentOS (rhbz#2117264)
+
+* Mon Aug 01 2022 Luca BRUNO <lucab@lucabruno.net> - 8.8p1-3
+- Use allocated static GID for 'ssh_keys' group (rhbz#2104595)
+
+* Fri Jul 22 2022 Fedora Release Engineering <releng@fedoraproject.org> - 8.8p1-2.1
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_37_Mass_Rebuild
+
+* Fri Apr 29 2022 Dmitry Belyavskiy <dbelyavs@redhat.com> - 8.8p1-2
+- Disable locale forwarding in OpenSSH (#2002739)
+
+* Thu Jan 20 2022 Fedora Release Engineering <releng@fedoraproject.org> - 8.8p1-1.1
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_36_Mass_Rebuild
+
+* Mon Nov 29 2021 Dmitry Belyavskiy <dbelyavs@redhat.com> - 8.8p1-1 + 0.10.4-5
+- New upstream release (#2007967)
+
+* Wed Sep 29 2021 Dmitry Belyavskiy <dbelyavs@redhat.com> - 8.7p1-3
+- CVE-2021-41617 fix (#2008292)
+
+* Thu Sep 16 2021 Dmitry Belyavskiy <dbelyavs@redhat.com> - 8.7p1-2
+- Use SFTP protocol for scp by default (#2004956)
+
+* Tue Sep 14 2021 Sahana Prasad <sahana@redhat.com> - 8.7p1-1.1
+- Rebuilt with OpenSSL 3.0.0
+
+* Wed Sep 01 2021 Dmitry Belyavskiy <dbelyavs@redhat.com> - 8.7p1-1 + 0.10.4-4
+- New upstream release (#1995893)
+
+* Thu Jul 22 2021 Fedora Release Engineering <releng@fedoraproject.org> - 8.6p1-5.1
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_35_Mass_Rebuild
+
+* Mon Jun 21 2021 Dmitry Belyavskiy <dbelyavs@redhat.com> - 8.6p1-5
+- restore the blocking mode on standard output (#1942901) - upstream
+
+* Tue May 25 2021 Timm Bäder <tbaeder@redhat.com> - 8.6p1-4
+- Use %%set_build_flags to set all builds flags
+
+* Fri May 21 2021 Dmitry Belyavskiy <dbelyavs@redhat.com> - 8.6p1-3
+- Hostbased ssh authentication fails if session ID contains a '/' (#1963059)
+
+* Mon May 10 2021 Dmitry Belyavskiy <dbelyavs@redhat.com> - 8.6p1-2
+- restore the blocking mode on standard output (#1942901)
+
+* Mon Apr 19 2021 Dmitry Belyavskiy <dbelyavs@redhat.com> - 8.6p1-1 + 0.10.4-3
+- New upstream release (#1950819)
+- ssh-keygen printing fingerprint issue with Windows keys (#1901518)
+- sshd provides PAM an incorrect error code (#1879503)
+
+* Tue Mar 09 2021 Rex Dieter <rdieter@fedoraproject.org> - 8.5p1-2
+- ssh-agent.serivce is user unit (#1761817#27)
+
+* Wed Mar 03 2021 Jakub Jelen <jjelen@redhat.com> - 8.5p1-1 + 0.10.4-2
+- New upstream release (#1934336)
+
+* Tue Mar 02 2021 Zbigniew Jędrzejewski-Szmek <zbyszek@in.waw.pl> - 8.4p1-5.2
+- Rebuilt for updated systemd-rpm-macros
+  See https://pagure.io/fesco/issue/2583.
+
+* Tue Jan 26 2021 Fedora Release Engineering <releng@fedoraproject.org> - 8.4p1-5.1
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_34_Mass_Rebuild
+
+* Fri Jan 22 2021 Jakub Jelen <jjelen@redhat.com> - 8.4p1-5 + 0.10.4-1
+- Use /usr/share/empty.sshd instead of /var/empty/sshd
+- Allow emptu labels in PKCS#11 tokens (#1919007)
+- Drop openssh-cavs subpackage
+
+* Tue Dec 01 2020 Jakub Jelen <jjelen@redhat.com> - 8.4p1-4 + 0.10.4-1
+- Remove "PasswordAuthentication yes" from vendor configuration as it is
+  already default and it might be hard to override.
+- Fix broken obsoletes for openssh-ldap (#1902084)
+
+* Thu Nov 19 2020 Jakub Jelen <jjelen@redhat.com> - 8.4p1-3 + 0.10.4-1
+- Unbreak seccomp filter on arm (#1897712)
+- Add a workaround for Debian's broken OpenSSH (#1881301)
+
+* Tue Oct 06 2020 Jakub Jelen <jjelen@redhat.com> - 8.4p1-2 + 0.10.4-1
+- Unbreak ssh-copy-id after a release (#1884231)
+- Remove misleading comment from sysconfig
+
+* Tue Sep 29 2020 Jakub Jelen <jjelen@redhat.com> - 8.4p1-1 + 0.10.4-1
+- New upstream release of OpenSSH and pam_ssh_agent_auth (#1882995)
+
+* Fri Aug 21 2020 Jakub Jelen <jjelen@redhat.com> - 8.3p1-4 + 0.10.3-10
+- Remove openssh-ldap subpackage (#1871025)
+- pkcs11: Do not crash with invalid paths in ssh-agent (#1868996)
+- Clarify documentation about sftp-server -m (#1862504)
+
+* Tue Jul 28 2020 Fedora Release Engineering <releng@fedoraproject.org> - 8.3p1-3.1
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_33_Mass_Rebuild
+
+* Wed Jun 10 2020 Jakub Jelen <jjelen@redhat.com> - 8.3p1-3 + 0.10.3-10
+- Do not lose PIN when more slots match PKCS#11 URI (#1843372)
+- Update to new crypto-policies version on server (using sshd_config include)
+- Move redhat configuraion files to larger number to allow simpler override
+- Move sshd_config include before any other definitions (#1824913)
+
+* Mon Jun 01 2020 Jakub Jelen <jjelen@redhat.com> - 8.3p1-2 + 0.10.3-10
+- Fix crash on cleanup (#1842281)
+
+* Wed May 27 2020 Jakub Jelen <jjelen@redhat.com> - 8.3p1-1 + 0.10.3-10
+- New upstream release (#1840503)
+- Unbreak corner cases of sshd_config include
+- Fix order of gssapi key exchange algorithms
+
+* Wed Apr 08 2020 Jakub Jelen <jjelen@redhat.com> - 8.2p1-3 + 0.10.3-9
+- Simplify reference to crypto policies in configuration files
+- Unbreak gssapi authentication with GSSAPITrustDNS over jump hosts
+- Correctly print FIPS mode initialized in debug mode
+- Enable SHA2-based GSSAPI key exchange methods (#1666781)
+- Do not break X11 forwarding when IPv6 is disabled
+- Remove fipscheck dependency as OpenSSH is no longer FIPS module
+- Improve documentation about crypto policies defaults in manual pages
+
+* Thu Feb 20 2020 Jakub Jelen <jjelen@redhat.com> - 8.2p1-2 + 0.10.3-9
+- Build against libfido2 to unbreak internal u2f support
+
+* Mon Feb 17 2020 Jakub Jelen <jjelen@redhat.com> - 8.2p1-1 + 0.10.3-9
+- New upstrem reelase (#1803290)
+- New /etc/ssh/sshd_config.d drop in directory
+- Support for U2F security keys
+- Correctly report invalid key permissions (#1801459)
+- Do not write bogus information on stderr in FIPS mode (#1778224)
+
+* Mon Feb 03 2020 Jakub Jelen <jjelen@redhat.com> - 8.1p1-4 + 0.10.3-8
+- Unbreak seccomp filter on ARM (#1796267)
+
+* Wed Jan 29 2020 Fedora Release Engineering <releng@fedoraproject.org> - 8.1p1-3.1
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_32_Mass_Rebuild
+
+* Wed Nov 27 2019 Jakub Jelen <jjelen@redhat.com> - 8.1p1-3 + 0.10.3-8
+- Unbreak seccomp filter also on ARM (#1777054)
+
+* Thu Nov 14 2019 Jakub Jelen <jjelen@redhat.com> - 8.1p1-2 + 0.10.3-8
+- Unbreak seccomp filter with latest glibc (#1771946)
+
+* Wed Oct 09 2019 Jakub Jelen <jjelen@redhat.com> - 8.1p1-1 + 0.10.3-8
+- New upstream release (#1759750)
+
+* Thu Jul 25 2019 Fedora Release Engineering <releng@fedoraproject.org> - 8.0p1-8.1
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_31_Mass_Rebuild
+
+* Tue Jul 23 2019 Jakub Jelen <jjelen@redhat.com> - 8.0p1-8 + 0.10.3-7
+- Use the upstream-accepted version of the PKCS#8 PEM support (#1722285)
+
+* Fri Jul 12 2019 Jakub Jelen <jjelen@redhat.com> - 8.0p1-7 + 0.10.3-7
+- Use the environment file under /etc/sysconfig for anaconda configuration (#1722928)
+
+* Wed Jul 03 2019 Jakub Jelen <jjelen@redhat.com> - 8.0p1-6 + 0.10.3-7
+- Provide the entry point for anaconda configuration in service file (#1722928)
+
+* Wed Jun 26 2019 Jakub Jelen <jjelen@redhat.com> - 8.0p1-5 + 0.10.3-7
+- Disable root password logins (#1722928)
+- Fix typo in manual pages related to crypto-policies
+- Fix the gating test to make sure it removes the test user
+- Cleanu up spec file and get rid of some rpmlint warnings
+
+* Mon Jun 17 2019 Jakub Jelen <jjelen@redhat.com> - 8.0p1-4 + 0.10.3-7
+- Compatibility with ibmca engine for ECC
+- Generate more modern PEM files using new OpenSSL API
+- Provide correct signature types for RSA keys using SHA2 from agent
+
+* Mon May 27 2019 Jakub Jelen <jjelen@redhat.com> - 8.0p1-3 + 0.10.3-7
+- Remove problematic patch updating cached pw structure
+- Do not require the labels on the public objects (#1710832)
+
+* Tue May 14 2019 Jakub Jelen <jjelen@redhat.com> - 8.0p1-2 + 0.10.3-7
+- Use OpenSSL KDF
+- Use high-level OpenSSL API for signatures handling
+- Mention crypto-policies in manual pages instead of hardcoded defaults
+- Verify in package testsuite that SCP vulnerabilities are fixed
+- Do not fail in FIPS mode, when unsupported algorithm is listed in configuration
+
+* Fri Apr 26 2019 Jakub Jelen <jjelen@redhat.com> - 8.0p1-1 + 0.10.3-7
+- New upstream release (#1701072)
+- Removed support for VendroPatchLevel configuration option
+- Significant rework of GSSAPI Key Exchange
+- Significant rework of PKCS#11 URI support
+
+* Mon Mar 11 2019 Jakub Jelen <jjelen@redhat.com> - 7.9p1-5 + 0.10.3.6
+- Fix kerberos cleanup procedures with GSSAPI
+- Update cached passwd structure after PAM authentication
+- Do not fall back to sshd_net_t SELinux context
+- Fix corner cases of PKCS#11 URI implementation
+- Do not negotiate arbitrary primes with DH GEX in FIPS 
+
+* Wed Feb 06 2019 Jakub Jelen <jjelen@redhat.com> - 7.9p1-4 + 0.10.3.6
+- Log when a client requests an interactive session and only sftp is allowed
+- Fix minor issues in ssh-copy-id
+- Enclose redhat specific configuration with Match final block
+
+* Fri Feb 01 2019 Fedora Release Engineering <releng@fedoraproject.org> - 7.9p1-3.2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_30_Mass_Rebuild
+
+* Mon Jan 14 2019 Björn Esser <besser82@fedoraproject.org> - 7.9p1-3.1
+- Rebuilt for libcrypt.so.2 (#1666033)
+
+* Mon Jan 14 2019 Jakub Jelen <jjelen@redhat.com> - 7.9p1-3 + 0.10.3.6
+- Backport Match final to unbreak canonicalization with crypto-policies (#1630166)
+- gsskex: Dump correct option
+- Backport several fixes from 7_9 branch, mostly related to certificate authentication (#1665611)
+- Backport patch for CVE-2018-20685 (#1665786)
+- Correctly initialize ECDSA key structures from PKCS#11
+
+* Wed Nov 14 2018 Jakub Jelen <jjelen@redhat.com> - 7.9p1-2 + 0.10.3-6
+- Fix LDAP configure test (#1642414)
+- Avoid segfault on kerberos authentication failure
+- Reference correct file in configuration example (#1643274)
+- Dump missing GSSAPI configuration options
+- Allow to disable RSA signatures with SHA-1
+
+* Fri Oct 19 2018 Jakub Jelen <jjelen@redhat.com> - 7.9p1-1 + 0.10.3-6
+- New upstream release OpenSSH 7.9p1 (#1632902, #1630166)
+- Honor GSSAPIServerIdentity option for GSSAPI key exchange
+- Do not break gsssapi-keyex authentication method when specified in
+  AuthenticationMethods
+- Follow the system-wide PATH settings (#1633756)
+- Address some coverity issues
+
+* Mon Sep 24 2018 Jakub Jelen <jjelen@redhat.com> - 7.8p1-3 + 0.10.3-5
+- Disable OpenSSH hardening flags and use the ones provided by system
+- Ignore unknown parts of PKCS#11 URI
+- Do not fail with GSSAPI enabled in match blocks (#1580017)
+- Fix the segfaulting cavs test (#1628962)
+
+* Fri Aug 31 2018 Jakub Jelen <jjelen@redhat.com> - 7.8p1-2 + 0.10.3-5
+- New upstream release fixing CVE 2018-15473
+- Remove unused patches
+- Remove reference to unused enviornment variable SSH_USE_STRONG_RNG
+- Address coverity issues
+- Unbreak scp between two IPv6 hosts
+- Unbreak GSSAPI key exchange (#1624344)
+- Unbreak rekeying with GSSAPI key exchange (#1624344)
+
+* Thu Aug 09 2018 Jakub Jelen <jjelen@redhat.com> - 7.7p1-6 + 0.10.3-4
+- Fix listing of kex algoritms in FIPS mode
+- Allow aes-gcm cipher modes in FIPS mode
+- Coverity fixes
+
+* Fri Jul 13 2018 Fedora Release Engineering <releng@fedoraproject.org> - 7.7p1-5.1
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_29_Mass_Rebuild
+
+* Tue Jul 03 2018 Jakub Jelen <jjelen@redhat.com> - 7.7p1-5 + 0.10.3-4
+- Disable manual printing of motd by default (#1591381)
+
+* Wed Jun 27 2018 Jakub Jelen <jjelen@redhat.com> - 7.7p1-4 + 0.10.3-4
+- Better handling of kerberos tickets storage (#1566494)
+- Add pam_motd to pam stack (#1591381)
+
+* Mon Apr 16 2018 Jakub Jelen <jjelen@redhat.com> - 7.7p1-3 + 0.10.3-4
+- Fix tun devices and other issues fixed after release upstream (#1567775)
+
+* Thu Apr 12 2018 Jakub Jelen <jjelen@redhat.com> - 7.7p1-2 + 0.10.3-4
+- Do not break quotes parsing in configuration file (#1566295)
+
+* Wed Apr 04 2018 Jakub Jelen <jjelen@redhat.com> - 7.7p1-1 + 0.10.3-4
+- New upstream release (#1563223)
+- Add support for ECDSA keys in PKCS#11 (#1354510)
+- Add support for PKCS#11 URIs
+
+* Tue Mar 06 2018 Jakub Jelen <jjelen@redhat.com> - 7.6p1-7 + 0.10.3-3
+- Require crypto-policies version and new path
+- Remove bogus NSS linking
+
+* Thu Feb 08 2018 Fedora Release Engineering <releng@fedoraproject.org> - 7.6p1-6.1
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_28_Mass_Rebuild
+
+* Fri Jan 26 2018 Jakub Jelen <jjelen@redhat.com> - 7.6p1-6 + 0.10.3-3
+- Rebuild for gcc bug on i386 (#1536555)
+
+* Thu Jan 25 2018 Florian Weimer <fweimer@redhat.com> - 7.6p1-5.2
+- Rebuild to work around gcc bug leading to sshd miscompilation (#1538648)
+
+* Sat Jan 20 2018 Björn Esser <besser82@fedoraproject.org> - 7.6p1-5.1.1
+- Rebuilt for switch to libxcrypt
+
+* Wed Jan 17 2018 Jakub Jelen <jjelen@redhat.com> - 7.6p1-5 + 0.10.3-3
+- Drop support for TCP wrappers (#1530163)
+- Do not pass hostnames to audit -- UseDNS is usually disabled (#1534577)
+
+* Thu Dec 14 2017 Jakub Jelen <jjelen@redhat.com> - 7.6p1-4 + 0.10.3-3
+- Whitelist gettid() syscall in seccomp filter (#1524392)
+
+* Mon Dec 11 2017 Jakub Jelen <jjelen@redhat.com> - 7.6p1-3 + 0.10.3-3
+- Do not segfault during audit cleanup (#1524233)
+- Avoid gcc warnings about uninitialized variables
+
+* Wed Nov 22 2017 Jakub Jelen <jjelen@redhat.com> - 7.6p1-2 + 0.10.3-3
+- Do not build everything against libldap
+- Do not segfault for ECC keys in PKCS#11
+
+* Thu Oct 19 2017 Jakub Jelen <jjelen@redhat.com> - 7.6p1-1 + 0.10.3-3
+- New upstream release OpenSSH 7.6
+- Addressing review remarks for OpenSSL 1.1.0 patch
+- Fix PermitOpen bug in OpenSSH 7.6
+- Drop support for ExposeAuthenticationMethods option
+
+* Mon Sep 11 2017 Jakub Jelen <jjelen@redhat.com> - 7.5p1-6 + 0.10.3-2
+- Do not export KRB5CCNAME if the default path is used (#1199363)
+- Add enablement for openssl-ibmca and openssl-ibmpkcs11 (#1477636)
+- Add new GSSAPI kex algorithms with SHA-2, but leave them disabled for now
+- Enforce pam_sepermit for all logins in SSH (#1492313)
+- Remove pam_reauthorize, since it is not needed by cockpit anymore (#1492313)
+
+* Mon Aug 14 2017 Jakub Jelen <jjelen@redhat.com> - 7.5p1-5 + 0.10.3-2
+- Another less-intrusive approach to crypto policy (#1479271)
+
+* Tue Aug 01 2017 Jakub Jelen <jjelen@redhat.com> - 7.5p1-4 + 0.10.3-2
+- Remove SSH-1 subpackage for Fedora 27 (#1474942)
+- Follow system-wide crypto policy in server (#1479271)
+
+* Thu Jul 27 2017 Fedora Release Engineering <releng@fedoraproject.org> - 7.5p1-3.1
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Mass_Rebuild
+
+* Fri Jun 30 2017 Jakub Jelen <jjelen@redhat.com> - 7.5p1-2 + 0.10.3-2
+- Sync downstream patches with RHEL (FIPS)
+- Resolve potential issues with OpenSSL 1.1.0 patch
+
+* Wed Mar 22 2017 Jakub Jelen <jjelen@redhat.com> - 7.5p1-2 + 0.10.3-2
+- Fix various after-release typos including failed build in s390x (#1434341)
+- Revert chroot magic with SELinux
+
+* Mon Mar 20 2017 Jakub Jelen <jjelen@redhat.com> - 7.5p1-1 + 0.10.3-2
+- New upstream release
+
+* Fri Mar 03 2017 Jakub Jelen <jjelen@redhat.com> - 7.4p1-4 + 0.10.3-1
+- Avoid sending the SD_NOTIFY messages from wrong processes (#1427526)
+- Address reports by coverity
+
+* Mon Feb 20 2017 Jakub Jelen <jjelen@redhat.com> - 7.4p1-3 + 0.10.3-1
+- Properly report errors from included files (#1408558)
+- New pam_ssh_agent_auth 0.10.3 release
+- Switch to SD_NOTIFY to make systemd happy
+
+* Mon Feb 06 2017 Jakub Jelen <jjelen@redhat.com> - 7.4p1-2 + 0.10.2-5
+- Fix ssh-agent cert signing error (#1416584)
+- Fix wrong path to crypto policies
+- Attempt to resolve issue with systemd
+
+* Tue Jan 03 2017 Jakub Jelen <jjelen@redhat.com> - 7.4p1-1 + 0.10.2-5
+- New upstream release (#1406204)
+- Cache supported OIDs for GSSAPI key exchange (#1395288)
+- Fix typo causing heap corruption (use-after-free) (#1409433)
+- Prevent hangs with long MOTD
+
+* Thu Dec 08 2016 Jakub Jelen <jjelen@redhat.com> - 7.3p1-7 + 0.10.2-4
+- Properly deserialize received RSA certificates in ssh-agent (#1402029)
+- Move MAX_DISPLAYS to a configuration option
+
+* Wed Nov 16 2016 Jakub Jelen <jjelen@redhat.com> - 7.3p1-6 + 0.10.2-4
+- GSSAPI requires futex syscall in privsep child (#1395288)
+
+* Thu Oct 27 2016 Jakub Jelen <jjelen@redhat.com> - 7.3p1-5 + 0.10.2-4
+- Build against OpenSSL 1.1.0 with compat changes
+- Recommend crypto-policies
+- Fix chroot dropping capabilities (#1386755)
+
+* Thu Sep 29 2016 Jakub Jelen <jjelen@redhat.com> - 7.3p1-4 + 0.10.2-4
+- Fix NULL dereference (#1380297)
+- Include client Crypto Policy (#1225752)
+
+* Mon Aug 15 2016 Jakub Jelen <jjelen@redhat.com> - 7.3p1-3 + 0.10.2-4
+- Proper content of included configuration file
+
+* Tue Aug 09 2016 Jakub Jelen <jjelen@redhat.com> - 7.3p1-2 + 0.10.2-4
+- Fix permissions on the include directory (#1365270)
+
+* Tue Aug 02 2016 Jakub Jelen <jjelen@redhat.com> - 7.3p1-1 + 0.10.2-4
+- New upstream release (#1362156)
+
+* Tue Jul 26 2016 Jakub Jelen <jjelen@redhat.com> - 7.2p2-11 + 0.10.2-3
+- Remove slogin and sshd-keygen (#1359762)
+- Prevent guest_t from running sudo (#1357860)
+
+* Mon Jul 18 2016 Jakub Jelen <jjelen@redhat.com> - 7.2p2-10 + 0.10.2-3
+- CVE-2016-6210: User enumeration via covert timing channel (#1357443)
+- Expose more information about authentication to PAM
+- Make closefrom() ignore softlinks to the /dev/ devices on s390
+
+* Fri Jul 01 2016 Jakub Jelen <jjelen@redhat.com> - 7.2p2-9 + 0.10.2-3
+- Fix wrong detection of UseLogin in server configuration (#1350347)
+
+* Fri Jun 24 2016 Jakub Jelen <jjelen@redhat.com> - 7.2p2-8 + 0.10.2-3
+- Enable seccomp filter for MIPS architectures
+- UseLogin=yes is not supported in Fedora
+- SFTP server forced permissions should restore umask
+- pam_ssh_agent_auth: Fix conflict bewteen two getpwuid() calls (#1349551)
+
+* Mon Jun 06 2016 Jakub Jelen <jjelen@redhat.com> - 7.2p2-7
+- Fix regression in certificate-based authentication (#1333498)
+- Check for real location of .k5login file (#1328243)
+- Fix unchecked dereference in pam_ssh_agent_auth
+- Clean up old patches
+- Build with seccomp filter on ppc64(le) (#1195065)
+
+* Fri Apr 29 2016 Jakub Jelen <jjelen@redhat.com> - 7.2p2-6 + 0.10.2-3
+- Add legacy sshd-keygen for anaconda (#1331077)
+
+* Fri Apr 22 2016 Jakub Jelen <jjelen@redhat.com> - 7.2p2-5 + 0.10.2-3
+- CVE-2015-8325: ignore PAM environment vars when UseLogin=yes (#1328013)
+- Fix typo in sysconfig/sshd (#1325535)
+
+* Fri Apr 15 2016 Jakub Jelen <jjelen@redhat.com> - 7.2p2-4 + 0.10.2-3
+- Revise socket activation and services dependencies (#1325535)
+- Drop unused init script
+
+* Wed Apr 13 2016 Jakub Jelen <jjelen@redhat.com> 7.2p2-3 + 0.10.2-3
+- Make sshd-keygen comply with packaging guidelines (#1325535)
+- Soft-deny socket() syscall in seccomp sandbox (#1324493)
+- Remove *sha1 Kex in FIPS mode (#1324493)
+- Remove *gcm ciphers in FIPS mode (#1324493)
+
+* Wed Apr 06 2016 Jakub Jelen <jjelen@redhat.com> 7.2p2-2 + 0.10.2-3
+- Fix GSSAPI Key Exchange according to RFC (#1323622)
+- Remove init.d/functions dependency from sshd-keygen (#1317722)
+- Do not use MD5 in pam_ssh_agent_auth in FIPS mode
+
+* Thu Mar 10 2016 Jakub Jelen <jjelen@redhat.com> 7.2p2-1 + 0.10.2-3
+- New upstream (security) release (#1316529)
+- Clean up audit patch
+
+* Thu Mar 03 2016 Jakub Jelen <jjelen@redhat.com> 7.2p1-2 + 0.10.2-2
+- Restore slogin symlinks to preserve backward compatibility
+
+* Mon Feb 29 2016 Jakub Jelen <jjelen@redhat.com> 7.2p1-1 + 0.10.2-2
+- New upstream release (#1312870)
+
+* Wed Feb 24 2016 Jakub Jelen <jjelen@redhat.com> 7.1p2-4.1 + 0.10.2-1
+- Fix race condition in auditing events when using multiplexing (#1308295)
+- Fix X11 forwarding CVE according to upstream
+- Fix problem when running without privsep (#1303910)
+- Remove hard glob limit in SFTP
+
+* Thu Feb 04 2016 Fedora Release Engineering <releng@fedoraproject.org> - 7.1p2-3.1
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_24_Mass_Rebuild
+
+* Sat Jan 30 2016 Jakub Jelen <jjelen@redhat.com> 7.1p2-3 + 0.10.2-1
+- Fix segfaults with pam_ssh_agent_auth (#1303036)
+- Silently disable X11 forwarding on problems
+- Systemd service should be forking to detect immediate failures
+
+* Mon Jan 25 2016 Jakub Jelen <jjelen@redhat.com> 7.1p2-2 + 0.10.2-1
+- Rebased to recent version of pam_ssh_agent_auth
+- Upstream fix for CVE-2016-1908
+- Remove useless defattr
+
+* Thu Jan 14 2016 Jakub Jelen <jjelen@redhat.com> 7.1p2-1 + 0.9.2-9
+- New security upstream release for CVE-2016-0777
+
+* Tue Jan 12 2016 Jakub Jelen <jjelen@redhat.com> 7.1p1-7 + 0.9.2-8
+- Change RPM define macros to global according to packaging guidelines
+- Fix wrong handling of SSH_COPY_ID_LEGACY environment variable
+- Update ssh-agent and ssh-keysign permissions (#1296724)
+- Fix few problems with alternative builds without GSSAPI or openSSL
+- Fix condition to run sshd-keygen
+
+* Fri Dec 18 2015 Jakub Jelen <jjelen@redhat.com> 7.1p1-6 + 0.9.2-8
+- Preserve IUTF8 tty mode flag over ssh connections (#1270248)
+- Do not require sysconfig file to start service (#1279521)
+- Update ssh-copy-id to upstream version
+- GSSAPI Key Exchange documentation improvements
+- Remove unused patches
+
+* Wed Nov 04 2015 Jakub Jelen <jjelen@redhat.com> 7.1p1-5 + 0.9.2-8
+- Do not set user context too many times for root logins (#1269072)
+
+* Thu Oct 22 2015 Jakub Jelen <jjelen@redhat.com> 7.1p1-4 + 0.9.2-8
+- Review SELinux user context handling after authentication (#1269072)
+- Handle root logins the same way as other users (#1269072)
+- Audit implicit mac, if mac is covered in cipher (#1271694)
+- Increase size limit for remote glob over sftp
+
+* Fri Sep 25 2015 Jakub Jelen <jjelen@redhat.com> 7.1p1-3 + 0.9.2-8
+- Fix FIPS mode for DH kex (#1260253)
+- Provide full RELRO and PIE form askpass helper (#1264036)
+- Fix gssapi key exchange on server and client (#1261414)
+- Allow gss-keyex root login when without-password is set (upstream #2456)
+- Fix obsolete usage of SELinux constants (#1261496)
+
+* Wed Sep 09 2015 Jakub Jelen <jjelen@redhat.com> 7.1p1-2 + 0.9.2-8
+- Fix warnings reported by gcc related to keysign and keyAlgorithms
+
+* Sat Aug 22 2015 Jakub Jelen <jjelen@redhat.com> 7.1p1-1 + 0.9.2-8
+- New upstream release
+
+* Wed Aug 19 2015 Jakub Jelen <jjelen@redhat.com> 7.0p1-2 + 0.9.3-7
+- Fix problem with DSA keys using pam_ssh_agent_auth (#1251777)
+- Add GSSAPIKexAlgorithms option for server and client application
+- Possibility to validate legacy systems by more fingerprints (#1249626)
+
+* Wed Aug 12 2015 Jakub Jelen <jjelen@redhat.com> 7.0p1-1 + 0.9.3-7
+- New upstream release (#1252639)
+- Fix pam_ssh_agent_auth package (#1251777)
+- Security: Use-after-free bug related to PAM support (#1252853)
+- Security: Privilege separation weakness related to PAM support (#1252854)
+- Security: Incorrectly set TTYs to be world-writable (#1252862)
+
+* Tue Jul 28 2015 Jakub Jelen <jjelen@redhat.com> 6.9p1-4 + 0.9.3-6
+- Handle terminal control characters in scp progressmeter (#1247204)
+
+* Thu Jul 23 2015 Jakub Jelen <jjelen@redhat.com> 6.9p1-3 + 0.9.3-6
+- CVE-2015-5600: only query each keyboard-interactive device once (#1245971)
+
+* Wed Jul 15 2015 Jakub Jelen <jjelen@redhat.com> 6.9p1-2 + 0.9.3-6
+- Enable SECCOMP filter for s390* architecture (#1195065)
+- Fix race condition when multiplexing connection (#1242682)
+
+* Wed Jul 01 2015 Jakub Jelen <jjelen@redhat.com> 6.9p1-1 + 0.9.3-6
+- New upstream release (#1238253)
+- Increase limitation number of files which can be listed using glob in sftp
+- Correctly revert "PermitRootLogin no" option from upstream sources (#89216)
+
+* Wed Jun 24 2015 Jakub Jelen <jjelen@redhat.com> 6.8p1-9 + 0.9.3-5
+- Allow socketcall(SYS_SHUTDOWN) for net_child on ix86 architecture
+
+* Thu Jun 18 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 6.8p1-8.1
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+
+* Mon Jun 08 2015 Jakub Jelen <jjelen@redhat.com> 6.8p1-8 + 0.9.3-5
+- Return stat syscall to seccomp filter (#1228323)
+
+* Wed Jun 03 2015 Jakub Jelen <jjelen@redhat.com> 6.8p1-7 + 0.9.3-5
+- Handle pam_ssh_agent_auth memory, buffers and variable sizes (#1225106)
+
+* Thu May 28 2015 Jakub Jelen <jjelen@redhat.com> 6.8p1-6 + 0.9.3-5
+- Resolve problem with pam_ssh_agent_auth after rebase (#1225106)
+- ssh-copy-id: tcsh doesnt work with multiline strings
+- Fix upstream memory problems
+- Add missing options in testmode output and manual pages
+- Provide LDIF version of LPK schema
+- Document required selinux boolean for working ssh-ldap-helper
+
+* Mon Apr 20 2015 Jakub Jelen <jjelen@redhat.com> 6.8p1-5 + 0.9.3-5
+- Fix segfault on daemon exit caused by API change (#1213423)
+
+* Thu Apr 02 2015 Jakub Jelen <jjelen@redhat.com> 6.8p1-4 + 0.9.3-5
+- Fix audit_end_command to restore ControlPersist function (#1203900)
+
+* Tue Mar 31 2015 Jakub Jelen <jjelen@redhat.com> 6.8p1-3 + 0.9.3-5
+- Fixed issue with GSSAPI key exchange (#1207719)
+- Add pam_namespace to sshd pam stack (based on #1125110)
+- Remove krb5-config workaround for #1203900
+- Fix handling SELinux context in MLS systems
+- Regression: solve sshd segfaults if other instance already running
+
+* Thu Mar 26 2015 Jakub Jelen <jjelen@redhat.com> 6.8p1-2 + 0.9.3-5
+- Update audit and gss patches after rebase
+- Fix reintroduced upstrem bug #1878
+
+* Tue Mar 24 2015 Jakub Jelen <jjelen@redhat.com> 6.8p1-1 + 0.9.3-5
+- new upstream release openssh-6.8p1 (#1203245)
+- Resolve segfault with auditing commands (#1203900)
+- Workaround krb5-config bug (#1204646)
+
+* Thu Mar 12 2015 Jakub Jelen <jjelen@redhat.com> 6.7p1-11 + 0.9.3-4
+- Ability to specify LDAP filter in ldap.conf for ssh-ldap-helper
+- Fix auditing when using combination of ForceCommand and PTY
+- Add sftp option to force mode of created files (from rhel)
+- Fix tmpfiles.d entries to be more consistent (#1196807)
+
+* Mon Mar 02 2015 Jakub Jelen <jjelen@redhat.com> 6.7p1-10 + 0.9.3-4
+- Add tmpfiles.d entries (#1196807)
+
+* Fri Feb 27 2015 Jakub Jelen <jjelen@redhat.com> 6.7p1-9 + 0.9.3-4
+- Adjust seccomp filter for primary architectures and solve aarch64 issue (#1197051)
+- Solve issue with ssh-copy-id and keys without trailing newline (#1093168)
+
+* Tue Feb 24 2015 Jakub Jelen <jjelen@redhat.com> 6.7p1-8 + 0.9.3-4
+- Add AArch64 support for seccomp_filter sandbox (#1195065)
+
+* Mon Feb 23 2015 Jakub Jelen <jjelen@redhat.com> 6.7p1-7 + 0.9.3-4
+- Fix seccomp filter on architectures without getuid32
+
+* Mon Feb 23 2015 Jakub Jelen <jjelen@redhat.com> 6.7p1-6 + 0.9.3-4
+- Update seccomp filter to work on i686 architectures (#1194401)
+- Fix previous failing build (#1195065)
+
+* Sun Feb 22 2015 Peter Robinson <pbrobinson@fedoraproject.org> 6.7p1-5 + 0.9.3-4
+- Only use seccomp for sandboxing on supported platforms
+
+* Fri Feb 20 2015 Jakub Jelen <jjelen@redhat.com> 6.7p1-4 + 0.9.3-4
+- Move cavs tests into subpackage -cavs (#1194320)
+
+* Wed Feb 18 2015 Jakub Jelen <jjelen@redhat.com> 6.7p1-3 + 0.9.3-4
+- update coverity patch
+- make output of sshd -T more consistent (#1187521)
+- enable seccomp for sandboxing instead of rlimit (#1062953)
+- update hardening to compile on gcc5
+- Add SSH KDF CAVS test driver (#1193045)
+- Fix ssh-copy-id on non-sh remote shells (#1045191)
+
+* Tue Jan 27 2015 Jakub Jelen <jjelen@redhat.com> 6.7p1-2 + 0.9.3-4
+- fixed audit patch after rebase
+
+* Tue Jan 20 2015 Petr Lautrbach <plautrba@redhat.com> 6.7p1-1 + 0.9.3-4
+- new upstream release openssh-6.7p1
+
+* Thu Jan 15 2015 Jakub Jelen <jjelen@redhat.com> 6.6.1p1-11.1 + 0.9.3-3
+- error message if scp when directory doesn't exist (#1142223)
+- parsing configuration file values (#1130733)
+- documentation in service and socket files for systemd (#1181593)
+- updated ldap patch (#981058)
+- fixed vendor-patchlevel
+- add new option GSSAPIEnablek5users and disable using ~/.k5users by default CVE-2014-9278 (#1170745)
+
+* Fri Dec 19 2014 Petr Lautrbach <plautrba@redhat.com> 6.6.1p1-10 + 0.9.3-3
+- log via monitor in chroots without /dev/log
+
+* Wed Dec 03 2014 Petr Lautrbach <plautrba@redhat.com> 6.6.1p1-9 + 0.9.3-3
+- the .local domain example should be in ssh_config, not in sshd_config
+- use different values for DH for Cisco servers (#1026430)
+
+* Thu Nov 13 2014 Petr Lautrbach <plautrba@redhat.com> 6.6.1p1-8 + 0.9.3-3
+- fix gsskex patch to correctly handle MONITOR_REQ_GSSSIGN request (#1118005)
+
+* Fri Nov 07 2014 Petr Lautrbach <plautrba@redhat.com> 6.6.1p1-7 + 0.9.3-3
+- correct the calculation of bytes for authctxt->krb5_ccname <ams@corefiling.com> (#1161073)
+
+* Tue Nov 04 2014 Petr Lautrbach <plautrba@redhat.com> 6.6.1p1-6 + 0.9.3-3
+- privsep_preauth: use SELinux context from selinux-policy (#1008580)
+- change audit trail for unknown users (mindrot#2245)
+- fix kuserok patch which checked for the existence of .k5login
+  unconditionally and hence prevented other mechanisms to be used properly
+- revert the default of KerberosUseKuserok back to yes (#1153076)
+- ignore SIGXFSZ in postauth monitor (mindrot#2263)
+- sshd-keygen - don't generate DSA and ED25519 host keys in FIPS mode
+
+* Mon Sep 08 2014 Petr Lautrbach <plautrba@redhat.com> 6.6.1p1-5 + 0.9.3-3
+- set a client's address right after a connection is set (mindrot#2257)
+- apply RFC3454 stringprep to banners when possible (mindrot#2058)
+- don't consider a partial success as a failure (mindrot#2270)
+
+* Sun Aug 17 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 6.6.1p1-4.1
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_21_22_Mass_Rebuild
+
+* Fri Jul 18 2014 Tom Callaway <spot@fedoraproject.org> 6.6.1p1-4 + 0.9.3-3
+- fix license handling (both)
+
+* Fri Jul 18 2014 Petr Lautrbach <plautrba@redhat.com> 6.6.1p1-3 + 0.9.3-2
+- standardise on NI_MAXHOST for gethostname() string lengths (#1051490)
+
+* Mon Jul 14 2014 Petr Lautrbach <plautrba@redhat.com> 6.6.1p1-2 + 0.9.3-2
+- add pam_reauthorize.so to sshd.pam (#1115977)
+- spec file and patches clenup
+
+* Sat Jun 07 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 6.6.1p1-1.1
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_21_Mass_Rebuild
+
+* Tue Jun 03 2014 Petr Lautrbach <plautrba@redhat.com> 6.6.1p1-1 + 0.9.3-2
+- disable the curve25519 KEX when speaking to OpenSSH 6.5 or 6.6
+- add support for ED25519 keys to sshd-keygen and sshd.sysconfig
+- drop openssh-server-sysvinit subpackage
+- slightly change systemd units logic - use sshd-keygen.service (#1066615)
+
+* Tue Jun 03 2014 Petr Lautrbach <plautrba@redhat.com> 6.6p1-1 + 0.9.3-2
+- new upstream release openssh-6.6p1
+
+* Thu May 15 2014 Petr Lautrbach <plautrba@redhat.com> 6.4p1-4 + 0.9.3-1
+- use SSH_COPY_ID_LEGACY variable to run ssh-copy-id in the legacy mode
+- make /etc/ssh/moduli file public (#1043661)
+- test existence of /etc/ssh/ssh_host_ecdsa_key in sshd-keygen.service
+- don't clean up gssapi credentials by default (#1055016)
+- ssh-agent - try CLOCK_BOOTTIME with fallback (#1091992)
+- prevent a server from skipping SSHFP lookup - CVE-2014-2653 (#1081338)
+- ignore environment variables with embedded '=' or '\0' characters - CVE-2014-2532
+  (#1077843)
+
+* Wed Dec 11 2013 Petr Lautrbach <plautrba@redhat.com> 6.4p1-3 + 0.9.3-1
+- sshd-keygen - use correct permissions on ecdsa host key (#1023945)
+- use only rsa and ecdsa host keys by default
+
+* Tue Nov 26 2013 Petr Lautrbach <plautrba@redhat.com> 6.4p1-2 + 0.9.3-1
+- fix fatal() cleanup in the audit patch (#1029074)
+- fix parsing logic of ldap.conf file (#1033662)
+
+* Fri Nov 08 2013 Petr Lautrbach <plautrba@redhat.com> 6.4p1-1 + 0.9.3-1
+- new upstream release
+
+* Fri Nov 01 2013 Petr Lautrbach <plautrba@redhat.com> 6.3p1-5 + 0.9.3-7
+- adjust gss kex mechanism to the upstream changes (#1024004)
+- don't use xfree in pam_ssh_agent_auth sources <geertj@gmail.com> (#1024965)
+
+* Fri Oct 25 2013 Petr Lautrbach <plautrba@redhat.com> 6.3p1-4 + 0.9.3-6
+- rebuild with the openssl with the ECC support
+
+* Thu Oct 24 2013 Petr Lautrbach <plautrba@redhat.com> 6.3p1-3 + 0.9.3-6
+- don't use SSH_FP_MD5 for fingerprints in FIPS mode
+
+* Wed Oct 23 2013 Petr Lautrbach <plautrba@redhat.com> 6.3p1-2 + 0.9.3-6
+- use default_ccache_name from /etc/krb5.conf for a kerberos cache (#991186)
+- increase the size of the Diffie-Hellman groups (#1010607)
+- sshd-keygen to generate ECDSA keys <i.grok@comcast.net> (#1019222)
+
+* Tue Oct 15 2013 Petr Lautrbach <plautrba@redhat.com> 6.3p1-1.1 + 0.9.3-6
+- new upstream release (#1007769)
+
+* Tue Oct 08 2013 Petr Lautrbach <plautrba@redhat.com> 6.2p2-9 + 0.9.3-5
+- use dracut-fips package to determine if a FIPS module is installed
+- revert -fips subpackages and hmac files suffixes
+
+* Wed Sep 25 2013 Petr Lautrbach <plautrba@redhat.com> 6.2p2-8 + 0.9.3-5
+- sshd-keygen: generate only RSA keys by default (#1010092)
+- use dist tag in suffixes for hmac checksum files
+
+* Wed Sep 11 2013 Petr Lautrbach <plautrba@redhat.com> 6.2p2-7 + 0.9.3-5
+- use hmac_suffix for ssh{,d} hmac checksums
+- bump the minimum value of SSH_USE_STRONG_RNG to 14 according to SP800-131A
+- automatically restart sshd.service on-failure after 42s interval
+
+* Thu Aug 29 2013 Petr Lautrbach <plautrba@redhat.com> 6.2p2-6.1 + 0.9.3-5
+- add -fips subpackages that contains the FIPS module files
+
+* Wed Jul 31 2013 Petr Lautrbach <plautrba@redhat.com> 6.2p2-5 + 0.9.3-5
+- gssapi credentials need to be stored before a pam session opened (#987792)
+
+* Tue Jul 23 2013 Petr Lautrbach <plautrba@redhat.com> 6.2p2-4 + 0.9.3-5
+- don't show Success for EAI_SYSTEM (#985964)
+- make sftp's libedit interface marginally multibyte aware (#841771)
+
+* Mon Jun 17 2013 Petr Lautrbach <plautrba@redhat.com> 6.2p2-3 + 0.9.3-5
+- move default gssapi cache to /run/user/<uid> (#848228)
+
+* Tue May 21 2013 Petr Lautrbach <plautrba@redhat.com> 6.2p2-2 + 0.9.3-5
+- add socket activated sshd units to the package (#963268)
+- fix the example in the HOWTO.ldap-keys
+
+* Mon May 20 2013 Petr Lautrbach <plautrba@redhat.com> 6.2p2-1 + 0.9.3-5
+- new upstream release (#963582)
+
+* Wed Apr 17 2013 Petr Lautrbach <plautrba@redhat.com> 6.2p1-4 + 0.9.3-4
+- don't use export in sysconfig file (#953111)
+
+* Tue Apr 16 2013 Petr Lautrbach <plautrba@redhat.com> 6.2p1-3 + 0.9.3-4
+- sshd.service: use KillMode=process (#890376)
+- add latest config.{sub,guess} to support aarch64 (#926284)
+
+* Tue Apr 09 2013 Petr Lautrbach <plautrba@redhat.com> 6.2p1-2 + 0.9.3-4
+- keep track of which IndentityFile options were manually supplied and
+  which were default options, and don't warn if the latter are missing.
+  (mindrot#2084)
+
+* Tue Apr 09 2013 Petr Lautrbach <plautrba@redhat.com> 6.2p1-1 + 0.9.3-4
+- new upstream release (#924727)
+
+* Wed Mar 06 2013 Petr Lautrbach <plautrba@redhat.com> 6.1p1-7 + 0.9.3-3
+- use SELinux type sshd_net_t for [net] childs (#915085)
+
+* Thu Feb 14 2013 Petr Lautrbach <plautrba@redhat.com> 6.1p1-6 + 0.9.3-3
+- fix AuthorizedKeysCommand option
+
+* Fri Feb 08 2013 Petr Lautrbach <plautrba@redhat.com> 6.1p1-5 + 0.9.3-3
+- change default value of MaxStartups - CVE-2010-5107 (#908707)
+
+* Mon Dec 03 2012 Petr Lautrbach <plautrba@redhat.com> 6.1p1-4 + 0.9.3-3
+- fix segfault in openssh-5.8p2-force_krb.patch (#882541)
+
+* Mon Dec 03 2012 Petr Lautrbach <plautrba@redhat.com> 6.1p1-3 + 0.9.3-3
+- replace RequiredAuthentications2 with AuthenticationMethods based on upstream
+- obsolete RequiredAuthentications[12] options
+- fix openssh-6.1p1-privsep-selinux.patch
+
+* Fri Oct 26 2012 Petr Lautrbach <plautrba@redhat.com> 6.1p1-2
+- add SELinux comment to /etc/ssh/sshd_config about SELinux command to modify port (#861400)
+- drop required chkconfig (#865498)
+- drop openssh-5.9p1-sftp-chroot.patch (#830237)
+
+* Sat Sep 15 2012 Petr Lautrbach <plautrba@redhat.com> 6.1p1-1 + 0.9.3-3
+- new upstream release (#852651)
+- use DIR: kerberos type cache (#848228)
+- don't use chroot_user_t for chrooted users (#830237)
+- replace scriptlets with systemd macros (#850249)
+- don't use /bin and /sbin paths (#856590)
+
+* Mon Aug 06 2012 Petr Lautrbach <plautrba@redhat.com> 6.0p1-1 + 0.9.3-2
+- new upstream release
+
+* Mon Aug 06 2012 Petr Lautrbach <plautrba@redhat.com> 5.9p1-26 + 0.9.3-1
+- change SELinux context also for root user (#827109)
+
+* Fri Jul 27 2012 Petr Lautrbach <plautrba@redhat.com> 5.9p1-25 + 0.9.3-1
+- fix various issues in openssh-5.9p1-required-authentications.patch
+
+* Tue Jul 17 2012 Tomas Mraz <tmraz@redhat.com> 5.9p1-24 + 0.9.3-1
+- allow sha256 and sha512 hmacs in the FIPS mode
+
+* Fri Jun 22 2012 Tomas Mraz <tmraz@redhat.com> 5.9p1-23 + 0.9.3-1
+- fix segfault in su when pam_ssh_agent_auth is used and the ssh-agent
+  is not running, most probably not exploitable
+- update pam_ssh_agent_auth to 0.9.3 upstream version
+
+* Fri Apr 06 2012 Petr Lautrbach <plautrba@redhat.com> 5.9p1-22 + 0.9.2-32
+- don't create RSA1 key in FIPS mode
+- don't install sshd-keygen.service (#810419)
+
+* Fri Mar 30 2012 Petr Lautrbach <plautrba@redhat.com> 5.9p1-21 + 0.9.2-32
+- fix various issues in openssh-5.9p1-required-authentications.patch
+
+* Wed Mar 21 2012 Petr Lautrbach <plautrba@redhat.com> 5.9p1-20 + 0.9.2-32
+- Fix dependencies in systemd units, don't enable sshd-keygen.service (#805338)
+
+* Wed Feb 22 2012 Petr Lautrbach <plautrba@redhat.com> 5.9p1-19 + 0.9.2-32
+- Look for x11 forward sockets with AI_ADDRCONFIG flag getaddrinfo (#735889)
+
+* Mon Feb 06 2012 Petr Lautrbach <plautrba@redhat.com> 5.9p1-18 + 0.9.2-32
+- replace TwoFactorAuth with RequiredAuthentications[12]
+  https://bugzilla.mindrot.org/show_bug.cgi?id=983
+
+* Tue Jan 31 2012 Petr Lautrbach <plautrba@redhat.com> 5.9p1-17 + 0.9.2-32
+- run privsep slave process as the users SELinux context (#781634)
+
+* Tue Dec 13 2011 Tomas Mraz <tmraz@redhat.com> 5.9p1-16 + 0.9.2-32
+- add CAVS test driver for the aes-ctr ciphers
+
+* Sun Dec 11 2011 Tomas Mraz <tmraz@redhat.com> 5.9p1-15 + 0.9.2-32
+- enable aes-ctr ciphers use the EVP engines from OpenSSL such as the AES-NI
+
+* Tue Dec 06 2011 Petr Lautrbach <plautrba@redhat.com> 5.9p1-14 + 0.9.2-32
+- warn about unsupported option UsePAM=no (#757545)
+
+* Mon Nov 21 2011 Tomas Mraz <tmraz@redhat.com> - 5.9p1-13 + 0.9.2-32
+- add back the restorecon call to ssh-copy-id - it might be needed on older
+  distributions (#739989)
+
+* Fri Nov 18 2011 Tomas Mraz <tmraz@redhat.com> - 5.9p1-12 + 0.9.2-32
+- still support /etc/sysconfig/sshd loading in sshd service (#754732)
+- fix incorrect key permissions generated by sshd-keygen script (#754779)
+
+* Fri Oct 14 2011 Tomas Mraz <tmraz@redhat.com> - 5.9p1-11 + 0.9.2-32
+- remove unnecessary requires on initscripts
+- set VerifyHostKeyDNS to ask in the default configuration (#739856)
+
+* Mon Sep 19 2011 Jan F. Chadima <jchadima@redhat.com> - 5.9p1-10 + 0.9.2-32
+- selinux sandbox rewrite
+- two factor authentication tweaking
+
+* Wed Sep 14 2011 Jan F. Chadima <jchadima@redhat.com> - 5.9p1-9 + 0.9.2-32
+- coverity upgrade
+- wipe off nonfunctional nss
+- selinux sandbox tweaking
+
+* Tue Sep 13 2011 Jan F. Chadima <jchadima@redhat.com> - 5.9p1-8 + 0.9.2-32
+- coverity upgrade
+- experimental selinux sandbox
+
+* Tue Sep 13 2011 Jan F. Chadima <jchadima@redhat.com> - 5.9p1-7 + 0.9.2-32
+- fully reanable auditing
+
+* Mon Sep 12 2011 Jan F. Chadima <jchadima@redhat.com> - 5.9p1-6 + 0.9.2-32
+- repair signedness in akc patch
+
+* Mon Sep 12 2011 Jan F. Chadima <jchadima@redhat.com> - 5.9p1-5 + 0.9.2-32
+- temporarily disable part of audit4 patch
+
+* Fri Sep  9 2011 Jan F. Chadima <jchadima@redhat.com> - 5.9p1-3 + 0.9.2-32
+- Coverity second pass
+- Reenable akc patch
+
+* Thu Sep  8 2011 Jan F. Chadima <jchadima@redhat.com> - 5.9p1-2 + 0.9.2-32
+- Coverity first pass
+
+* Wed Sep  7 2011 Jan F. Chadima <jchadima@redhat.com> - 5.9p1-1 + 0.9.2-32
+- Rebase to 5.9p1
+- Add chroot sftp patch
+- Add two factor auth patch
+
+* Tue Aug 23 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p2-21 + 0.9.2-31
+- ignore SIGPIPE in ssh keyscan
+
+* Tue Aug  9 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p2-20 + 0.9.2-31
+- save ssh-askpass's debuginfo
+
+* Mon Aug  8 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p2-19 + 0.9.2-31
+- compile ssh-askpass with corect CFLAGS
+
+* Mon Aug  8 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p2-18 + 0.9.2-31
+- improve selinux's change context log 
+
+* Mon Aug  8 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p2-17 + 0.9.2-31
+- repair broken man pages
+
+* Mon Jul 25 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p2-16 + 0.9.2-31
+- rebuild due to broken rpmbiild
+
+* Thu Jul 21 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p2-15 + 0.9.2-31
+- Do not change context when run under unconfined_t
+
+* Thu Jul 14 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p2-14 + 0.9.2-31
+- Add postlogin to pam. (#718807)
+
+* Tue Jun 28 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p2-12 + 0.9.2-31
+- Systemd compatibility according to Mathieu Bridon <bochecha@fedoraproject.org>
+- Split out the host keygen into their own command, to ease future migration
+  to systemd. Compatitbility with the init script was kept.
+- Migrate the package to full native systemd unit files, according to the Fedora
+  packaging guidelines.
+- Prepate the unit files for running an ondemand server. (do not add it actually)
+
+* Tue Jun 21 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p2-10 + 0.9.2-31
+- Mention IPv6 usage in man pages
+
+* Mon Jun 20 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p2-9 + 0.9.2-31
+- Improve init script
+
+* Thu Jun 16 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p2-7 + 0.9.2-31
+- Add possibility to compile openssh without downstream patches
+
+* Thu Jun  9 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p2-6 + 0.9.2-31
+- remove stale control sockets (#706396)
+
+* Tue May 31 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p2-5 + 0.9.2-31
+- improove entropy manuals
+
+* Fri May 27 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p2-4 + 0.9.2-31
+- improove entropy handling
+- concat ldap patches
+
+* Tue May 24 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p2-3 + 0.9.2-31
+- improove ldap manuals
+
+* Mon May 23 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p2-2 + 0.9.2-31
+- add gssapi forced command
+
+* Tue May  3 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p2-1 + 0.9.2-31
+- update the openssh version
+
+* Thu Apr 28 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p1-34 + 0.9.2-30
+- temporarily disabling systemd units
+
+* Wed Apr 27 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p1-33 + 0.9.2-30
+- add flags AI_V4MAPPED and AI_ADDRCONFIG to getaddrinfo
+
+* Tue Apr 26 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p1-32 + 0.9.2-30
+- update scriptlets
+
+* Fri Apr 22 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p1-30 + 0.9.2-30
+- add systemd units
+
+* Fri Apr 22 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p1-28 + 0.9.2-30
+- improving sshd -> passwd transation
+- add template for .local domain to sshd_config
+
+* Thu Apr 21 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p1-27 + 0.9.2-30
+- the private keys may be 640 root:ssh_keys ssh_keysign is sgid
+
+* Wed Apr 20 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p1-26 + 0.9.2-30
+- improving sshd -> passwd transation
+
+* Tue Apr  5 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p1-25 + 0.9.2-30
+- the intermediate context is set to sshd_sftpd_t
+- do not crash in packet.c if no connection
+
+* Thu Mar 31 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p1-24 + 0.9.2-30
+- resolve warnings in port_linux.c
+
+* Tue Mar 29 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p1-23 + 0.9.2-30
+- add /etc/sysconfig/sshd
+
+* Mon Mar 28 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p1-22 + 0.9.2-30
+- improve reseeding and seed source (documentation)
+
+* Tue Mar 22 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p1-20 + 0.9.2-30
+- use /dev/random or /dev/urandom for seeding prng
+- improve periodical reseeding of random generator
+
+* Thu Mar 17 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p1-18 + 0.9.2-30
+- add periodical reseeding of random generator 
+- change selinux contex for internal sftp in do_usercontext
+- exit(0) after sigterm
+
+* Thu Mar 10 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p1-17 + 0.9.2-30
+- improove ssh-ldap (documentation)
+
+* Tue Mar  8 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p1-16 + 0.9.2-30
+- improve session keys audit
+
+* Mon Mar  7 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p1-15 + 0.9.2-30
+- CVE-2010-4755
+
+* Fri Mar  4 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p1-14 + 0.9.2-30
+- improove ssh-keycat (documentation)
+
+* Thu Mar  3 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p1-13 + 0.9.2-30
+- improve audit of logins and auths
+
+* Tue Mar  1 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p1-12 + 0.9.2-30
+- improove ssk-keycat
+
+* Mon Feb 28 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p1-11 + 0.9.2-30
+- add ssk-keycat
+
+* Fri Feb 25 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p1-10 + 0.9.2-30
+- reenable auth-keys ldap backend
+
+* Fri Feb 25 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p1-9 + 0.9.2-30
+- another audit improovements
+
+* Thu Feb 24 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p1-8 + 0.9.2-30
+- another audit improovements
+- switchable fingerprint mode
+
+* Thu Feb 17 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p1-4 + 0.9.2-30
+- improve audit of server key management
+
+* Wed Feb 16 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p1-3 + 0.9.2-30
+- improve audit of logins and auths
+
+* Mon Feb 14 2011 Jan F. Chadima <jchadima@redhat.com> - 5.8p1-1 + 0.9.2-30
+- bump openssh version to 5.8p1
+
+* Tue Feb 08 2011 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 5.6p1-30.1
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_15_Mass_Rebuild
+
+* Mon Feb  7 2011 Jan F. Chadima <jchadima@redhat.com> - 5.6p1-30 + 0.9.2-29
+- clean the data structures in the non privileged process
+- clean the data structures when roaming
+
+* Wed Feb  2 2011 Jan F. Chadima <jchadima@redhat.com> - 5.6p1-28 + 0.9.2-29
+- clean the data structures in the privileged process
+
+* Tue Jan 25 2011 Jan F. Chadima <jchadima@redhat.com> - 5.6p1-25 + 0.9.2-29
+- clean the data structures before exit net process
+
+* Mon Jan 17 2011 Jan F. Chadima <jchadima@redhat.com> - 5.6p1-24 + 0.9.2-29
+- make audit compatible with the fips mode
+
+* Fri Jan 14 2011 Jan F. Chadima <jchadima@redhat.com> - 5.6p1-23 + 0.9.2-29
+- add audit of destruction the server keys
+
+* Wed Jan 12 2011 Jan F. Chadima <jchadima@redhat.com> - 5.6p1-22 + 0.9.2-29
+- add audit of destruction the session keys
+
+* Fri Dec 10 2010 Jan F. Chadima <jchadima@redhat.com> - 5.6p1-21 + 0.9.2-29
+- reenable run sshd as non root user
+- renable rekeying
+
+* Wed Nov 24 2010 Jan F. Chadima <jchadima@redhat.com> - 5.6p1-20 + 0.9.2-29
+- reapair clientloop crash (#627332)
+- properly restore euid in case connect to the ssh-agent socket fails
+
+* Mon Nov 22 2010 Jan F. Chadima <jchadima@redhat.com> - 5.6p1-19 + 0.9.2-28
+- striped read permissions from suid and sgid binaries
+
+* Mon Nov 15 2010 Jan F. Chadima <jchadima@redhat.com> - 5.6p1-18 + 0.9.2-27
+- used upstream version of the biguid patch
+
+* Mon Nov 15 2010 Jan F. Chadima <jchadima@redhat.com> - 5.6p1-17 + 0.9.2-27
+- improoved kuserok patch
+
+* Fri Nov  5 2010 Jan F. Chadima <jchadima@redhat.com> - 5.6p1-16 + 0.9.2-27
+- add auditing the host based key ussage
+- repait X11 abstract layer socket (#648896)
+
+* Wed Nov  3 2010 Jan F. Chadima <jchadima@redhat.com> - 5.6p1-15 + 0.9.2-27
+- add auditing the kex result
+
+* Tue Nov  2 2010 Jan F. Chadima <jchadima@redhat.com> - 5.6p1-14 + 0.9.2-27
+- add auditing the key ussage
+
+* Wed Oct 20 2010 Jan F. Chadima <jchadima@redhat.com> - 5.6p1-12 + 0.9.2-27
+- update gsskex patch (#645389)
+
+* Wed Oct 20 2010 Jan F. Chadima <jchadima@redhat.com> - 5.6p1-11 + 0.9.2-27
+- rebase linux audit according to upstream
+
+* Fri Oct  1 2010 Jan F. Chadima <jchadima@redhat.com> - 5.6p1-10 + 0.9.2-27
+- add missing headers to linux audit
+
+* Wed Sep 29 2010 Jan F. Chadima <jchadima@redhat.com> - 5.6p1-9 + 0.9.2-27
+- audit module now uses openssh audit framevork
+
+* Wed Sep 15 2010 Jan F. Chadima <jchadima@redhat.com> - 5.6p1-8 + 0.9.2-27
+- Add the GSSAPI kuserok switch to the kuserok patch
+
+* Wed Sep 15 2010 Jan F. Chadima <jchadima@redhat.com> - 5.6p1-7 + 0.9.2-27
+- Repaired the kuserok patch
+
+* Mon Sep 13 2010 Jan F. Chadima <jchadima@redhat.com> - 5.6p1-6 + 0.9.2-27
+- Repaired the problem with puting entries with very big uid into lastlog
+
+* Mon Sep 13 2010 Jan F. Chadima <jchadima@redhat.com> - 5.6p1-5 + 0.9.2-27
+- Merging selabel patch with the upstream version. (#632914)
+
+* Mon Sep 13 2010 Jan F. Chadima <jchadima@redhat.com> - 5.6p1-4 + 0.9.2-27
+- Tweaking selabel patch to work properly without selinux rules loaded. (#632914)
+
+* Wed Sep  8 2010 Tomas Mraz <tmraz@redhat.com> - 5.6p1-3 + 0.9.2-27
+- Make fipscheck hmacs compliant with FHS - requires new fipscheck
+
+* Fri Sep  3 2010 Jan F. Chadima <jchadima@redhat.com> - 5.6p1-2 + 0.9.2-27
+- Added -z relro -z now to LDFLAGS
+
+* Fri Sep  3 2010 Jan F. Chadima <jchadima@redhat.com> - 5.6p1-1 + 0.9.2-27
+- Rebased to openssh5.6p1
+
+* Wed Jul  7 2010 Jan F. Chadima <jchadima@redhat.com> - 5.5p1-18 + 0.9.2-26
+- merged with newer bugzilla's version of authorized keys command patch
+
+* Wed Jun 30 2010 Jan F. Chadima <jchadima@redhat.com> - 5.5p1-17 + 0.9.2-26
+- improved the x11 patch according to upstream (#598671)
+
+* Fri Jun 25 2010 Jan F. Chadima <jchadima@redhat.com> - 5.5p1-16 + 0.9.2-26
+- improved the x11 patch (#598671)
+
+* Thu Jun 24 2010 Jan F. Chadima <jchadima@redhat.com> - 5.5p1-15 + 0.9.2-26
+- changed _PATH_UNIX_X to unexistent file name (#598671)
+
+* Wed Jun 23 2010 Jan F. Chadima <jchadima@redhat.com> - 5.5p1-14 + 0.9.2-26
+- sftp works in deviceless chroot again (broken from 5.5p1-3)
+
+* Tue Jun  8 2010 Jan F. Chadima <jchadima@redhat.com> - 5.5p1-13 + 0.9.2-26
+- add option to switch out krb5_kuserok
+
+* Fri May 21 2010 Jan F. Chadima <jchadima@redhat.com> - 5.5p1-12 + 0.9.2-26
+- synchronize uid and gid for the user sshd
+
+* Thu May 20 2010 Jan F. Chadima <jchadima@redhat.com> - 5.5p1-11 + 0.9.2-26
+- Typo in ssh-ldap.conf(5) and ssh-ladap-helper(8)
+
+* Fri May 14 2010 Jan F. Chadima <jchadima@redhat.com> - 5.5p1-10 + 0.9.2-26
+- Repair the reference in man ssh-ldap-helper(8)
+- Repair the PubkeyAgent section in sshd_config(5)
+- Provide example ldap.conf
+
+* Thu May 13 2010 Jan F. Chadima <jchadima@redhat.com> - 5.5p1-9 + 0.9.2-26
+- Make the Ldap configuration widely compatible
+- create the aditional docs for LDAP support.
+
+* Thu May  6 2010 Jan F. Chadima <jchadima@redhat.com> - 5.5p1-8 + 0.9.2-26
+- Make LDAP config elements TLS_CACERT and TLS_REQCERT compatiple with pam_ldap (#589360)
+
+* Thu May  6 2010 Jan F. Chadima <jchadima@redhat.com> - 5.5p1-7 + 0.9.2-26
+- Make LDAP config element tls_checkpeer compatiple with nss_ldap (#589360)
+
+* Tue May  4 2010 Jan F. Chadima <jchadima@redhat.com> - 5.5p1-6 + 0.9.2-26
+- Comment spec.file
+- Sync patches from upstream
+
+* Mon May  3 2010 Jan F. Chadima <jchadima@redhat.com> - 5.5p1-5 + 0.9.2-26
+- Create separate ldap package
+- Tweak the ldap patch
+- Rename stderr patch properly
+
+* Thu Apr 29 2010 Jan F. Chadima <jchadima@redhat.com> - 5.5p1-4 + 0.9.2-26
+- Added LDAP support
+
+* Mon Apr 26 2010 Jan F. Chadima <jchadima@redhat.com> - 5.5p1-3 + 0.9.2-26
+- Ignore .bashrc output to stderr in the subsystems
+
+* Tue Apr 20 2010 Jan F. Chadima <jchadima@redhat.com> - 5.5p1-2 + 0.9.2-26
+- Drop dependency on man
+
+* Fri Apr 16 2010 Jan F. Chadima <jchadima@redhat.com> - 5.5p1-1 + 0.9.2-26
+- Update to 5.5p1
+
+* Fri Mar 12 2010 Jan F. Chadima <jchadima@redhat.com> - 5.4p1-3 + 0.9.2-25
+- repair configure script of pam_ssh_agent
+- repair error mesage in ssh-keygen
+
+* Fri Mar 12 2010 Jan F. Chadima <jchadima@redhat.com> - 5.4p1-2
+- source krb5-devel profile script only if exists
+
+* Tue Mar  9 2010 Jan F. Chadima <jchadima@redhat.com> - 5.4p1-1
+- Update to 5.4p1
+- discontinued support for nss-keys
+- discontinued support for scard
+
+* Wed Mar  3 2010 Jan F. Chadima <jchadima@redhat.com> - 5.4p1-0.snap20100302.1
+- Prepare update to 5.4p1
+
+* Mon Feb 15 2010 Jan F. Chadima <jchadima@redhat.com> - 5.3p1-22
+- ImplicitDSOLinking (#564824)
+
+* Fri Jan 29 2010 Jan F. Chadima <jchadima@redhat.com> - 5.3p1-21
+- Allow to use hardware crypto if awailable (#559555)
+
+* Mon Jan 25 2010 Jan F. Chadima <jchadima@redhat.com> - 5.3p1-20
+- optimized FD_CLOEXEC on accept socket (#541809)
+
+* Mon Jan 25 2010 Tomas Mraz <tmraz@redhat.com> - 5.3p1-19
+- updated pam_ssh_agent_auth to new version from upstream (just
+  a licence change)
+
+* Thu Jan 21 2010 Jan F. Chadima <jchadima@redhat.com> - 5.3p1-18
+- optimized RAND_cleanup patch (#557166)
+
+* Wed Jan 20 2010 Jan F. Chadima <jchadima@redhat.com> - 5.3p1-17
+- add RAND_cleanup at the exit of each program using RAND (#557166)
+
+* Tue Jan 19 2010 Jan F. Chadima <jchadima@redhat.com> - 5.3p1-16
+- set FD_CLOEXEC on accepted socket (#541809)
+
+* Fri Jan  8 2010 Jan F. Chadima <jchadima@redhat.com> - 5.3p1-15
+- replaced define by global in macros
+
+* Tue Jan  5 2010 Jan F. Chadima <jchadima@redhat.com> - 5.3p1-14
+- Update the pka patch
+
+* Mon Dec 21 2009 Jan F. Chadima <jchadima@redhat.com> - 5.3p1-13
+- Update the audit patch
+
+* Fri Dec  4 2009 Jan F. Chadima <jchadima@redhat.com> - 5.3p1-12
+- Add possibility to autocreate only RSA key into initscript (#533339)
+
+* Fri Nov 27 2009 Jan F. Chadima <jchadima@redhat.com> - 5.3p1-11
+- Prepare NSS key patch for future SEC_ERROR_LOCKED_PASSWORD (#537411)
+
+* Tue Nov 24 2009 Jan F. Chadima <jchadima@redhat.com> - 5.3p1-10
+- Update NSS key patch (#537411, #356451)
+
+* Fri Nov 20 2009 Jan F. Chadima <jchadima@redhat.com> - 5.3p1-9
+- Add gssapi key exchange patch (#455351)
+
+* Fri Nov 20 2009 Jan F. Chadima <jchadima@redhat.com> - 5.3p1-8
+- Add public key agent patch (#455350)
+
+* Mon Nov  2 2009 Jan F. Chadima <jchadima@redhat.com> - 5.3p1-7
+- Repair canohost patch to allow gssapi to work when host is acessed via pipe proxy (#531849)
+
+* Thu Oct 29 2009 Jan F. Chadima <jchadima@redhat.com> - 5.3p1-6
+- Modify the init script to prevent it to hang during generating the keys (#515145)
+
+* Tue Oct 27 2009 Jan F. Chadima <jchadima@redhat.com> - 5.3p1-5
+- Add README.nss
+
+* Mon Oct 19 2009 Tomas Mraz <tmraz@redhat.com> - 5.3p1-4
+- Add pam_ssh_agent_auth module to a subpackage.
+
+* Fri Oct 16 2009 Jan F. Chadima <jchadima@redhat.com> - 5.3p1-3
+- Reenable audit.
+
+* Fri Oct  2 2009 Jan F. Chadima <jchadima@redhat.com> - 5.3p1-2
+- Upgrade to new wersion 5.3p1
+
+* Tue Sep 29 2009 Jan F. Chadima <jchadima@redhat.com> - 5.2p1-29
+- Resolve locking in ssh-add (#491312)
+
+* Thu Sep 24 2009 Jan F. Chadima <jchadima@redhat.com> - 5.2p1-28
+- Repair initscript to be acord to guidelines (#521860)
+- Add bugzilla# to application of edns and xmodifiers patch
+
+* Wed Sep 16 2009 Jan F. Chadima <jchadima@redhat.com> - 5.2p1-26
+- Changed pam stack to password-auth
+
+* Fri Sep 11 2009 Jan F. Chadima <jchadima@redhat.com> - 5.2p1-25
+- Dropped homechroot patch
+
+* Mon Sep  7 2009 Jan F. Chadima <jchadima@redhat.com> - 5.2p1-24
+- Add check for nosuid, nodev in homechroot
+
+* Tue Sep  1 2009 Jan F. Chadima <jchadima@redhat.com> - 5.2p1-23
+- add correct patch for ip-opts
+
+* Tue Sep  1 2009 Jan F. Chadima <jchadima@redhat.com> - 5.2p1-22
+- replace ip-opts patch by an upstream candidate version
+
+* Mon Aug 31 2009 Jan F. Chadima <jchadima@redhat.com> - 5.2p1-21
+- rearange selinux patch to be acceptable for upstream
+- replace seftp patch by an upstream version
+
+* Fri Aug 28 2009 Jan F. Chadima <jchadima@redhat.com> - 5.2p1-20
+- merged xmodifiers to redhat patch
+- merged gssapi-role to selinux patch
+- merged cve-2007_3102 to audit patch
+- sesftp patch only with WITH_SELINUX flag
+- rearange sesftp patch according to upstream request
+
+* Wed Aug 26 2009 Jan F. Chadima <jchadima@redhat.com> - 5.2p1-19
+- minor change in sesftp patch
+
+* Fri Aug 21 2009 Tomas Mraz <tmraz@redhat.com> - 5.2p1-18
+- rebuilt with new openssl
+
+* Thu Jul 30 2009 Jan F. Chadima <jchadima@redhat.com> - 5.2p1-17
+- Added dnssec support. (#205842)
+
+* Sat Jul 25 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 5.2p1-16
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_12_Mass_Rebuild
+
+* Fri Jul 24 2009 Jan F. Chadima <jchadima@redhat.com> - 5.2p1-15
+- only INTERNAL_SFTP can be home-chrooted
+- save _u and _r parts of context changing to sftpd_t
+
+* Fri Jul 17 2009 Jan F. Chadima <jchadima@redhat.com> - 5.2p1-14
+- changed internal-sftp context to sftpd_t
+
+* Fri Jul  3 2009 Jan F. Chadima <jchadima@redhat.com> - 5.2p1-13
+- changed home length path patch to upstream version
+
+* Tue Jun 30 2009 Jan F. Chadima <jchadima@redhat.com> - 5.2p1-12
+- create '~/.ssh/known_hosts' within proper context
+
+* Mon Jun 29 2009 Jan F. Chadima <jchadima@redhat.com> - 5.2p1-11
+- length of home path in ssh now limited by PATH_MAX
+- correct timezone with daylight processing
+
+* Sat Jun 27 2009 Jan F. Chadima <jchadima@redhat.com> - 5.2p1-10
+- final version chroot %%h (sftp only)
+
+* Tue Jun 23 2009 Jan F. Chadima <jchadima@redhat.com> - 5.2p1-9
+- repair broken ls in chroot %%h
+
+* Fri Jun 12 2009 Jan F. Chadima <jchadima@redhat.com> - 5.2p1-8
+- add XMODIFIERS to exported environment (#495690)
+
+* Fri May 15 2009 Tomas Mraz <tmraz@redhat.com> - 5.2p1-6
+- allow only protocol 2 in the FIPS mode
+
+* Thu Apr 30 2009 Tomas Mraz <tmraz@redhat.com> - 5.2p1-5
+- do integrity verification only on binaries which are part
+  of the OpenSSH FIPS modules
+
+* Mon Apr 20 2009 Tomas Mraz <tmraz@redhat.com> - 5.2p1-4
+- log if FIPS mode is initialized
+- make aes-ctr cipher modes work in the FIPS mode
+
+* Fri Apr  3 2009 Jan F. Chadima <jchadima@redhat.com> - 5.2p1-3
+- fix logging after chroot
+- enable non root users to use chroot %%h in internal-sftp
+
+* Fri Mar 13 2009 Tomas Mraz <tmraz@redhat.com> - 5.2p1-2
+- add AES-CTR ciphers to the FIPS mode proposal
+
+* Mon Mar  9 2009 Jan F. Chadima <jchadima@redhat.com> - 5.2p1-1
+- upgrade to new upstream release
+
+* Thu Feb 26 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 5.1p1-8
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_11_Mass_Rebuild
+
+* Thu Feb 12 2009 Tomas Mraz <tmraz@redhat.com> - 5.1p1-7
+- drop obsolete triggers
+- add testing FIPS mode support
+- LSBize the initscript (#247014)
+
+* Fri Jan 30 2009 Tomas Mraz <tmraz@redhat.com> - 5.1p1-6
+- enable use of ssl engines (#481100)
+
+* Thu Jan 15 2009 Tomas Mraz <tmraz@redhat.com> - 5.1p1-5
+- remove obsolete --with-rsh (#478298)
+- add pam_sepermit to allow blocking confined users in permissive mode
+  (#471746)
+- move system-auth after pam_selinux in the session stack
+
+* Thu Dec 11 2008 Tomas Mraz <tmraz@redhat.com> - 5.1p1-4
+- set FD_CLOEXEC on channel sockets (#475866)
+- adjust summary
+- adjust nss-keys patch so it is applicable without selinux patches (#470859)
+
+* Fri Oct 17 2008 Tomas Mraz <tmraz@redhat.com> - 5.1p1-3
+- fix compatibility with some servers (#466818)
+
+* Thu Jul 31 2008 Tomas Mraz <tmraz@redhat.com> - 5.1p1-2
+- fixed zero length banner problem (#457326)
+
+* Wed Jul 23 2008 Tomas Mraz <tmraz@redhat.com> - 5.1p1-1
+- upgrade to new upstream release
+- fixed a problem with public key authentication and explicitely
+  specified SELinux role
+
+* Wed May 21 2008 Tomas Mraz <tmraz@redhat.com> - 5.0p1-3
+- pass the connection socket to ssh-keysign (#447680)
+
+* Mon May 19 2008 Tomas Mraz <tmraz@redhat.com> - 5.0p1-2
+- add LANGUAGE to accepted/sent environment variables (#443231)
+- use pam_selinux to obtain the user context instead of doing it itself
+- unbreak server keep alive settings (patch from upstream)
+- small addition to scp manpage
+
+* Mon Apr  7 2008 Tomas Mraz <tmraz@redhat.com> - 5.0p1-1
+- upgrade to new upstream (#441066)
+- prevent initscript from killing itself on halt with upstart (#438449)
+- initscript status should show that the daemon is running
+  only when the main daemon is still alive (#430882)
+
+* Thu Mar  6 2008 Tomas Mraz <tmraz@redhat.com> - 4.7p1-10
+- fix race on control master and cleanup stale control socket (#436311)
+  patches by David Woodhouse
+
+* Fri Feb 29 2008 Tomas Mraz <tmraz@redhat.com> - 4.7p1-9
+- set FD_CLOEXEC on client socket
+- apply real fix for window size problem (#286181) from upstream
+- apply fix for the spurious failed bind from upstream
+- apply open handle leak in sftp fix from upstream
+
+* Tue Feb 12 2008 Dennis Gilmore <dennis@ausil.us> - 4.7p1-8
+- we build for sparcv9 now  and it needs -fPIE
+
+* Thu Jan  3 2008 Tomas Mraz <tmraz@redhat.com> - 4.7p1-7
+- fix gssapi auth with explicit selinux role requested (#427303) - patch
+  by Nalin Dahyabhai
+
+* Tue Dec  4 2007 Tomas Mraz <tmraz@redhat.com> - 4.7p1-6
+- explicitly source krb5-devel profile script
+
+* Tue Dec 04 2007 Release Engineering <rel-eng at fedoraproject dot org> - 4.7p1-5
+- Rebuild for openssl bump
+
+* Tue Nov 20 2007 Tomas Mraz <tmraz@redhat.com> - 4.7p1-4
+- do not copy /etc/localtime into the chroot as it is not
+  necessary anymore (#193184)
+- call setkeycreatecon when selinux context is established
+- test for NULL privk when freeing key (#391871) - patch by
+  Pierre Ossman
+
+* Mon Sep 17 2007 Tomas Mraz <tmraz@redhat.com> - 4.7p1-2
+- revert default window size adjustments (#286181)
+
+* Thu Sep  6 2007 Tomas Mraz <tmraz@redhat.com> - 4.7p1-1
+- upgrade to latest upstream
+- use libedit in sftp (#203009)
+- fixed audit log injection problem (CVE-2007-3102)
+
+* Thu Aug  9 2007 Tomas Mraz <tmraz@redhat.com> - 4.5p1-8
+- fix sftp client problems on write error (#247802)
+- allow disabling autocreation of server keys (#235466)
+
+* Wed Jun 20 2007 Tomas Mraz <tmraz@redhat.com> - 4.5p1-7
+- experimental NSS keys support
+- correctly setup context when empty level requested (#234951)
+
+* Tue Mar 20 2007 Tomas Mraz <tmraz@redhat.com> - 4.5p1-6
+- mls level check must be done with default role same as requested
+
+* Mon Mar 19 2007 Tomas Mraz <tmraz@redhat.com> - 4.5p1-5
+- make profile.d/gnome-ssh-askpass.* regular files (#226218)
+
+* Tue Feb 27 2007 Tomas Mraz <tmraz@redhat.com> - 4.5p1-4
+- reject connection if requested mls range is not obtained (#229278)
+
+* Thu Feb 22 2007 Tomas Mraz <tmraz@redhat.com> - 4.5p1-3
+- improve Buildroot
+- remove duplicate /etc/ssh from files
+
+* Tue Jan 16 2007 Tomas Mraz <tmraz@redhat.com> - 4.5p1-2
+- support mls on labeled networks (#220487)
+- support mls level selection on unlabeled networks
+- allow / in usernames in scp (only beginning /, ./, and ../ is special) 
+
+* Thu Dec 21 2006 Tomas Mraz <tmraz@redhat.com> - 4.5p1-1
+- update to 4.5p1 (#212606)
+
+* Thu Nov 30 2006 Tomas Mraz <tmraz@redhat.com> - 4.3p2-14
+- fix gssapi with DNS loadbalanced clusters (#216857)
+
+* Tue Nov 28 2006 Tomas Mraz <tmraz@redhat.com> - 4.3p2-13
+- improved pam_session patch so it doesn't regress, the patch is necessary
+  for the pam_session_close to be called correctly as uid 0
+
+* Fri Nov 10 2006 Tomas Mraz <tmraz@redhat.com> - 4.3p2-12
+- CVE-2006-5794 - properly detect failed key verify in monitor (#214641)
+
+* Thu Nov  2 2006 Tomas Mraz <tmraz@redhat.com> - 4.3p2-11
+- merge sshd initscript patches
+- kill all ssh sessions when stop is called in halt or reboot runlevel
+- remove -TERM option from killproc so we don't race on sshd restart
+
+* Mon Oct  2 2006 Tomas Mraz <tmraz@redhat.com> - 4.3p2-10
+- improve gssapi-no-spnego patch (#208102)
+- CVE-2006-4924 - prevent DoS on deattack detector (#207957)
+- CVE-2006-5051 - don't call cleanups from signal handler (#208459)
+
+* Wed Aug 23 2006 Tomas Mraz <tmraz@redhat.com> - 4.3p2-9
+- don't report duplicate syslog messages, use correct local time (#189158)
+- don't allow spnego as gssapi mechanism (from upstream)
+- fixed memleaks found by Coverity (from upstream)
+- allow ip options except source routing (#202856) (patch by HP)
+
+* Tue Aug  8 2006 Tomas Mraz <tmraz@redhat.com> - 4.3p2-8
+- drop the pam-session patch from the previous build (#201341)
+- don't set IPV6_V6ONLY sock opt when listening on wildcard addr (#201594)
+
+* Thu Jul 20 2006 Tomas Mraz <tmraz@redhat.com> - 4.3p2-7
+- dropped old ssh obsoletes
+- call the pam_session_open/close from the monitor when privsep is
+  enabled so it is always called as root (patch by Darren Tucker)
+
+* Mon Jul 17 2006 Tomas Mraz <tmraz@redhat.com> - 4.3p2-6
+- improve selinux patch (by Jan Kiszka)
+- upstream patch for buffer append space error (#191940)
+- fixed typo in configure.ac (#198986)
+- added pam_keyinit to pam configuration (#198628)
+- improved error message when askpass dialog cannot grab
+  keyboard input (#198332)
+- buildrequires xauth instead of xorg-x11-xauth
+- fixed a few rpmlint warnings
+
+* Wed Jul 12 2006 Jesse Keating <jkeating@redhat.com> - 4.3p2-5.1
+- rebuild
+
+* Fri Apr 14 2006 Tomas Mraz <tmraz@redhat.com> - 4.3p2-5
+- don't request pseudoterminal allocation if stdin is not tty (#188983)
+
+* Thu Mar  2 2006 Tomas Mraz <tmraz@redhat.com> - 4.3p2-4
+- allow access if audit is not compiled in kernel (#183243)
+
+* Fri Feb 24 2006 Tomas Mraz <tmraz@redhat.com> - 4.3p2-3
+- enable the subprocess in chroot to send messages to system log
+- sshd should prevent login if audit call fails
+
+* Tue Feb 21 2006 Tomas Mraz <tmraz@redhat.com> - 4.3p2-2
+- print error from scp if not remote (patch by Bjorn Augustsson #178923)
+
+* Mon Feb 13 2006 Tomas Mraz <tmraz@redhat.com> - 4.3p2-1
+- new version
+
+* Fri Feb 10 2006 Jesse Keating <jkeating@redhat.com> - 4.3p1-2.1
+- bump again for double-long bug on ppc(64)
+
+* Mon Feb  6 2006 Tomas Mraz <tmraz@redhat.com> - 4.3p1-2
+- fixed another place where syslog was called in signal handler
+- pass locale environment variables to server, accept them there (#179851)
+
+* Wed Feb  1 2006 Tomas Mraz <tmraz@redhat.com> - 4.3p1-1
+- new version, dropped obsolete patches
+
+* Tue Dec 20 2005 Tomas Mraz <tmraz@redhat.com> - 4.2p1-10
+- hopefully make the askpass dialog less confusing (#174765)
+
+* Fri Dec 09 2005 Jesse Keating <jkeating@redhat.com>
+- rebuilt
+
+* Tue Nov 22 2005 Tomas Mraz <tmraz@redhat.com> - 4.2p1-9
+- drop x11-ssh-askpass from the package
+- drop old build_6x ifs from spec file
+- improve gnome-ssh-askpass so it doesn't reveal number of passphrase 
+  characters to person looking at the display
+- less hackish fix for the __USE_GNU problem
+
+* Fri Nov 18 2005 Nalin Dahyabhai <nalin@redhat.com> - 4.2p1-8
+- work around missing gccmakedep by wrapping makedepend in a local script
+- remove now-obsolete build dependency on "xauth"
+
+* Thu Nov 17 2005 Warren Togami <wtogami@redhat.com> - 4.2p1-7
+- xorg-x11-devel -> libXt-devel
+- rebuild for new xauth location so X forwarding works
+- buildreq audit-libs-devel
+- buildreq automake for aclocal
+- buildreq imake for xmkmf
+-  -D_GNU_SOURCE in flags in order to get it to build
+   Ugly hack to workaround openssh defining __USE_GNU which is
+   not allowed and causes problems according to Ulrich Drepper
+   fix this the correct way after FC5test1
+
+* Wed Nov  9 2005 Jeremy Katz <katzj@redhat.com> - 4.2p1-6
+- rebuild against new openssl
+
+* Fri Oct 28 2005 Tomas Mraz <tmraz@redhat.com> 4.2p1-5
+- put back the possibility to skip SELinux patch
+- add patch for user login auditing by Steve Grubb
+
+* Tue Oct 18 2005 Dan Walsh <dwalsh@redhat.com> 4.2p1-4
+- Change selinux patch to use get_default_context_with_rolelevel in libselinux.
+
+* Thu Oct 13 2005 Tomas Mraz <tmraz@redhat.com> 4.2p1-3
+- Update selinux patch to use getseuserbyname
+
+* Fri Oct  7 2005 Tomas Mraz <tmraz@redhat.com> 4.2p1-2
+- use include instead of pam_stack in pam config
+- use fork+exec instead of system in scp - CVE-2006-0225 (#168167)
+- upstream patch for displaying authentication errors
+
+* Tue Sep 06 2005 Tomas Mraz <tmraz@redhat.com> 4.2p1-1
+- upgrade to a new upstream version
+
+* Tue Aug 16 2005 Tomas Mraz <tmraz@redhat.com> 4.1p1-5
+- use x11-ssh-askpass if openssh-askpass-gnome is not installed (#165207)
+- install ssh-copy-id from contrib (#88707)
+
+* Wed Jul 27 2005 Tomas Mraz <tmraz@redhat.com> 4.1p1-4
+- don't deadlock on exit with multiple X forwarded channels (#152432)
+- don't use X11 port which can't be bound on all IP families (#163732)
+
+* Wed Jun 29 2005 Tomas Mraz <tmraz@redhat.com> 4.1p1-3
+- fix small regression caused by the nologin patch (#161956)
+- fix race in getpeername error checking (mindrot #1054)
+
+* Thu Jun  9 2005 Tomas Mraz <tmraz@redhat.com> 4.1p1-2
+- use only pam_nologin for nologin testing
+
+* Mon Jun  6 2005 Tomas Mraz <tmraz@redhat.com> 4.1p1-1
+- upgrade to a new upstream version
+- call pam_loginuid as a pam session module
+
+* Mon May 16 2005 Tomas Mraz <tmraz@redhat.com> 4.0p1-3
+- link libselinux only to sshd (#157678)
+
+* Mon Apr  4 2005 Tomas Mraz <tmraz@redhat.com> 4.0p1-2
+- fixed Local/RemoteForward in ssh_config.5 manpage
+- fix fatal when Local/RemoteForward is used and scp run (#153258)
+- don't leak user validity when using krb5 authentication
+
+* Thu Mar 24 2005 Tomas Mraz <tmraz@redhat.com> 4.0p1-1
+- upgrade to 4.0p1
+- remove obsolete groups patch
+
+* Wed Mar 16 2005 Elliot Lee <sopwith@redhat.com>
+- rebuilt
+
+* Mon Feb 28 2005 Nalin Dahyabhai <nalin@redhat.com> 3.9p1-12
+- rebuild so that configure can detect that krb5_init_ets is gone now
+
+* Mon Feb 21 2005 Tomas Mraz <tmraz@redhat.com> 3.9p1-11
+- don't call syslog in signal handler
+- allow password authentication when copying from remote
+  to remote machine (#103364)
+
+* Wed Feb  9 2005 Tomas Mraz <tmraz@redhat.com>
+- add spaces to messages in initscript (#138508)
+
+* Tue Feb  8 2005 Tomas Mraz <tmraz@redhat.com> 3.9p1-10
+- enable trusted forwarding by default if X11 forwarding is 
+  required by user (#137685 and duplicates)
+- disable protocol 1 support by default in sshd server config (#88329)
+- keep the gnome-askpass dialog above others (#69131)
+
+* Fri Feb  4 2005 Tomas Mraz <tmraz@redhat.com>
+- change permissions on pam.d/sshd to 0644 (#64697)
+- patch initscript so it doesn't kill opened sessions if
+  the sshd daemon isn't running anymore (#67624)
+
+* Mon Jan  3 2005 Bill Nottingham <notting@redhat.com> 3.9p1-9
+- don't use initlog
+
+* Mon Nov 29 2004 Thomas Woerner <twoerner@redhat.com> 3.9p1-8.1
+- fixed PIE build for all architectures
+
+* Mon Oct  4 2004 Nalin Dahyabhai <nalin@redhat.com> 3.9p1-8
+- add a --enable-vendor-patchlevel option which allows a ShowPatchLevel option
+  to enable display of a vendor patch level during version exchange (#120285)
+- configure with --disable-strip to build useful debuginfo subpackages
+
+* Mon Sep 20 2004 Bill Nottingham <notting@redhat.com> 3.9p1-7
+- when using gtk2 for askpass, don't buildprereq gnome-libs-devel
+
+* Tue Sep 14 2004 Nalin Dahyabhai <nalin@redhat.com> 3.9p1-6
+- build
+
+* Mon Sep 13 2004 Nalin Dahyabhai <nalin@redhat.com>
+- disable ACSS support
+
+* Thu Sep 2 2004 Daniel Walsh <dwalsh@redhat.com> 3.9p1-5
+- Change selinux patch to use get_default_context_with_role in libselinux.
+
+* Thu Sep 2 2004 Daniel Walsh <dwalsh@redhat.com> 3.9p1-4
+- Fix patch
+	* Bad debug statement.
+	* Handle root/sysadm_r:kerberos
+
+* Thu Sep 2 2004 Daniel Walsh <dwalsh@redhat.com> 3.9p1-3
+- Modify Colin Walter's patch to allow specifying rule during connection
+
+* Tue Aug 31 2004 Daniel Walsh <dwalsh@redhat.com> 3.9p1-2
+- Fix TTY handling for SELinux
+
+* Tue Aug 24 2004 Daniel Walsh <dwalsh@redhat.com> 3.9p1-1
+- Update to upstream
+
+* Sun Aug 1 2004 Alan Cox <alan@redhat.com> 3.8.1p1-5
+- Apply buildreq fixup patch (#125296)
+
+* Tue Jun 15 2004 Daniel Walsh <dwalsh@redhat.com> 3.8.1p1-4
+- Clean up patch for upstream submission.
+
+* Tue Jun 15 2004 Elliot Lee <sopwith@redhat.com>
+- rebuilt
+
+* Wed Jun 9 2004 Daniel Walsh <dwalsh@redhat.com> 3.8.1p1-2
+- Remove use of pam_selinux and patch selinux in directly.  
+
+* Mon Jun  7 2004 Nalin Dahyabhai <nalin@redhat.com> 3.8.1p1-1
+- request gssapi-with-mic by default but not delegation (flag day for anyone
+  who used previous gssapi patches)
+- no longer request x11 forwarding by default
+
+* Thu Jun 3 2004 Daniel Walsh <dwalsh@redhat.com> 3.6.1p2-36
+- Change pam file to use open and close with pam_selinux
+
+* Tue Jun  1 2004 Nalin Dahyabhai <nalin@redhat.com> 3.8.1p1-0
+- update to 3.8.1p1
+- add workaround from CVS to reintroduce passwordauth using pam
+
+* Tue Jun 1 2004 Daniel Walsh <dwalsh@redhat.com> 3.6.1p2-35
+- Remove CLOSEXEC on STDERR
+
+* Tue Mar 16 2004 Daniel Walsh <dwalsh@redhat.com> 3.6.1p2-34
+
+* Wed Mar 03 2004 Phil Knirsch <pknirsch@redhat.com> 3.6.1p2-33.30.1
+- Built RHLE3 U2 update package.
+
+* Wed Mar 3 2004 Daniel Walsh <dwalsh@redhat.com> 3.6.1p2-33
+- Close file descriptors on exec 
+
+* Mon Mar  1 2004 Thomas Woerner <twoerner@redhat.com> 3.6.1p2-32
+- fixed pie build
+
+* Thu Feb 26 2004 Daniel Walsh <dwalsh@redhat.com> 3.6.1p2-31
+- Add restorecon to startup scripts
+
+* Thu Feb 26 2004 Daniel Walsh <dwalsh@redhat.com> 3.6.1p2-30
+- Add multiple qualified to openssh
+
+* Mon Feb 23 2004 Daniel Walsh <dwalsh@redhat.com> 3.6.1p2-29
+- Eliminate selinux code and use pam_selinux
+
+* Fri Feb 13 2004 Elliot Lee <sopwith@redhat.com>
+- rebuilt
+
+* Mon Jan 26 2004 Daniel Walsh <dwalsh@redhat.com> 3.6.1p2-27
+- turn off pie on ppc
+
+* Mon Jan 26 2004 Daniel Walsh <dwalsh@redhat.com> 3.6.1p2-26
+- fix is_selinux_enabled
+
+* Wed Jan 14 2004 Daniel Walsh <dwalsh@redhat.com> 3.6.1p2-25
+- Rebuild to grab shared libselinux
+
+* Wed Dec 3 2003 Daniel Walsh <dwalsh@redhat.com> 3.6.1p2-24
+- turn on selinux
+
+* Tue Nov 18 2003 Nalin Dahyabhai <nalin@redhat.com>
+- un#ifdef out code for reporting password expiration in non-privsep
+  mode (#83585)
+
+* Mon Nov 10 2003 Nalin Dahyabhai <nalin@redhat.com>
+- add machinery to build with/without -fpie/-pie, default to doing so
+
+* Thu Nov 06 2003 David Woodhouse <dwmw2@redhat.com> 3.6.1p2-23
+- Don't whinge about getsockopt failing (#109161)
+
+* Fri Oct 24 2003 Nalin Dahyabhai <nalin@redhat.com>
+- add missing buildprereq on zlib-devel (#104558)
+
+* Mon Oct 13 2003 Daniel Walsh <dwalsh@redhat.com> 3.6.1p2-22
+- turn selinux off
+
+* Mon Oct 13 2003 Daniel Walsh <dwalsh@redhat.com> 3.6.1p2-21.sel
+- turn selinux on
+
+* Fri Sep 19 2003 Daniel Walsh <dwalsh@redhat.com> 3.6.1p2-21
+- turn selinux off
+
+* Fri Sep 19 2003 Daniel Walsh <dwalsh@redhat.com> 3.6.1p2-20.sel
+- turn selinux on
+
+* Fri Sep 19 2003 Nalin Dahyabhai <nalin@redhat.com>
+- additional fix for apparently-never-happens double-free in buffer_free()
+- extend fix for #103998 to cover SSH1
+
+* Wed Sep 17 2003 Nalin Dahyabhai <nalin@redhat.com> 3.6.1p2-19
+- rebuild
+
+* Wed Sep 17 2003 Nalin Dahyabhai <nalin@redhat.com> 3.6.1p2-18
+- additional buffer manipulation cleanups from Solar Designer
+
+* Wed Sep 17 2003 Daniel Walsh <dwalsh@redhat.com> 3.6.1p2-17
+- turn selinux off
+
+* Wed Sep 17 2003 Daniel Walsh <dwalsh@redhat.com> 3.6.1p2-16.sel
+- turn selinux on
+
+* Tue Sep 16 2003 Bill Nottingham <notting@redhat.com> 3.6.1p2-15
+- rebuild
+
+* Tue Sep 16 2003 Bill Nottingham <notting@redhat.com> 3.6.1p2-14
+- additional buffer manipulation fixes (CAN-2003-0695)
+
+* Tue Sep 16 2003 Daniel Walsh <dwalsh@redhat.com> 3.6.1p2-13.sel
+- turn selinux on
+
+* Tue Sep 16 2003 Nalin Dahyabhai <nalin@redhat.com> 3.6.1p2-12
+- rebuild
+
+* Tue Sep 16 2003 Nalin Dahyabhai <nalin@redhat.com> 3.6.1p2-11
+- apply patch to store the correct buffer size in allocated buffers
+  (CAN-2003-0693)
+- skip the initial PAM authentication attempt with an empty password if
+  empty passwords are not permitted in our configuration (#103998)
+
+* Fri Sep 5 2003 Daniel Walsh <dwalsh@redhat.com> 3.6.1p2-10
+- turn selinux off
+
+* Fri Sep 5 2003 Daniel Walsh <dwalsh@redhat.com> 3.6.1p2-9.sel
+- turn selinux on
+
+* Tue Aug 26 2003 Daniel Walsh <dwalsh@redhat.com> 3.6.1p2-8
+- Add BuildPreReq gtk2-devel if gtk2
+
+* Tue Aug 12 2003 Nalin Dahyabhai <nalin@redhat.com> 3.6.1p2-7
+- rebuild
+
+* Tue Aug 12 2003 Nalin Dahyabhai <nalin@redhat.com> 3.6.1p2-6
+- modify patch which clears the supplemental group list at startup to only
+  complain if setgroups() fails if sshd has euid == 0
+- handle krb5 installed in %%{_prefix} or elsewhere by using krb5-config
+
+* Mon Jul 28 2003 Daniel Walsh <dwalsh@redhat.com> 3.6.1p2-5
+- Add SELinux patch
+
+* Tue Jul 22 2003 Nalin Dahyabhai <nalin@redhat.com> 3.6.1p2-4
+- rebuild
+
+* Wed Jul 16 2003 Nalin Dahyabhai <nalin@redhat.com> 3.6.1p2-3
+- rebuild
+
+* Wed Jul 16 2003 Nalin Dahyabhai <nalin@redhat.com> 3.6.1p2-2
+- rebuild
+
+* Thu Jun  5 2003 Nalin Dahyabhai <nalin@redhat.com> 3.6.1p2-1
+- update to 3.6.1p2
+
+* Wed Jun 04 2003 Elliot Lee <sopwith@redhat.com>
+6 rebuilt
+
+* Mon Mar 24 2003 Florian La Roche <Florian.LaRoche@redhat.de>
+- add patch for getsockopt() call to work on bigendian 64bit archs
+
+* Fri Feb 14 2003 Nalin Dahyabhai <nalin@redhat.com> 3.5p1-6
+- move scp to the -clients subpackage, because it directly depends on ssh
+  which is also in -clients (#84329)
+
+* Mon Feb 10 2003 Nalin Dahyabhai <nalin@redhat.com> 3.5p1-5
+- rebuild
+
+* Wed Jan 22 2003 Tim Powers <timp@redhat.com>
+- rebuilt
+
+* Tue Jan  7 2003 Nalin Dahyabhai <nalin@redhat.com> 3.5p1-3
+- rebuild
+
+* Tue Nov 12 2002 Nalin Dahyabhai <nalin@redhat.com> 3.5p1-2
+- patch PAM configuration to use relative path names for the modules, allowing
+  us to not worry about which arch the modules are built for on multilib systems
+
+* Tue Oct 15 2002 Nalin Dahyabhai <nalin@redhat.com> 3.5p1-1
+- update to 3.5p1, merging in filelist/perm changes from the upstream spec
+
+* Fri Oct  4 2002 Nalin Dahyabhai <nalin@redhat.com> 3.4p1-3
+- merge
+
+* Thu Sep 12 2002  Than Ngo <than@redhat.com> 3.4p1-2.1
+- fix to build on multilib systems
+
+* Thu Aug 29 2002 Curtis Zinzilieta <curtisz@redhat.com> 3.4p1-2gss
+- added gssapi patches and uncommented patch here
+
+* Wed Aug 14 2002 Nalin Dahyabhai <nalin@redhat.com> 3.4p1-2
+- pull patch from CVS to fix too-early free in ssh-keysign (#70009)
+
+* Thu Jun 27 2002 Nalin Dahyabhai <nalin@redhat.com> 3.4p1-1
+- 3.4p1
+- drop anon mmap patch
+
+* Tue Jun 25 2002 Nalin Dahyabhai <nalin@redhat.com> 3.3p1-2
+- rework the close-on-exit docs
+- include configuration file man pages
+- make use of nologin as the privsep shell optional
+
+* Mon Jun 24 2002 Nalin Dahyabhai <nalin@redhat.com> 3.3p1-1
+- update to 3.3p1
+- merge in spec file changes from upstream (remove setuid from ssh, ssh-keysign)
+- disable gtk2 askpass
+- require pam-devel by filename rather than by package for erratum
+- include patch from Solar Designer to work around anonymous mmap failures
+
+* Fri Jun 21 2002 Tim Powers <timp@redhat.com>
+- automated rebuild
+
+* Fri Jun  7 2002 Nalin Dahyabhai <nalin@redhat.com> 3.2.3p1-3
+- don't require autoconf any more
+
+* Fri May 31 2002 Nalin Dahyabhai <nalin@redhat.com> 3.2.3p1-2
+- build gnome-ssh-askpass with gtk2
+
+* Tue May 28 2002 Nalin Dahyabhai <nalin@redhat.com> 3.2.3p1-1
+- update to 3.2.3p1
+- merge in spec file changes from upstream
+
+* Fri May 17 2002 Nalin Dahyabhai <nalin@redhat.com> 3.2.2p1-1
+- update to 3.2.2p1
+
+* Fri May 17 2002 Nalin Dahyabhai <nalin@redhat.com> 3.1p1-4
+- drop buildreq on db1-devel
+- require pam-devel by package name
+- require autoconf instead of autoconf253 again
+
+* Tue Apr  2 2002 Nalin Dahyabhai <nalin@redhat.com> 3.1p1-3
+- pull patch from CVS to avoid printing error messages when some of the
+  default keys aren't available when running ssh-add
+- refresh to current revisions of Simon's patches
+ 
+* Thu Mar 21 2002 Nalin Dahyabhai <nalin@redhat.com> 3.1p1-2gss
+- reintroduce Simon's gssapi patches
+- add buildprereq for autoconf253, which is needed to regenerate configure
+  after applying the gssapi patches
+- refresh to the latest version of Markus's patch to build properly with
+  older versions of OpenSSL
+
+* Thu Mar  7 2002 Nalin Dahyabhai <nalin@redhat.com> 3.1p1-2
+- bump and grind (through the build system)
+
+* Thu Mar  7 2002 Nalin Dahyabhai <nalin@redhat.com> 3.1p1-1
+- require sharutils for building (mindrot #137)
+- require db1-devel only when building for 6.x (#55105), which probably won't
+  work anyway (3.1 requires OpenSSL 0.9.6 to build), but what the heck
+- require pam-devel by file (not by package name) again
+- add Markus's patch to compile with OpenSSL 0.9.5a (from
+  http://bugzilla.mindrot.org/show_bug.cgi?id=141) and apply it if we're
+  building for 6.x
+
+* Thu Mar  7 2002 Nalin Dahyabhai <nalin@redhat.com> 3.1p1-0
+- update to 3.1p1
+
+* Tue Mar  5 2002 Nalin Dahyabhai <nalin@redhat.com> SNAP-20020305
+- update to SNAP-20020305
+- drop debug patch, fixed upstream
+
+* Wed Feb 20 2002 Nalin Dahyabhai <nalin@redhat.com> SNAP-20020220
+- update to SNAP-20020220 for testing purposes (you've been warned, if there's
+  anything to be warned about, gss patches won't apply, I don't mind)
+
+* Wed Feb 13 2002 Nalin Dahyabhai <nalin@redhat.com> 3.0.2p1-3
+- add patches from Simon Wilkinson and Nicolas Williams for GSSAPI key
+  exchange, authentication, and named key support
+
+* Wed Jan 23 2002 Nalin Dahyabhai <nalin@redhat.com> 3.0.2p1-2
+- remove dependency on db1-devel, which has just been swallowed up whole
+  by gnome-libs-devel
+
+* Sat Dec 29 2001 Nalin Dahyabhai <nalin@redhat.com>
+- adjust build dependencies so that build6x actually works right (fix
+  from Hugo van der Kooij)
+
+* Tue Dec  4 2001 Nalin Dahyabhai <nalin@redhat.com> 3.0.2p1-1
+- update to 3.0.2p1
+
+* Fri Nov 16 2001 Nalin Dahyabhai <nalin@redhat.com> 3.0.1p1-1
+- update to 3.0.1p1
+
+* Tue Nov 13 2001 Nalin Dahyabhai <nalin@redhat.com>
+- update to current CVS (not for use in distribution)
+
+* Thu Nov  8 2001 Nalin Dahyabhai <nalin@redhat.com> 3.0p1-1
+- merge some of Damien Miller <djm@mindrot.org> changes from the upstream
+  3.0p1 spec file and init script
+
+* Wed Nov  7 2001 Nalin Dahyabhai <nalin@redhat.com>
+- update to 3.0p1
+- update to x11-ssh-askpass 1.2.4.1
+- change build dependency on a file from pam-devel to the pam-devel package
+- replace primes with moduli
+
+* Thu Sep 27 2001 Nalin Dahyabhai <nalin@redhat.com> 2.9p2-9
+- incorporate fix from Markus Friedl's advisory for IP-based authorization bugs
+
+* Thu Sep 13 2001 Bernhard Rosenkraenzer <bero@redhat.com> 2.9p2-8
+- Merge changes to rescue build from current sysadmin survival cd
+
+* Thu Sep  6 2001 Nalin Dahyabhai <nalin@redhat.com> 2.9p2-7
+- fix scp's server's reporting of file sizes, and build with the proper
+  preprocessor define to get large-file capable open(), stat(), etc.
+  (sftp has been doing this correctly all along) (#51827)
+- configure without --with-ipv4-default on RHL 7.x and newer (#45987,#52247)
+- pull cvs patch to fix support for /etc/nologin for non-PAM logins (#47298)
+- mark profile.d scriptlets as config files (#42337)
+- refer to Jason Stone's mail for zsh workaround for exit-hanging quasi-bug
+- change a couple of log() statements to debug() statements (#50751)
+- pull cvs patch to add -t flag to sshd (#28611)
+- clear fd_sets correctly (one bit per FD, not one byte per FD) (#43221)
+
+* Mon Aug 20 2001 Nalin Dahyabhai <nalin@redhat.com> 2.9p2-6
+- add db1-devel as a BuildPrerequisite (noted by Hans Ecke)
+
+* Thu Aug 16 2001 Nalin Dahyabhai <nalin@redhat.com>
+- pull cvs patch to fix remote port forwarding with protocol 2
+
+* Thu Aug  9 2001 Nalin Dahyabhai <nalin@redhat.com>
+- pull cvs patch to add session initialization to no-pty sessions
+- pull cvs patch to not cut off challengeresponse auth needlessly
+- refuse to do X11 forwarding if xauth isn't there, handy if you enable
+  it by default on a system that doesn't have X installed (#49263)
+
+* Wed Aug  8 2001 Nalin Dahyabhai <nalin@redhat.com>
+- don't apply patches to code we don't intend to build (spotted by Matt Galgoci)
+
+* Mon Aug  6 2001 Nalin Dahyabhai <nalin@redhat.com>
+- pass OPTIONS correctly to initlog (#50151)
+
+* Wed Jul 25 2001 Nalin Dahyabhai <nalin@redhat.com>
+- switch to x11-ssh-askpass 1.2.2
+
+* Wed Jul 11 2001 Nalin Dahyabhai <nalin@redhat.com>
+- rebuild in new environment
+
+* Mon Jun 25 2001 Nalin Dahyabhai <nalin@redhat.com>
+- disable the gssapi patch
+
+* Mon Jun 18 2001 Nalin Dahyabhai <nalin@redhat.com>
+- update to 2.9p2
+- refresh to a new version of the gssapi patch
+
+* Thu Jun  7 2001 Nalin Dahyabhai <nalin@redhat.com>
+- change Copyright: BSD to License: BSD
+- add Markus Friedl's unverified patch for the cookie file deletion problem
+  so that we can verify it
+- drop patch to check if xauth is present (was folded into cookie patch)
+- don't apply gssapi patches for the errata candidate
+- clear supplemental groups list at startup
+
+* Fri May 25 2001 Nalin Dahyabhai <nalin@redhat.com>
+- fix an error parsing the new default sshd_config
+- add a fix from Markus Friedl (via openssh-unix-dev) for ssh-keygen not
+  dealing with comments right
+
+* Thu May 24 2001 Nalin Dahyabhai <nalin@redhat.com>
+- add in Simon Wilkinson's GSSAPI patch to give it some testing in-house,
+  to be removed before the next beta cycle because it's a big departure
+  from the upstream version
+
+* Thu May  3 2001 Nalin Dahyabhai <nalin@redhat.com>
+- finish marking strings in the init script for translation
+- modify init script to source /etc/sysconfig/sshd and pass $OPTIONS to sshd
+  at startup (change merged from openssh.com init script, originally by
+  Pekka Savola)
+- refuse to do X11 forwarding if xauth isn't there, handy if you enable
+  it by default on a system that doesn't have X installed
+
+* Wed May  2 2001 Nalin Dahyabhai <nalin@redhat.com>
+- update to 2.9
+- drop various patches that came from or went upstream or to or from CVS
+
+* Wed Apr 18 2001 Nalin Dahyabhai <nalin@redhat.com>
+- only require initscripts 5.00 on 6.2 (reported by Peter Bieringer)
+
+* Sun Apr  8 2001 Preston Brown <pbrown@redhat.com>
+- remove explicit openssl requirement, fixes builddistro issue
+- make initscript stop() function wait until sshd really dead to avoid 
+  races in condrestart
+
+* Mon Apr  2 2001 Nalin Dahyabhai <nalin@redhat.com>
+- mention that challengereponse supports PAM, so disabling password doesn't
+  limit users to pubkey and rsa auth (#34378)
+- bypass the daemon() function in the init script and call initlog directly,
+  because daemon() won't start a daemon it detects is already running (like
+  open connections)
+- require the version of openssl we had when we were built
+
+* Fri Mar 23 2001 Nalin Dahyabhai <nalin@redhat.com>
+- make do_pam_setcred() smart enough to know when to establish creds and
+  when to reinitialize them
+- add in a couple of other fixes from Damien for inclusion in the errata
+
+* Thu Mar 22 2001 Nalin Dahyabhai <nalin@redhat.com>
+- update to 2.5.2p2
+- call setcred() again after initgroups, because the "creds" could actually
+  be group memberships
+
+* Tue Mar 20 2001 Nalin Dahyabhai <nalin@redhat.com>
+- update to 2.5.2p1 (includes endianness fixes in the rijndael implementation)
+- don't enable challenge-response by default until we find a way to not
+  have too many userauth requests (we may make up to six pubkey and up to
+  three password attempts as it is)
+- remove build dependency on rsh to match openssh.com's packages more closely
+
+* Sat Mar  3 2001 Nalin Dahyabhai <nalin@redhat.com>
+- remove dependency on openssl -- would need to be too precise
+
+* Fri Mar  2 2001 Nalin Dahyabhai <nalin@redhat.com>
+- rebuild in new environment
+
+* Mon Feb 26 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Revert the patch to move pam_open_session.
+- Init script and spec file changes from Pekka Savola. (#28750)
+- Patch sftp to recognize '-o protocol' arguments. (#29540)
+
+* Thu Feb 22 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Chuck the closing patch.
+- Add a trigger to add host keys for protocol 2 to the config file, now that
+  configuration file syntax requires us to specify it with HostKey if we
+  specify any other HostKey values, which we do.
+
+* Tue Feb 20 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Redo patch to move pam_open_session after the server setuid()s to the user.
+- Rework the nopam patch to use be picked up by autoconf.
+
+* Mon Feb 19 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Update for 2.5.1p1.
+- Add init script mods from Pekka Savola.
+- Tweak the init script to match the CVS contrib script more closely.
+- Redo patch to ssh-add to try to adding both identity and id_dsa to also try
+  adding id_rsa.
+
+* Fri Feb 16 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Update for 2.5.0p1.
+- Use $RPM_OPT_FLAGS instead of -O when building gnome-ssh-askpass
+- Resync with parts of Damien Miller's openssh.spec from CVS, including
+  update of x11 askpass to 1.2.0.
+- Only require openssl (don't prereq) because we generate keys in the init
+  script now.
+
+* Tue Feb 13 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Don't open a PAM session until we've forked and become the user (#25690).
+- Apply Andrew Bartlett's patch for letting pam_authenticate() know which
+  host the user is attempting a login from.
+- Resync with parts of Damien Miller's openssh.spec from CVS.
+- Don't expose KbdInt responses in debug messages (from CVS).
+- Detect and handle errors in rsa_{public,private}_decrypt (from CVS).
+
+* Wed Feb  7 2001 Trond Eivind Glomsrxd <teg@redhat.com>
+- i18n-tweak to initscript.
+
+* Tue Jan 23 2001 Nalin Dahyabhai <nalin@redhat.com>
+- More gettextizing.
+- Close all files after going into daemon mode (needs more testing).
+- Extract patch from CVS to handle auth banners (in the client).
+- Extract patch from CVS to handle compat weirdness.
+
+* Fri Jan 19 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Finish with the gettextizing.
+
+* Thu Jan 18 2001 Nalin Dahyabhai <nalin@redhat.com>
+- Fix a bug in auth2-pam.c (#23877)
+- Gettextize the init script.
+
+* Wed Dec 20 2000 Nalin Dahyabhai <nalin@redhat.com>
+- Incorporate a switch for using PAM configs for 6.x, just in case.
+
+* Tue Dec  5 2000 Nalin Dahyabhai <nalin@redhat.com>
+- Incorporate Bero's changes for a build specifically for rescue CDs.
+
+* Wed Nov 29 2000 Nalin Dahyabhai <nalin@redhat.com>
+- Don't treat pam_setcred() failure as fatal unless pam_authenticate() has
+  succeeded, to allow public-key authentication after a failure with "none"
+  authentication.  (#21268)
+
+* Tue Nov 28 2000 Nalin Dahyabhai <nalin@redhat.com>
+- Update to x11-askpass 1.1.1. (#21301)
+- Don't second-guess fixpaths, which causes paths to get fixed twice. (#21290)
+
+* Mon Nov 27 2000 Nalin Dahyabhai <nalin@redhat.com>
+- Merge multiple PAM text messages into subsequent prompts when possible when
+  doing keyboard-interactive authentication.
+
+* Sun Nov 26 2000 Nalin Dahyabhai <nalin@redhat.com>
+- Disable the built-in MD5 password support.  We're using PAM.
+- Take a crack at doing keyboard-interactive authentication with PAM, and
+  enable use of it in the default client configuration so that the client
+  will try it when the server disallows password authentication.
+- Build with debugging flags.  Build root policies strip all binaries anyway.
+
+* Tue Nov 21 2000 Nalin Dahyabhai <nalin@redhat.com>
+- Use DESTDIR instead of %%makeinstall.
+- Remove /usr/X11R6/bin from the path-fixing patch.
+
+* Mon Nov 20 2000 Nalin Dahyabhai <nalin@redhat.com>
+- Add the primes file from the latest snapshot to the main package (#20884).
+- Add the dev package to the prereq list (#19984).
+- Remove the default path and mimic login's behavior in the server itself.
+
+* Fri Nov 17 2000 Nalin Dahyabhai <nalin@redhat.com>
+- Resync with conditional options in Damien Miller's .spec file for an errata.
+- Change libexecdir from %%{_libexecdir}/ssh to %%{_libexecdir}/openssh.
+
+* Tue Nov  7 2000 Nalin Dahyabhai <nalin@redhat.com>
+- Update to OpenSSH 2.3.0p1.
+- Update to x11-askpass 1.1.0.
+- Enable keyboard-interactive authentication.
+
+* Mon Oct 30 2000 Nalin Dahyabhai <nalin@redhat.com>
+- Update to ssh-askpass-x11 1.0.3.
+- Change authentication related messages to be private (#19966).
+
+* Tue Oct 10 2000 Nalin Dahyabhai <nalin@redhat.com>
+- Patch ssh-keygen to be able to list signatures for DSA public key files
+  it generates.
+
+* Thu Oct  5 2000 Nalin Dahyabhai <nalin@redhat.com>
+- Add BuildPreReq on /usr/include/security/pam_appl.h to be sure we always
+  build PAM authentication in.
+- Try setting SSH_ASKPASS if gnome-ssh-askpass is installed.
+- Clean out no-longer-used patches.
+- Patch ssh-add to try to add both identity and id_dsa, and to error only
+  when neither exists.
+
+* Mon Oct  2 2000 Nalin Dahyabhai <nalin@redhat.com>
+- Update x11-askpass to 1.0.2. (#17835)
+- Add BuildPreReqs for /bin/login and /usr/bin/rsh so that configure will
+  always find them in the right place. (#17909)
+- Set the default path to be the same as the one supplied by /bin/login, but
+  add /usr/X11R6/bin. (#17909)
+- Try to handle obsoletion of ssh-server more cleanly.  Package names
+  are different, but init script name isn't. (#17865)
+
+* Wed Sep  6 2000 Nalin Dahyabhai <nalin@redhat.com>
+- Update to 2.2.0p1. (#17835)
+- Tweak the init script to allow proper restarting. (#18023)
+
+* Wed Aug 23 2000 Nalin Dahyabhai <nalin@redhat.com>
+- Update to 20000823 snapshot.
+- Change subpackage requirements from %%{version} to %%{version}-%%{release}
+- Back out the pipe patch.
+
+* Mon Jul 17 2000 Nalin Dahyabhai <nalin@redhat.com>
+- Update to 2.1.1p4, which includes fixes for config file parsing problems.
+- Move the init script back.
+- Add Damien's quick fix for wackiness.
+
+* Wed Jul 12 2000 Nalin Dahyabhai <nalin@redhat.com>
+- Update to 2.1.1p3, which includes fixes for X11 forwarding and strtok().
+
+* Thu Jul  6 2000 Nalin Dahyabhai <nalin@redhat.com>
+- Move condrestart to server postun.
+- Move key generation to init script.
+- Actually use the right patch for moving the key generation to the init script.
+- Clean up the init script a bit.
+
+* Wed Jul  5 2000 Nalin Dahyabhai <nalin@redhat.com>
+- Fix X11 forwarding, from mail post by Chan Shih-Ping Richard.
+
+* Sun Jul  2 2000 Nalin Dahyabhai <nalin@redhat.com>
+- Update to 2.1.1p2.
+- Use of strtok() considered harmful.
+
+* Sat Jul  1 2000 Nalin Dahyabhai <nalin@redhat.com>
+- Get the build root out of the man pages.
+
+* Thu Jun 29 2000 Nalin Dahyabhai <nalin@redhat.com>
+- Add and use condrestart support in the init script.
+- Add newer initscripts as a prereq.
+
+* Tue Jun 27 2000 Nalin Dahyabhai <nalin@redhat.com>
+- Build in new environment (release 2)
+- Move -clients subpackage to Applications/Internet group
+
+* Fri Jun  9 2000 Nalin Dahyabhai <nalin@redhat.com>
+- Update to 2.2.1p1
+
+* Sat Jun  3 2000 Nalin Dahyabhai <nalin@redhat.com>
+- Patch to build with neither RSA nor RSAref.
+- Miscellaneous FHS-compliance tweaks.
+- Fix for possibly-compressed man pages.
+
+* Wed Mar 15 2000 Damien Miller <djm@ibs.com.au>
+- Updated for new location
+- Updated for new gnome-ssh-askpass build
+
+* Sun Dec 26 1999 Damien Miller <djm@mindrot.org>
+- Added Jim Knoble's <jmknoble@pobox.com> askpass
+
+* Mon Nov 15 1999 Damien Miller <djm@mindrot.org>
+- Split subpackages further based on patch from jim knoble <jmknoble@pobox.com>
+
+* Sat Nov 13 1999 Damien Miller <djm@mindrot.org>
+- Added 'Obsoletes' directives
+
+* Tue Nov 09 1999 Damien Miller <djm@ibs.com.au>
+- Use make install
+- Subpackages
+
+* Mon Nov 08 1999 Damien Miller <djm@ibs.com.au>
+- Added links for slogin
+- Fixed perms on manpages
+
+* Sat Oct 30 1999 Damien Miller <djm@ibs.com.au>
+- Renamed init script
+
+* Fri Oct 29 1999 Damien Miller <djm@ibs.com.au>
+- Back to old binary names
+
+* Thu Oct 28 1999 Damien Miller <djm@ibs.com.au>
+- Use autoconf
+- New binary names
+
+* Wed Oct 27 1999 Damien Miller <djm@ibs.com.au>
+- Initial RPMification, based on Jan "Yenya" Kasprzak's <kas@fi.muni.cz> spec.
