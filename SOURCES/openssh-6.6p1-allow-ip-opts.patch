@@ -38,5 +38,5 @@ diff -up openssh/sshd.c.ip-opts openssh/sshd.c
 +			}
 +		} while (i < option_size);
  	}
- 	return;
  #endif /* IP_OPTIONS */
+ }
