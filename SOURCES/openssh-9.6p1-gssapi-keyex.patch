@@ -1,6 +1,6 @@
 diff --color -ruNp a/auth2.c b/auth2.c
---- a/auth2.c	2024-08-28 12:35:01.189659493 +0200
-+++ b/auth2.c	2024-08-28 12:35:41.246432045 +0200
+--- a/auth2.c	2026-03-13 12:32:48.463830672 +0100
++++ b/auth2.c	2026-03-13 12:16:40.013559000 +0100
 @@ -71,6 +71,7 @@ extern Authmethod method_passwd;
  extern Authmethod method_kbdint;
  extern Authmethod method_hostbased;
@@ -18,8 +18,8 @@ diff --color -ruNp a/auth2.c b/auth2.c
  #endif
  	&method_passwd,
 diff --color -ruNp a/auth2-gss.c b/auth2-gss.c
---- a/auth2-gss.c	2024-08-28 12:35:01.189659493 +0200
-+++ b/auth2-gss.c	2024-08-28 12:35:41.265432411 +0200
+--- a/auth2-gss.c	2026-03-13 12:32:48.464158978 +0100
++++ b/auth2-gss.c	2026-03-13 12:16:40.011579476 +0100
 @@ -51,6 +51,7 @@
  #define SSH_GSSAPI_MAX_MECHS	2048
  
@@ -108,8 +108,8 @@ diff --color -ruNp a/auth2-gss.c b/auth2-gss.c
  	&methodcfg_gssapi,
  	userauth_gssapi,
 diff --color -ruNp a/auth2-methods.c b/auth2-methods.c
---- a/auth2-methods.c	2024-07-01 06:36:28.000000000 +0200
-+++ b/auth2-methods.c	2024-08-28 12:35:41.265432411 +0200
+--- a/auth2-methods.c	2024-09-20 00:20:48.000000000 +0200
++++ b/auth2-methods.c	2026-03-13 12:16:40.011621502 +0100
 @@ -50,6 +50,11 @@ struct authmethod_cfg methodcfg_pubkey =
  	&options.pubkey_authentication
  };
@@ -131,8 +131,8 @@ diff --color -ruNp a/auth2-methods.c b/auth2-methods.c
  #endif
  	&methodcfg_passwd,
 diff --color -ruNp a/auth.c b/auth.c
---- a/auth.c	2024-07-01 06:36:28.000000000 +0200
-+++ b/auth.c	2024-08-28 12:35:41.245432026 +0200
+--- a/auth.c	2024-09-20 00:20:48.000000000 +0200
++++ b/auth.c	2026-03-13 12:16:39.971971452 +0100
 @@ -356,7 +356,8 @@ auth_root_allowed(struct ssh *ssh, const
  	case PERMIT_NO_PASSWD:
  		if (strcmp(method, "publickey") == 0 ||
@@ -144,8 +144,8 @@ diff --color -ruNp a/auth.c b/auth.c
  		break;
  	case PERMIT_FORCED_ONLY:
 diff --color -ruNp a/canohost.c b/canohost.c
---- a/canohost.c	2024-07-01 06:36:28.000000000 +0200
-+++ b/canohost.c	2024-08-28 12:35:41.246432045 +0200
+--- a/canohost.c	2024-09-20 00:20:48.000000000 +0200
++++ b/canohost.c	2026-03-13 12:16:39.971614349 +0100
 @@ -35,6 +35,99 @@
  #include "canohost.h"
  #include "misc.h"
@@ -247,8 +247,8 @@ diff --color -ruNp a/canohost.c b/canohost.c
  ipv64_normalise_mapped(struct sockaddr_storage *addr, socklen_t *len)
  {
 diff --color -ruNp a/canohost.h b/canohost.h
---- a/canohost.h	2024-07-01 06:36:28.000000000 +0200
-+++ b/canohost.h	2024-08-28 12:35:41.246432045 +0200
+--- a/canohost.h	2024-09-20 00:20:48.000000000 +0200
++++ b/canohost.h	2026-03-13 12:16:39.973010227 +0100
 @@ -15,6 +15,9 @@
  #ifndef _CANOHOST_H
  #define _CANOHOST_H
@@ -260,8 +260,8 @@ diff --color -ruNp a/canohost.h b/canohost.h
  int		 get_peer_port(int);
  char		*get_local_ipaddr(int);
 diff --color -ruNp a/clientloop.c b/clientloop.c
---- a/clientloop.c	2024-07-01 06:36:28.000000000 +0200
-+++ b/clientloop.c	2024-08-28 12:35:41.246432045 +0200
+--- a/clientloop.c	2024-09-20 00:20:48.000000000 +0200
++++ b/clientloop.c	2026-03-13 12:16:39.973067475 +0100
 @@ -115,6 +115,10 @@
  #include "ssherr.h"
  #include "hostfile.h"
@@ -289,8 +289,8 @@ diff --color -ruNp a/clientloop.c b/clientloop.c
  		if (conn_in_ready)
  			client_process_net_input(ssh);
 diff --color -ruNp a/configure.ac b/configure.ac
---- a/configure.ac	2024-08-28 12:35:01.202659743 +0200
-+++ b/configure.ac	2024-08-28 12:35:41.247432064 +0200
+--- a/configure.ac	2026-03-13 12:32:48.476497111 +0100
++++ b/configure.ac	2026-03-13 12:16:39.974067978 +0100
 @@ -774,6 +774,30 @@ int main(void) { if (NSVersionOfRunTimeL
  	    [Use tunnel device compatibility to OpenBSD])
  	AC_DEFINE([SSH_TUN_PREPEND_AF], [1],
@@ -323,8 +323,8 @@ diff --color -ruNp a/configure.ac b/configure.ac
  	AC_CHECK_DECL([AU_IPv4], [],
  	    AC_DEFINE([AU_IPv4], [0], [System only supports IPv4 audit records])
 diff --color -ruNp a/gss-genr.c b/gss-genr.c
---- a/gss-genr.c	2024-07-01 06:36:28.000000000 +0200
-+++ b/gss-genr.c	2024-08-28 12:35:41.248432084 +0200
+--- a/gss-genr.c	2024-09-20 00:20:48.000000000 +0200
++++ b/gss-genr.c	2026-03-13 12:16:40.012672759 +0100
 @@ -42,9 +42,33 @@
  #include "sshbuf.h"
  #include "log.h"
@@ -519,7 +519,28 @@ diff --color -ruNp a/gss-genr.c b/gss-genr.c
  /* Check that the OID in a data stream matches that in the context */
  int
  ssh_gssapi_check_oid(Gssctxt *ctx, void *data, size_t len)
-@@ -216,7 +393,7 @@ ssh_gssapi_init_ctx(Gssctxt *ctx, int de
+@@ -168,6 +345,7 @@ ssh_gssapi_build_ctx(Gssctxt **ctx)
+ 	(*ctx)->creds = GSS_C_NO_CREDENTIAL;
+ 	(*ctx)->client = GSS_C_NO_NAME;
+ 	(*ctx)->client_creds = GSS_C_NO_CREDENTIAL;
++	(*ctx)->first = 1;
+ }
+ 
+ /* Delete our context, providing it has been built correctly */
+@@ -193,6 +371,12 @@ ssh_gssapi_delete_ctx(Gssctxt **ctx)
+ 		gss_release_name(&ms, &(*ctx)->client);
+ 	if ((*ctx)->client_creds != GSS_C_NO_CREDENTIAL)
+ 		gss_release_cred(&ms, &(*ctx)->client_creds);
++	sshbuf_free((*ctx)->shared_secret);
++	sshbuf_free((*ctx)->server_pubkey);
++	sshbuf_free((*ctx)->server_host_key_blob);
++	sshbuf_free((*ctx)->server_blob);
++	explicit_bzero((*ctx)->hash, sizeof((*ctx)->hash));
++	BN_clear_free((*ctx)->dh_client_pub);
+ 
+ 	free(*ctx);
+ 	*ctx = NULL;
+@@ -216,7 +400,7 @@ ssh_gssapi_init_ctx(Gssctxt *ctx, int de
  	}
  
  	ctx->major = gss_init_sec_context(&ctx->minor,
@@ -528,7 +549,7 @@ diff --color -ruNp a/gss-genr.c b/gss-genr.c
  	    GSS_C_MUTUAL_FLAG | GSS_C_INTEG_FLAG | deleg_flag,
  	    0, NULL, recv_tok, NULL, send_tok, flags, NULL);
  
-@@ -246,8 +423,42 @@ ssh_gssapi_import_name(Gssctxt *ctx, con
+@@ -246,8 +430,42 @@ ssh_gssapi_import_name(Gssctxt *ctx, con
  }
  
  OM_uint32
@@ -571,7 +592,7 @@ diff --color -ruNp a/gss-genr.c b/gss-genr.c
  	if ((ctx->major = gss_get_mic(&ctx->minor, ctx->context,
  	    GSS_C_QOP_DEFAULT, buffer, hash)))
  		ssh_gssapi_error(ctx);
-@@ -255,6 +466,19 @@ ssh_gssapi_sign(Gssctxt *ctx, gss_buffer
+@@ -255,6 +473,19 @@ ssh_gssapi_sign(Gssctxt *ctx, gss_buffer
  	return (ctx->major);
  }
  
@@ -591,7 +612,7 @@ diff --color -ruNp a/gss-genr.c b/gss-genr.c
  void
  ssh_gssapi_buildmic(struct sshbuf *b, const char *user, const char *service,
      const char *context, const struct sshbuf *session_id)
-@@ -271,11 +495,16 @@ ssh_gssapi_buildmic(struct sshbuf *b, co
+@@ -271,11 +502,16 @@ ssh_gssapi_buildmic(struct sshbuf *b, co
  }
  
  int
@@ -609,7 +630,7 @@ diff --color -ruNp a/gss-genr.c b/gss-genr.c
  
  	/* RFC 4462 says we MUST NOT do SPNEGO */
  	if (oid->length == spnego_oid.length &&
-@@ -285,6 +514,10 @@ ssh_gssapi_check_mechanism(Gssctxt **ctx
+@@ -285,6 +521,10 @@ ssh_gssapi_check_mechanism(Gssctxt **ctx
  	ssh_gssapi_build_ctx(ctx);
  	ssh_gssapi_set_oid(*ctx, oid);
  	major = ssh_gssapi_import_name(*ctx, host);
@@ -620,7 +641,7 @@ diff --color -ruNp a/gss-genr.c b/gss-genr.c
  	if (!GSS_ERROR(major)) {
  		major = ssh_gssapi_init_ctx(*ctx, 0, GSS_C_NO_BUFFER, &token,
  		    NULL);
-@@ -294,10 +527,66 @@ ssh_gssapi_check_mechanism(Gssctxt **ctx
+@@ -294,10 +534,66 @@ ssh_gssapi_check_mechanism(Gssctxt **ctx
  			    GSS_C_NO_BUFFER);
  	}
  
@@ -689,8 +710,8 @@ diff --color -ruNp a/gss-genr.c b/gss-genr.c
 +
  #endif /* GSSAPI */
 diff --color -ruNp a/gss-serv.c b/gss-serv.c
---- a/gss-serv.c	2024-07-01 06:36:28.000000000 +0200
-+++ b/gss-serv.c	2024-08-28 12:35:41.248432084 +0200
+--- a/gss-serv.c	2024-09-20 00:20:48.000000000 +0200
++++ b/gss-serv.c	2026-03-13 12:16:39.978787818 +0100
 @@ -1,7 +1,7 @@
  /* $OpenBSD: gss-serv.c,v 1.32 2020/03/13 03:17:07 djm Exp $ */
  
@@ -983,8 +1004,8 @@ diff --color -ruNp a/gss-serv.c b/gss-serv.c
  
  /* Privileged */
 diff --color -ruNp a/gss-serv-krb5.c b/gss-serv-krb5.c
---- a/gss-serv-krb5.c	2024-07-01 06:36:28.000000000 +0200
-+++ b/gss-serv-krb5.c	2024-08-28 12:35:41.248432084 +0200
+--- a/gss-serv-krb5.c	2024-09-20 00:20:48.000000000 +0200
++++ b/gss-serv-krb5.c	2026-03-13 12:16:39.978934056 +0100
 @@ -1,7 +1,7 @@
  /* $OpenBSD: gss-serv-krb5.c,v 1.9 2018/07/09 21:37:55 markus Exp $ */
  
@@ -1122,9 +1143,9 @@ diff --color -ruNp a/gss-serv-krb5.c b/gss-serv-krb5.c
  
  #endif /* KRB5 */
 diff --color -ruNp a/kex.c b/kex.c
---- a/kex.c	2024-07-01 06:36:28.000000000 +0200
-+++ b/kex.c	2024-08-28 12:35:41.249432103 +0200
-@@ -303,17 +303,37 @@ static int
+--- a/kex.c	2024-09-20 00:20:48.000000000 +0200
++++ b/kex.c	2026-03-13 12:16:39.978857653 +0100
+@@ -297,17 +297,37 @@ static int
  kex_compose_ext_info_server(struct ssh *ssh, struct sshbuf *m)
  {
  	int r;
@@ -1168,7 +1189,7 @@ diff --color -ruNp a/kex.c b/kex.c
  	    (r = sshbuf_put_cstring(m, "0")) != 0) {
  		error_fr(r, "compose");
  		return r;
-@@ -737,6 +737,9 @@ kex_free(struct kex *kex)
+@@ -737,6 +757,9 @@ kex_free(struct kex *kex)
  	sshbuf_free(kex->server_version);
  	sshbuf_free(kex->client_pub);
  	sshbuf_free(kex->session_id);
@@ -1179,8 +1200,8 @@ diff --color -ruNp a/kex.c b/kex.c
  	sshkey_free(kex->initial_hostkey);
  	free(kex->failed_choice);
 diff --color -ruNp a/kexdh.c b/kexdh.c
---- a/kexdh.c	2024-07-01 06:36:28.000000000 +0200
-+++ b/kexdh.c	2024-08-28 12:35:41.249432103 +0200
+--- a/kexdh.c	2024-09-20 00:20:48.000000000 +0200
++++ b/kexdh.c	2026-03-13 12:16:39.979537228 +0100
 @@ -49,13 +49,23 @@ kex_dh_keygen(struct kex *kex)
  {
  	switch (kex->kex_type) {
@@ -1206,8 +1227,8 @@ diff --color -ruNp a/kexdh.c b/kexdh.c
  		break;
  	case KEX_DH_GRP18_SHA512:
 diff --color -ruNp a/kexgen.c b/kexgen.c
---- a/kexgen.c	2024-07-01 06:36:28.000000000 +0200
-+++ b/kexgen.c	2024-08-28 12:35:41.249432103 +0200
+--- a/kexgen.c	2024-09-20 00:20:48.000000000 +0200
++++ b/kexgen.c	2026-03-13 12:16:39.979737335 +0100
 @@ -44,7 +44,7 @@
  static int input_kex_gen_init(int, u_int32_t, struct ssh *);
  static int input_kex_gen_reply(int type, u_int32_t seq, struct ssh *ssh);
@@ -1219,8 +1240,8 @@ diff --color -ruNp a/kexgen.c b/kexgen.c
      const struct sshbuf *client_version,
 diff --color -ruNp a/kexgssc.c b/kexgssc.c
 --- a/kexgssc.c	1970-01-01 01:00:00.000000000 +0100
-+++ b/kexgssc.c	2024-08-28 12:35:41.250432122 +0200
-@@ -0,0 +1,612 @@
++++ b/kexgssc.c	2026-03-13 12:25:23.115812190 +0100
+@@ -0,0 +1,706 @@
 +/*
 + * Copyright (c) 2001-2009 Simon Wilkinson. All rights reserved.
 + *
@@ -1270,38 +1291,206 @@ diff --color -ruNp a/kexgssc.c b/kexgssc.c
 +
 +#include "ssh-gss.h"
 +
++static int input_kexgss_hostkey(int, u_int32_t, struct ssh *);
++static int input_kexgss_continue(int, u_int32_t, struct ssh *);
++static int input_kexgss_complete(int, u_int32_t, struct ssh *);
++static int input_kexgss_error(int, u_int32_t, struct ssh *);
++static int input_kexgssgex_group(int, u_int32_t, struct ssh *);
++static int input_kexgssgex_continue(int, u_int32_t, struct ssh *);
++static int input_kexgssgex_complete(int, u_int32_t, struct ssh *);
++
++static int
++kexgss_final(struct ssh *ssh)
++{
++	struct kex *kex = ssh->kex;
++	Gssctxt *gss = kex->gss;
++	struct sshbuf *empty = NULL;
++	struct sshbuf *shared_secret = NULL;
++	u_char hash[SSH_DIGEST_MAX_LENGTH];
++	size_t hashlen;
++	int r;
++
++	/*
++	 * We _must_ have received a COMPLETE message in reply from the
++	 * server, which will have set server_blob and msg_tok
++	 */
++
++	/* compute shared secret */
++	switch (kex->kex_type) {
++	case KEX_GSS_GRP1_SHA1:
++	case KEX_GSS_GRP14_SHA1:
++	case KEX_GSS_GRP14_SHA256:
++	case KEX_GSS_GRP16_SHA512:
++		r = kex_dh_dec(kex, gss->server_blob, &shared_secret);
++		break;
++	case KEX_GSS_C25519_SHA256:
++		if (sshbuf_ptr(gss->server_blob)[sshbuf_len(gss->server_blob)] & 0x80)
++			fatal("The received key has MSB of last octet set!");
++		r = kex_c25519_dec(kex, gss->server_blob, &shared_secret);
++		break;
++	case KEX_GSS_NISTP256_SHA256:
++		if (sshbuf_len(gss->server_blob) != 65)
++			fatal("The received NIST-P256 key did not match "
++			      "expected length (expected 65, got %zu)",
++			      sshbuf_len(gss->server_blob));
++
++		if (sshbuf_ptr(gss->server_blob)[0] != POINT_CONVERSION_UNCOMPRESSED)
++			fatal("The received NIST-P256 key does not have first octet 0x04");
++
++		r = kex_ecdh_dec(kex, gss->server_blob, &shared_secret);
++		break;
++	default:
++		r = SSH_ERR_INVALID_ARGUMENT;
++		break;
++	}
++	if (r != 0) {
++		ssh_gssapi_delete_ctx(&kex->gss);
++		goto out;
++	}
++
++	if ((empty = sshbuf_new()) == NULL) {
++		ssh_gssapi_delete_ctx(&kex->gss);
++		r = SSH_ERR_ALLOC_FAIL;
++		goto out;
++	}
++
++	hashlen = sizeof(hash);
++	r = kex_gen_hash(kex->hash_alg, kex->client_version,
++			 kex->server_version, kex->my, kex->peer,
++			 (gss->server_host_key_blob ? gss->server_host_key_blob : empty),
++			 kex->client_pub, gss->server_blob, shared_secret,
++			 hash, &hashlen);
++	sshbuf_free(empty);
++	if (r != 0)
++		fatal_f("Unexpected KEX type %d", kex->kex_type);
++
++	gss->buf.value = hash;
++	gss->buf.length = hashlen;
++
++	/* Verify that the hash matches the MIC we just got. */
++	if (GSS_ERROR(ssh_gssapi_checkmic(gss, &gss->buf, &gss->msg_tok)))
++		ssh_packet_disconnect(ssh, "Hash's MIC didn't verify");
++
++	gss_release_buffer(&gss->minor, &gss->msg_tok);
++
++	if (kex->gss_deleg_creds)
++		ssh_gssapi_credentials_updated(gss);
++
++	if (gss_kex_context == NULL)
++		gss_kex_context = gss;
++	else
++		ssh_gssapi_delete_ctx(&kex->gss);
++
++	if ((r = kex_derive_keys(ssh, hash, hashlen, shared_secret)) == 0)
++		r = kex_send_newkeys(ssh);
++
++	if (kex->gss != NULL) {
++		sshbuf_free(gss->server_host_key_blob);
++		gss->server_host_key_blob = NULL;
++		sshbuf_free(gss->server_blob);
++		gss->server_blob = NULL;
++	}
++out:
++	explicit_bzero(kex->c25519_client_key, sizeof(kex->c25519_client_key));
++	explicit_bzero(hash, sizeof(hash));
++	sshbuf_free(shared_secret);
++	sshbuf_free(kex->client_pub);
++	kex->client_pub = NULL;
++	return r;
++}
++
++static int
++kexgss_init_ctx(struct ssh *ssh,
++		gss_buffer_desc *token_ptr)
++{
++	struct kex *kex = ssh->kex;
++	Gssctxt *gss = kex->gss;
++	gss_buffer_desc send_tok = GSS_C_EMPTY_BUFFER;
++	OM_uint32 ret_flags;
++	int r;
++
++	debug("Calling gss_init_sec_context");
++
++	gss->major = ssh_gssapi_init_ctx(gss, kex->gss_deleg_creds,
++					 token_ptr, &send_tok, &ret_flags);
++
++	if (GSS_ERROR(gss->major)) {
++		/* XXX Useless code: Missing send? */
++		if (send_tok.length != 0) {
++			if ((r = sshpkt_start(ssh, SSH2_MSG_KEXGSS_CONTINUE)) != 0 ||
++			    (r = sshpkt_put_string(ssh, send_tok.value, send_tok.length)) != 0)
++				fatal("sshpkt failed: %s", ssh_err(r));
++		}
++		fatal("gss_init_context failed");
++	}
++
++	/* If we've got an old receive buffer get rid of it */
++	if (token_ptr != GSS_C_NO_BUFFER)
++		gss_release_buffer(&gss->minor, token_ptr);
++
++	if (gss->major == GSS_S_COMPLETE) {
++		/* If mutual state flag is not true, kex fails */
++		if (!(ret_flags & GSS_C_MUTUAL_FLAG))
++			fatal("Mutual authentication failed");
++
++		/* If integ avail flag is not true kex fails */
++		if (!(ret_flags & GSS_C_INTEG_FLAG))
++			fatal("Integrity check failed");
++	}
++
++	/*
++	 * If we have data to send, then the last message that we
++	 * received cannot have been a 'complete'.
++	 */
++	if (send_tok.length != 0) {
++		if (gss->first) {
++			if ((r = sshpkt_start(ssh, SSH2_MSG_KEXGSS_INIT)) != 0 ||
++			    (r = sshpkt_put_string(ssh, send_tok.value, send_tok.length)) != 0 ||
++			    (r = sshpkt_put_stringb(ssh, kex->client_pub)) != 0)
++				fatal("failed to construct packet: %s", ssh_err(r));
++			gss->first = 0;
++		} else {
++			if ((r = sshpkt_start(ssh, SSH2_MSG_KEXGSS_CONTINUE)) != 0 ||
++			    (r = sshpkt_put_string(ssh, send_tok.value, send_tok.length)) != 0)
++				fatal("failed to construct packet: %s", ssh_err(r));
++		}
++		if ((r = sshpkt_send(ssh)) != 0)
++			fatal("failed to send packet: %s", ssh_err(r));
++		gss_release_buffer(&gss->minor, &send_tok);
++
++		/* If we've sent them data, they should reply */
++		ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_HOSTKEY, &input_kexgss_hostkey);
++		ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_CONTINUE, &input_kexgss_continue);
++		ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_COMPLETE, &input_kexgss_complete);
++		ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_ERROR, &input_kexgss_error);
++		return 0;
++	}
++	/* No data, and not complete */
++	if (gss->major != GSS_S_COMPLETE)
++		fatal("Not complete, and no token output");
++
++	if  (gss->major & GSS_S_CONTINUE_NEEDED)
++		return kexgss_init_ctx(ssh, token_ptr);
++
++	return kexgss_final(ssh);
++}
++
 +int
 +kexgss_client(struct ssh *ssh)
 +{
 +	struct kex *kex = ssh->kex;
-+	gss_buffer_desc send_tok = GSS_C_EMPTY_BUFFER,
-+	    recv_tok = GSS_C_EMPTY_BUFFER,
-+	    gssbuf, msg_tok = GSS_C_EMPTY_BUFFER, *token_ptr;
-+	Gssctxt *ctxt;
-+	OM_uint32 maj_status, min_status, ret_flags;
-+	struct sshbuf *server_blob = NULL;
-+	struct sshbuf *shared_secret = NULL;
-+	struct sshbuf *server_host_key_blob = NULL;
-+	struct sshbuf *empty = NULL;
-+	u_char *msg;
-+	int type = 0;
-+	int first = 1;
-+	u_char hash[SSH_DIGEST_MAX_LENGTH];
-+	size_t hashlen;
-+	u_char c;
 +	int r;
 +
 +	/* Initialise our GSSAPI world */
-+	ssh_gssapi_build_ctx(&ctxt);
-+	if (ssh_gssapi_id_kex(ctxt, kex->name, kex->kex_type)
-+	    == GSS_C_NO_OID)
++	ssh_gssapi_build_ctx(&kex->gss);
++	if (ssh_gssapi_id_kex(kex->gss, kex->name, kex->kex_type) == GSS_C_NO_OID)
 +		fatal("Couldn't identify host exchange");
 +
-+	if (ssh_gssapi_import_name(ctxt, kex->gss_host))
++	if (ssh_gssapi_import_name(kex->gss, kex->gss_host))
 +		fatal("Couldn't import hostname");
 +
 +	if (kex->gss_client &&
-+	    ssh_gssapi_client_identity(ctxt, kex->gss_client))
++	    ssh_gssapi_client_identity(kex->gss, kex->gss_client))
 +		fatal("Couldn't acquire client credentials");
 +
 +	/* Step 1 */
@@ -1322,521 +1511,447 @@ diff --color -ruNp a/kexgssc.c b/kexgssc.c
 +		fatal_f("Unexpected KEX type %d", kex->kex_type);
 +	}
 +	if (r != 0) {
-+		ssh_gssapi_delete_ctx(&ctxt);
++		ssh_gssapi_delete_ctx(&kex->gss);
 +		return r;
 +	}
++	return kexgss_init_ctx(ssh, GSS_C_NO_BUFFER);
++}
 +
-+	token_ptr = GSS_C_NO_BUFFER;
++static int
++input_kexgss_hostkey(int type,
++		     u_int32_t seq,
++		     struct ssh *ssh)
++{
++	Gssctxt *gss = ssh->kex->gss;
++	u_char *tmp = NULL;
++	size_t tmp_len = 0;
++	int r;
 +
-+	do {
-+		debug("Calling gss_init_sec_context");
++	debug("Received KEXGSS_HOSTKEY");
++	if (gss->server_host_key_blob)
++		fatal("Server host key received more than once");
++	if ((r = sshpkt_get_string(ssh, &tmp, &tmp_len)) != 0)
++		fatal("Failed to read server host key: %s", ssh_err(r));
++	if ((gss->server_host_key_blob = sshbuf_from(tmp, tmp_len)) == NULL)
++		fatal("sshbuf_from failed");
++	return 0;
++}
 +
-+		maj_status = ssh_gssapi_init_ctx(ctxt,
-+		    kex->gss_deleg_creds, token_ptr, &send_tok,
-+		    &ret_flags);
++static int
++input_kexgss_continue(int type,
++		      u_int32_t seq,
++		      struct ssh *ssh)
++{
++	Gssctxt *gss = ssh->kex->gss;
++	gss_buffer_desc recv_tok = GSS_C_EMPTY_BUFFER;
++	int r;
 +
-+		if (GSS_ERROR(maj_status)) {
-+			/* XXX Useles code: Missing send? */
-+			if (send_tok.length != 0) {
-+				if ((r = sshpkt_start(ssh,
-+				        SSH2_MSG_KEXGSS_CONTINUE)) != 0 ||
-+				    (r = sshpkt_put_string(ssh, send_tok.value,
-+				        send_tok.length)) != 0)
-+					fatal("sshpkt failed: %s", ssh_err(r));
-+			}
-+			fatal("gss_init_context failed");
-+		}
++	ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_HOSTKEY, NULL);
++	ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_CONTINUE, NULL);
++	ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_COMPLETE, NULL);
++	ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_ERROR, NULL);
 +
-+		/* If we've got an old receive buffer get rid of it */
-+		if (token_ptr != GSS_C_NO_BUFFER)
-+			gss_release_buffer(&min_status, &recv_tok);
++	debug("Received GSSAPI_CONTINUE");
++	if (gss->major == GSS_S_COMPLETE)
++		fatal("GSSAPI Continue received from server when complete");
++	if ((r = ssh_gssapi_sshpkt_get_buffer_desc(ssh, &recv_tok)) != 0 ||
++	    (r = sshpkt_get_end(ssh)) != 0)
++		fatal("Failed to read token: %s", ssh_err(r));
++	if  (!(gss->major & GSS_S_CONTINUE_NEEDED))
++		fatal("Didn't receive a SSH2_MSG_KEXGSS_COMPLETE when I expected it");
++	return kexgss_init_ctx(ssh, &recv_tok);
++}
 +
-+		if (maj_status == GSS_S_COMPLETE) {
-+			/* If mutual state flag is not true, kex fails */
-+			if (!(ret_flags & GSS_C_MUTUAL_FLAG))
-+				fatal("Mutual authentication failed");
++static int
++input_kexgss_complete(int type,
++		      u_int32_t seq,
++		      struct ssh *ssh)
++{
++	Gssctxt *gss = ssh->kex->gss;
++	gss_buffer_desc recv_tok = GSS_C_EMPTY_BUFFER;
++	u_char c;
++	int r;
 +
-+			/* If integ avail flag is not true kex fails */
-+			if (!(ret_flags & GSS_C_INTEG_FLAG))
-+				fatal("Integrity check failed");
-+		}
++	ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_HOSTKEY, NULL);
++	ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_CONTINUE, NULL);
++	ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_COMPLETE, NULL);
++	ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_ERROR, NULL);
 +
-+		/*
-+		 * If we have data to send, then the last message that we
-+		 * received cannot have been a 'complete'.
-+		 */
-+		if (send_tok.length != 0) {
-+			if (first) {
-+				if ((r = sshpkt_start(ssh, SSH2_MSG_KEXGSS_INIT)) != 0 ||
-+				    (r = sshpkt_put_string(ssh, send_tok.value,
-+				        send_tok.length)) != 0 ||
-+				    (r = sshpkt_put_stringb(ssh, kex->client_pub)) != 0)
-+					fatal("failed to construct packet: %s", ssh_err(r));
-+				first = 0;
-+			} else {
-+				if ((r = sshpkt_start(ssh, SSH2_MSG_KEXGSS_CONTINUE)) != 0 ||
-+				    (r = sshpkt_put_string(ssh, send_tok.value,
-+				        send_tok.length)) != 0)
-+					fatal("failed to construct packet: %s", ssh_err(r));
-+			}
-+			if ((r = sshpkt_send(ssh)) != 0)
-+				fatal("failed to send packet: %s", ssh_err(r));
-+			gss_release_buffer(&min_status, &send_tok);
++	debug("Received GSSAPI_COMPLETE");
++	if (gss->msg_tok.value != NULL)
++	        fatal("Received GSSAPI_COMPLETE twice?");
++	if ((r = sshpkt_getb_froms(ssh, &gss->server_blob)) != 0 ||
++	    (r = ssh_gssapi_sshpkt_get_buffer_desc(ssh, &gss->msg_tok)) != 0)
++		fatal("Failed to read message: %s", ssh_err(r));
 +
-+			/* If we've sent them data, they should reply */
-+			do {
-+				type = ssh_packet_read(ssh);
-+				if (type == SSH2_MSG_KEXGSS_HOSTKEY) {
-+					u_char *tmp = NULL;
-+					size_t tmp_len = 0;
++	/* Is there a token included? */
++	if ((r = sshpkt_get_u8(ssh, &c)) != 0)
++		fatal("sshpkt failed: %s", ssh_err(r));
++	if (c) {
++		if ((r = ssh_gssapi_sshpkt_get_buffer_desc(ssh, &recv_tok)) != 0)
++			fatal("Failed to read token: %s", ssh_err(r));
++		/* If we're already complete - protocol error */
++		if (gss->major == GSS_S_COMPLETE)
++			ssh_packet_disconnect(ssh, "Protocol error: received token when complete");
++	} else {
++		if (gss->major != GSS_S_COMPLETE)
++			ssh_packet_disconnect(ssh, "Protocol error: did not receive final token");
++	}
++	if ((r = sshpkt_get_end(ssh)) != 0)
++		fatal("Expecting end of packet.");
 +
-+					debug("Received KEXGSS_HOSTKEY");
-+					if (server_host_key_blob)
-+						fatal("Server host key received more than once");
-+					if ((r = sshpkt_get_string(ssh, &tmp, &tmp_len)) != 0)
-+						fatal("Failed to read server host key: %s", ssh_err(r));
-+					if ((server_host_key_blob = sshbuf_from(tmp, tmp_len)) == NULL)
-+						fatal("sshbuf_from failed");
-+				}
-+			} while (type == SSH2_MSG_KEXGSS_HOSTKEY);
++	if  (gss->major & GSS_S_CONTINUE_NEEDED)
++		return kexgss_init_ctx(ssh, &recv_tok);
 +
-+			switch (type) {
-+			case SSH2_MSG_KEXGSS_CONTINUE:
-+				debug("Received GSSAPI_CONTINUE");
-+				if (maj_status == GSS_S_COMPLETE)
-+					fatal("GSSAPI Continue received from server when complete");
-+				if ((r = ssh_gssapi_sshpkt_get_buffer_desc(ssh,
-+				        &recv_tok)) != 0 ||
-+				    (r = sshpkt_get_end(ssh)) != 0)
-+					fatal("Failed to read token: %s", ssh_err(r));
-+				break;
-+			case SSH2_MSG_KEXGSS_COMPLETE:
-+				debug("Received GSSAPI_COMPLETE");
-+				if (msg_tok.value != NULL)
-+				        fatal("Received GSSAPI_COMPLETE twice?");
-+				if ((r = sshpkt_getb_froms(ssh, &server_blob)) != 0 ||
-+				    (r = ssh_gssapi_sshpkt_get_buffer_desc(ssh,
-+				        &msg_tok)) != 0)
-+					fatal("Failed to read message: %s", ssh_err(r));
++	gss_release_buffer(&gss->minor, &recv_tok);
++	return kexgss_final(ssh);
++}
 +
-+				/* Is there a token included? */
-+				if ((r = sshpkt_get_u8(ssh, &c)) != 0)
-+					fatal("sshpkt failed: %s", ssh_err(r));
-+				if (c) {
-+					if ((r = ssh_gssapi_sshpkt_get_buffer_desc(
-+					    ssh, &recv_tok)) != 0)
-+						fatal("Failed to read token: %s", ssh_err(r));
-+					/* If we're already complete - protocol error */
-+					if (maj_status == GSS_S_COMPLETE)
-+						sshpkt_disconnect(ssh, "Protocol error: received token when complete");
-+				} else {
-+					/* No token included */
-+					if (maj_status != GSS_S_COMPLETE)
-+						sshpkt_disconnect(ssh, "Protocol error: did not receive final token");
-+				}
-+				if ((r = sshpkt_get_end(ssh)) != 0) {
-+					fatal("Expecting end of packet.");
-+				}
-+				break;
-+			case SSH2_MSG_KEXGSS_ERROR:
-+				debug("Received Error");
-+				if ((r = sshpkt_get_u32(ssh, &maj_status)) != 0 ||
-+				    (r = sshpkt_get_u32(ssh, &min_status)) != 0 ||
-+				    (r = sshpkt_get_string(ssh, &msg, NULL)) != 0 ||
-+				    (r = sshpkt_get_string(ssh, NULL, NULL)) != 0 || /* lang tag */
-+				    (r = sshpkt_get_end(ssh)) != 0)
-+					fatal("sshpkt_get failed: %s", ssh_err(r));
-+				fatal("GSSAPI Error: \n%.400s", msg);
-+			default:
-+				sshpkt_disconnect(ssh, "Protocol error: didn't expect packet type %d",
-+				    type);
-+			}
-+			token_ptr = &recv_tok;
-+		} else {
-+			/* No data, and not complete */
-+			if (maj_status != GSS_S_COMPLETE)
-+				fatal("Not complete, and no token output");
-+		}
-+	} while (maj_status & GSS_S_CONTINUE_NEEDED);
++static int
++input_kexgss_error(int type,
++		   u_int32_t seq,
++		   struct ssh *ssh)
++{
++	Gssctxt *gss = ssh->kex->gss;
++	u_char *msg;
++	int r;
++
++	debug("Received Error");
++	if ((r = sshpkt_get_u32(ssh, &gss->major)) != 0 ||
++	    (r = sshpkt_get_u32(ssh, &gss->minor)) != 0 ||
++	    (r = sshpkt_get_string(ssh, &msg, NULL)) != 0 ||
++	    (r = sshpkt_get_string(ssh, NULL, NULL)) != 0 || /* lang tag */
++	    (r = sshpkt_get_end(ssh)) != 0)
++		fatal("sshpkt_get failed: %s", ssh_err(r));
++	fatal("GSSAPI Error: \n%.400s", msg);
++	return 0;
++}
++
++/*******************************************************/
++/******************** KEXGSSGEX ************************/
++/*******************************************************/
++
++int
++kexgssgex_client(struct ssh *ssh)
++{
++	struct kex *kex = ssh->kex;
++	int r;
++
++	/* Initialise our GSSAPI world */
++	ssh_gssapi_build_ctx(&kex->gss);
++	if (ssh_gssapi_id_kex(kex->gss, kex->name, kex->kex_type) == GSS_C_NO_OID)
++		fatal("Couldn't identify host exchange");
++
++	if (ssh_gssapi_import_name(kex->gss, kex->gss_host))
++		fatal("Couldn't import hostname");
++
++	if (kex->gss_client &&
++	    ssh_gssapi_client_identity(kex->gss, kex->gss_client))
++		fatal("Couldn't acquire client credentials");
++
++	debug("Doing group exchange");
++	kex->min = DH_GRP_MIN;
++	kex->max = DH_GRP_MAX;
++	kex->nbits = dh_estimate(kex->dh_need * 8);
++
++	if ((r = sshpkt_start(ssh, SSH2_MSG_KEXGSS_GROUPREQ)) != 0 ||
++	    (r = sshpkt_put_u32(ssh, kex->min)) != 0 ||
++	    (r = sshpkt_put_u32(ssh, kex->nbits)) != 0 ||
++	    (r = sshpkt_put_u32(ssh, kex->max)) != 0 ||
++	    (r = sshpkt_send(ssh)) != 0)
++		fatal("Failed to construct a packet: %s", ssh_err(r));
++
++	debug("Wait SSH2_MSG_KEXGSS_GROUP");
++	ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_GROUP, &input_kexgssgex_group);
++	return 0;
++}
++
++static int
++kexgssgex_final(struct ssh *ssh)
++{
++	struct kex *kex = ssh->kex;
++	Gssctxt *gss = kex->gss;
++	struct sshbuf *buf = NULL;
++	struct sshbuf *empty = NULL;
++	struct sshbuf *shared_secret = NULL;
++	BIGNUM *dh_server_pub = NULL;
++	const BIGNUM *pub_key, *dh_p, *dh_g;
++	u_char hash[SSH_DIGEST_MAX_LENGTH];
++	size_t hashlen;
++	int r = SSH_ERR_INTERNAL_ERROR;
 +
 +	/*
 +	 * We _must_ have received a COMPLETE message in reply from the
 +	 * server, which will have set server_blob and msg_tok
 +	 */
 +
-+	if (type != SSH2_MSG_KEXGSS_COMPLETE)
-+		fatal("Didn't receive a SSH2_MSG_KEXGSS_COMPLETE when I expected it");
-+
-+	/* compute shared secret */
-+	switch (kex->kex_type) {
-+	case KEX_GSS_GRP1_SHA1:
-+	case KEX_GSS_GRP14_SHA1:
-+	case KEX_GSS_GRP14_SHA256:
-+	case KEX_GSS_GRP16_SHA512:
-+		r = kex_dh_dec(kex, server_blob, &shared_secret);
-+		break;
-+	case KEX_GSS_C25519_SHA256:
-+		if (sshbuf_ptr(server_blob)[sshbuf_len(server_blob)] & 0x80)
-+			fatal("The received key has MSB of last octet set!");
-+		r = kex_c25519_dec(kex, server_blob, &shared_secret);
-+		break;
-+	case KEX_GSS_NISTP256_SHA256:
-+		if (sshbuf_len(server_blob) != 65)
-+			fatal("The received NIST-P256 key did not match"
-+			    "expected length (expected 65, got %zu)", sshbuf_len(server_blob));
-+
-+		if (sshbuf_ptr(server_blob)[0] != POINT_CONVERSION_UNCOMPRESSED)
-+			fatal("The received NIST-P256 key does not have first octet 0x04");
-+
-+		r = kex_ecdh_dec(kex, server_blob, &shared_secret);
-+		break;
-+	default:
-+		r = SSH_ERR_INVALID_ARGUMENT;
-+		break;
-+	}
-+	if (r != 0)
++	/* 7. C verifies that the key Q_S is valid */
++	/* 8. C computes shared secret */
++	if ((buf = sshbuf_new()) == NULL ||
++	    (r = sshbuf_put_stringb(buf, gss->server_blob)) != 0 ||
++	    (r = sshbuf_get_bignum2(buf, &dh_server_pub)) != 0) {
++		ssh_gssapi_delete_ctx(&kex->gss);
 +		goto out;
++	}
++	sshbuf_free(buf);
++	buf = NULL;
 +
-+	if ((empty = sshbuf_new()) == NULL) {
++	if ((shared_secret = sshbuf_new()) == NULL) {
++		ssh_gssapi_delete_ctx(&kex->gss);
 +		r = SSH_ERR_ALLOC_FAIL;
 +		goto out;
 +	}
 +
-+	hashlen = sizeof(hash);
-+	if ((r = kex_gen_hash(
-+	    kex->hash_alg,
-+	    kex->client_version,
-+	    kex->server_version,
-+	    kex->my,
-+	    kex->peer,
-+	    (server_host_key_blob ? server_host_key_blob : empty),
-+	    kex->client_pub,
-+	    server_blob,
-+	    shared_secret,
-+	    hash, &hashlen)) != 0)
-+		fatal_f("Unexpected KEX type %d", kex->kex_type);
++	if ((r = kex_dh_compute_key(kex, dh_server_pub, shared_secret)) != 0) {
++		ssh_gssapi_delete_ctx(&kex->gss);
++		goto out;
++	}
 +
-+	gssbuf.value = hash;
-+	gssbuf.length = hashlen;
++	if ((empty = sshbuf_new()) == NULL) {
++		ssh_gssapi_delete_ctx(&kex->gss);
++		r = SSH_ERR_ALLOC_FAIL;
++		goto out;
++	}
++
++	DH_get0_key(kex->dh, &pub_key, NULL);
++	DH_get0_pqg(kex->dh, &dh_p, NULL, &dh_g);
++	hashlen = sizeof(hash);
++	r = kexgex_hash(kex->hash_alg, kex->client_version,
++			kex->server_version, kex->my, kex->peer,
++			(gss->server_host_key_blob ? gss->server_host_key_blob : empty),
++			kex->min, kex->nbits, kex->max, dh_p, dh_g, pub_key,
++			dh_server_pub, sshbuf_ptr(shared_secret), sshbuf_len(shared_secret),
++			hash, &hashlen);
++	sshbuf_free(empty);
++	if (r != 0)
++		fatal("Failed to calculate hash: %s", ssh_err(r));
++
++	gss->buf.value = hash;
++	gss->buf.length = hashlen;
 +
 +	/* Verify that the hash matches the MIC we just got. */
-+	if (GSS_ERROR(ssh_gssapi_checkmic(ctxt, &gssbuf, &msg_tok)))
-+		sshpkt_disconnect(ssh, "Hash's MIC didn't verify");
++	if (GSS_ERROR(ssh_gssapi_checkmic(gss, &gss->buf, &gss->msg_tok)))
++		ssh_packet_disconnect(ssh, "Hash's MIC didn't verify");
 +
-+	gss_release_buffer(&min_status, &msg_tok);
++	gss_release_buffer(&gss->minor, &gss->msg_tok);
 +
 +	if (kex->gss_deleg_creds)
-+		ssh_gssapi_credentials_updated(ctxt);
++		ssh_gssapi_credentials_updated(gss);
 +
 +	if (gss_kex_context == NULL)
-+		gss_kex_context = ctxt;
++		gss_kex_context = gss;
 +	else
-+		ssh_gssapi_delete_ctx(&ctxt);
++		ssh_gssapi_delete_ctx(&kex->gss);
 +
++	/* Finally derive the keys and send them */
 +	if ((r = kex_derive_keys(ssh, hash, hashlen, shared_secret)) == 0)
 +		r = kex_send_newkeys(ssh);
 +
++	if (kex->gss != NULL) {
++		sshbuf_free(gss->server_host_key_blob);
++		gss->server_host_key_blob = NULL;
++		sshbuf_free(gss->server_blob);
++		gss->server_blob = NULL;
++	}
 +out:
 +	explicit_bzero(hash, sizeof(hash));
-+	explicit_bzero(kex->c25519_client_key, sizeof(kex->c25519_client_key));
-+	sshbuf_free(empty);
-+	sshbuf_free(server_host_key_blob);
-+	sshbuf_free(server_blob);
++	DH_free(kex->dh);
++	kex->dh = NULL;
++	BN_clear_free(dh_server_pub);
 +	sshbuf_free(shared_secret);
-+	sshbuf_free(kex->client_pub);
-+	kex->client_pub = NULL;
 +	return r;
 +}
 +
-+int
-+kexgssgex_client(struct ssh *ssh)
++static int
++kexgssgex_init_ctx(struct ssh *ssh,
++		   gss_buffer_desc *token_ptr)
 +{
 +	struct kex *kex = ssh->kex;
-+	gss_buffer_desc send_tok = GSS_C_EMPTY_BUFFER,
-+	    recv_tok = GSS_C_EMPTY_BUFFER, gssbuf,
-+            msg_tok = GSS_C_EMPTY_BUFFER, *token_ptr;
-+	Gssctxt *ctxt;
-+	OM_uint32 maj_status, min_status, ret_flags;
-+	struct sshbuf *shared_secret = NULL;
-+	BIGNUM *p = NULL;
-+	BIGNUM *g = NULL;
-+	struct sshbuf *buf = NULL;
-+	struct sshbuf *server_host_key_blob = NULL;
-+	struct sshbuf *server_blob = NULL;
-+	BIGNUM *dh_server_pub = NULL;
-+	u_char *msg;
-+	int type = 0;
-+	int first = 1;
-+	u_char hash[SSH_DIGEST_MAX_LENGTH];
-+	size_t hashlen;
-+	const BIGNUM *pub_key, *dh_p, *dh_g;
-+	int nbits = 0, min = DH_GRP_MIN, max = DH_GRP_MAX;
-+	struct sshbuf *empty = NULL;
-+	u_char c;
++	Gssctxt *gss = kex->gss;
++	const BIGNUM *pub_key;
++	gss_buffer_desc send_tok = GSS_C_EMPTY_BUFFER;
++	OM_uint32 ret_flags;
 +	int r;
 +
-+	/* Initialise our GSSAPI world */
-+	ssh_gssapi_build_ctx(&ctxt);
-+	if (ssh_gssapi_id_kex(ctxt, kex->name, kex->kex_type)
-+	    == GSS_C_NO_OID)
-+		fatal("Couldn't identify host exchange");
++	/* Step 2 - call GSS_Init_sec_context() */
++	debug("Calling gss_init_sec_context");
 +
-+	if (ssh_gssapi_import_name(ctxt, kex->gss_host))
-+		fatal("Couldn't import hostname");
++	gss->major = ssh_gssapi_init_ctx(gss, kex->gss_deleg_creds,
++					 token_ptr, &send_tok, &ret_flags);
 +
-+	if (kex->gss_client &&
-+	    ssh_gssapi_client_identity(ctxt, kex->gss_client))
-+		fatal("Couldn't acquire client credentials");
++	if (GSS_ERROR(gss->major)) {
++		/* XXX Useless code: Missing send? */
++		if (send_tok.length != 0) {
++			if ((r = sshpkt_start(ssh, SSH2_MSG_KEXGSS_CONTINUE)) != 0 ||
++			    (r = sshpkt_put_string(ssh, send_tok.value, send_tok.length)) != 0)
++				fatal("sshpkt failed: %s", ssh_err(r));
++		}
++		fatal("gss_init_context failed");
++	}
 +
-+	debug("Doing group exchange");
-+	nbits = dh_estimate(kex->dh_need * 8);
++	/* If we've got an old receive buffer get rid of it */
++	if (token_ptr != GSS_C_NO_BUFFER)
++		gss_release_buffer(&gss->minor, token_ptr);
 +
-+	kex->min = DH_GRP_MIN;
-+	kex->max = DH_GRP_MAX;
-+	kex->nbits = nbits;
-+	if ((r = sshpkt_start(ssh, SSH2_MSG_KEXGSS_GROUPREQ)) != 0 ||
-+	    (r = sshpkt_put_u32(ssh, min)) != 0 ||
-+	    (r = sshpkt_put_u32(ssh, nbits)) != 0 ||
-+	    (r = sshpkt_put_u32(ssh, max)) != 0 ||
-+	    (r = sshpkt_send(ssh)) != 0)
-+		fatal("Failed to construct a packet: %s", ssh_err(r));
++	if (gss->major == GSS_S_COMPLETE) {
++		/* If mutual state flag is not true, kex fails */
++		if (!(ret_flags & GSS_C_MUTUAL_FLAG))
++			fatal("Mutual authentication failed");
 +
-+	if ((r = ssh_packet_read_expect(ssh, SSH2_MSG_KEXGSS_GROUP)) != 0)
-+		fatal("Error: %s", ssh_err(r));
++		/* If integ avail flag is not true kex fails */
++		if (!(ret_flags & GSS_C_INTEG_FLAG))
++			fatal("Integrity check failed");
++	}
++
++	/*
++	 * If we have data to send, then the last message that we
++	 * received cannot have been a 'complete'.
++	 */
++	if (send_tok.length != 0) {
++		if (gss->first) {
++	                DH_get0_key(kex->dh, &pub_key, NULL);
++			if ((r = sshpkt_start(ssh, SSH2_MSG_KEXGSS_INIT)) != 0 ||
++			    (r = sshpkt_put_string(ssh, send_tok.value, send_tok.length)) != 0 ||
++			    (r = sshpkt_put_bignum2(ssh, pub_key)) != 0)
++				fatal("failed to construct packet: %s", ssh_err(r));
++			gss->first = 0;
++		} else {
++			if ((r = sshpkt_start(ssh, SSH2_MSG_KEXGSS_CONTINUE)) != 0 ||
++			    (r = sshpkt_put_string(ssh, send_tok.value, send_tok.length)) != 0)
++				fatal("failed to construct packet: %s", ssh_err(r));
++		}
++		if ((r = sshpkt_send(ssh)) != 0)
++			fatal("failed to send packet: %s", ssh_err(r));
++		gss_release_buffer(&gss->minor, &send_tok);
++
++		/* If we've sent them data, they should reply */
++		ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_HOSTKEY, &input_kexgss_hostkey);
++		ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_CONTINUE, &input_kexgssgex_continue);
++		ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_COMPLETE, &input_kexgssgex_complete);
++		ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_ERROR, &input_kexgss_error);
++		return 0;
++	}
++	/* No data, and not complete */
++	if (gss->major != GSS_S_COMPLETE)
++		fatal("Not complete, and no token output");
++
++	if  (gss->major & GSS_S_CONTINUE_NEEDED)
++		return kexgssgex_init_ctx(ssh, token_ptr);
++
++	return kexgssgex_final(ssh);
++}
++
++static int
++input_kexgssgex_group(int type,
++		      u_int32_t seq,
++		      struct ssh *ssh)
++{
++	struct kex *kex = ssh->kex;
++	BIGNUM *p = NULL;
++	BIGNUM *g = NULL;
++	int r;
++
++	debug("Received SSH2_MSG_KEXGSS_GROUP");
++	ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_GROUP, NULL);
 +
 +	if ((r = sshpkt_get_bignum2(ssh, &p)) != 0 ||
 +	    (r = sshpkt_get_bignum2(ssh, &g)) != 0 ||
 +	    (r = sshpkt_get_end(ssh)) != 0)
 +		fatal("shpkt_get_bignum2 failed: %s", ssh_err(r));
 +
-+	if (BN_num_bits(p) < min || BN_num_bits(p) > max)
++	if (BN_num_bits(p) < kex->min || BN_num_bits(p) > kex->max)
 +		fatal("GSSGRP_GEX group out of range: %d !< %d !< %d",
-+		    min, BN_num_bits(p), max);
++		    kex->min, BN_num_bits(p), kex->max);
 +
 +	if ((kex->dh = dh_new_group(g, p)) == NULL)
 +		fatal("dn_new_group() failed");
 +	p = g = NULL; /* belong to kex->dh now */
 +
-+	if ((r = dh_gen_key(kex->dh, kex->we_need * 8)) != 0)
-+		goto out;
-+	DH_get0_key(kex->dh, &pub_key, NULL);
++	if ((r = dh_gen_key(kex->dh, kex->we_need * 8)) != 0) {
++		ssh_gssapi_delete_ctx(&kex->gss);
++		DH_free(kex->dh);
++		kex->dh = NULL;
++		return r;
++	}
 +
-+	token_ptr = GSS_C_NO_BUFFER;
++	return kexgssgex_init_ctx(ssh, GSS_C_NO_BUFFER);
++}
 +
-+	do {
-+		/* Step 2 - call GSS_Init_sec_context() */
-+		debug("Calling gss_init_sec_context");
++static int
++input_kexgssgex_continue(int type,
++			 u_int32_t seq,
++			 struct ssh *ssh)
++{
++	Gssctxt *gss = ssh->kex->gss;
++	gss_buffer_desc recv_tok = GSS_C_EMPTY_BUFFER;
++	int r;
 +
-+		maj_status = ssh_gssapi_init_ctx(ctxt,
-+		    kex->gss_deleg_creds, token_ptr, &send_tok,
-+		    &ret_flags);
++	ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_HOSTKEY, NULL);
++	ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_CONTINUE, NULL);
++	ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_COMPLETE, NULL);
++	ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_ERROR, NULL);
 +
-+		if (GSS_ERROR(maj_status)) {
-+			/* XXX Useles code: Missing send? */
-+			if (send_tok.length != 0) {
-+				if ((r = sshpkt_start(ssh,
-+				        SSH2_MSG_KEXGSS_CONTINUE)) != 0 ||
-+				    (r = sshpkt_put_string(ssh, send_tok.value,
-+				        send_tok.length)) != 0)
-+					fatal("sshpkt failed: %s", ssh_err(r));
-+			}
-+			fatal("gss_init_context failed");
-+		}
-+
-+		/* If we've got an old receive buffer get rid of it */
-+		if (token_ptr != GSS_C_NO_BUFFER)
-+			gss_release_buffer(&min_status, &recv_tok);
-+
-+		if (maj_status == GSS_S_COMPLETE) {
-+			/* If mutual state flag is not true, kex fails */
-+			if (!(ret_flags & GSS_C_MUTUAL_FLAG))
-+				fatal("Mutual authentication failed");
-+
-+			/* If integ avail flag is not true kex fails */
-+			if (!(ret_flags & GSS_C_INTEG_FLAG))
-+				fatal("Integrity check failed");
-+		}
-+
-+		/*
-+		 * If we have data to send, then the last message that we
-+		 * received cannot have been a 'complete'.
-+		 */
-+		if (send_tok.length != 0) {
-+			if (first) {
-+				if ((r = sshpkt_start(ssh, SSH2_MSG_KEXGSS_INIT)) != 0 ||
-+				    (r = sshpkt_put_string(ssh, send_tok.value,
-+				        send_tok.length)) != 0 ||
-+				    (r = sshpkt_put_bignum2(ssh, pub_key)) != 0)
-+					fatal("sshpkt failed: %s", ssh_err(r));
-+				first = 0;
-+			} else {
-+				if ((r = sshpkt_start(ssh, SSH2_MSG_KEXGSS_CONTINUE)) != 0 ||
-+				    (r = sshpkt_put_string(ssh,send_tok.value,
-+				        send_tok.length)) != 0)
-+					fatal("sshpkt failed: %s", ssh_err(r));
-+			}
-+			if ((r = sshpkt_send(ssh)) != 0)
-+				fatal("sshpkt_send failed: %s", ssh_err(r));
-+			gss_release_buffer(&min_status, &send_tok);
-+
-+			/* If we've sent them data, they should reply */
-+			do {
-+				type = ssh_packet_read(ssh);
-+				if (type == SSH2_MSG_KEXGSS_HOSTKEY) {
-+					u_char *tmp = NULL;
-+					size_t tmp_len = 0;
-+
-+					debug("Received KEXGSS_HOSTKEY");
-+					if (server_host_key_blob)
-+						fatal("Server host key received more than once");
-+					if ((r = sshpkt_get_string(ssh, &tmp, &tmp_len)) != 0)
-+						fatal("sshpkt failed: %s", ssh_err(r));
-+					if ((server_host_key_blob = sshbuf_from(tmp, tmp_len)) == NULL)
-+						fatal("sshbuf_from failed");
-+				}
-+			} while (type == SSH2_MSG_KEXGSS_HOSTKEY);
-+
-+			switch (type) {
-+			case SSH2_MSG_KEXGSS_CONTINUE:
-+				debug("Received GSSAPI_CONTINUE");
-+				if (maj_status == GSS_S_COMPLETE)
-+					fatal("GSSAPI Continue received from server when complete");
-+				if ((r = ssh_gssapi_sshpkt_get_buffer_desc(ssh,
-+				        &recv_tok)) != 0 ||
-+				    (r = sshpkt_get_end(ssh)) != 0)
-+					fatal("sshpkt failed: %s", ssh_err(r));
-+				break;
-+			case SSH2_MSG_KEXGSS_COMPLETE:
-+				debug("Received GSSAPI_COMPLETE");
-+				if (msg_tok.value != NULL)
-+				        fatal("Received GSSAPI_COMPLETE twice?");
-+				if ((r = sshpkt_getb_froms(ssh, &server_blob)) != 0 ||
-+				    (r = ssh_gssapi_sshpkt_get_buffer_desc(ssh,
-+				        &msg_tok)) != 0)
-+					fatal("sshpkt failed: %s", ssh_err(r));
-+
-+				/* Is there a token included? */
-+				if ((r = sshpkt_get_u8(ssh, &c)) != 0)
-+					fatal("sshpkt failed: %s", ssh_err(r));
-+				if (c) {
-+					if ((r = ssh_gssapi_sshpkt_get_buffer_desc(
-+					        ssh, &recv_tok)) != 0 ||
-+					    (r = sshpkt_get_end(ssh)) != 0)
-+						fatal("sshpkt failed: %s", ssh_err(r));
-+					/* If we're already complete - protocol error */
-+					if (maj_status == GSS_S_COMPLETE)
-+						sshpkt_disconnect(ssh, "Protocol error: received token when complete");
-+				} else {
-+					/* No token included */
-+					if (maj_status != GSS_S_COMPLETE)
-+						sshpkt_disconnect(ssh, "Protocol error: did not receive final token");
-+				}
-+				break;
-+			case SSH2_MSG_KEXGSS_ERROR:
-+				debug("Received Error");
-+				if ((r = sshpkt_get_u32(ssh, &maj_status)) != 0 ||
-+				    (r = sshpkt_get_u32(ssh, &min_status)) != 0 ||
-+				    (r = sshpkt_get_string(ssh, &msg, NULL)) != 0 ||
-+				    (r = sshpkt_get_string(ssh, NULL, NULL)) != 0 || /* lang tag */
-+				    (r = sshpkt_get_end(ssh)) != 0)
-+					fatal("sshpkt failed: %s", ssh_err(r));
-+				fatal("GSSAPI Error: \n%.400s", msg);
-+			default:
-+				sshpkt_disconnect(ssh, "Protocol error: didn't expect packet type %d",
-+				    type);
-+			}
-+			token_ptr = &recv_tok;
-+		} else {
-+			/* No data, and not complete */
-+			if (maj_status != GSS_S_COMPLETE)
-+				fatal("Not complete, and no token output");
-+		}
-+	} while (maj_status & GSS_S_CONTINUE_NEEDED);
-+
-+	/*
-+	 * We _must_ have received a COMPLETE message in reply from the
-+	 * server, which will have set dh_server_pub and msg_tok
-+	 */
-+
-+	if (type != SSH2_MSG_KEXGSS_COMPLETE)
++	debug("Received GSSAPI_CONTINUE");
++	if (gss->major == GSS_S_COMPLETE)
++		fatal("GSSAPI Continue received from server when complete");
++	if ((r = ssh_gssapi_sshpkt_get_buffer_desc(ssh, &recv_tok)) != 0 ||
++	    (r = sshpkt_get_end(ssh)) != 0)
++		fatal("Failed to read token: %s", ssh_err(r));
++	if  (!(gss->major & GSS_S_CONTINUE_NEEDED))
 +		fatal("Didn't receive a SSH2_MSG_KEXGSS_COMPLETE when I expected it");
++	return kexgssgex_init_ctx(ssh, &recv_tok);
++}
 +
-+	/* 7. C verifies that the key Q_S is valid */
-+	/* 8. C computes shared secret */
-+	if ((buf = sshbuf_new()) == NULL ||
-+	    (r = sshbuf_put_stringb(buf, server_blob)) != 0 ||
-+	    (r = sshbuf_get_bignum2(buf, &dh_server_pub)) != 0)
-+		goto out;
-+	sshbuf_free(buf);
-+	buf = NULL;
++static int
++input_kexgssgex_complete(int type,
++		      u_int32_t seq,
++		      struct ssh *ssh)
++{
++	Gssctxt *gss = ssh->kex->gss;
++	gss_buffer_desc recv_tok = GSS_C_EMPTY_BUFFER;
++	u_char c;
++	int r;
 +
-+	if ((shared_secret = sshbuf_new()) == NULL) {
-+		r = SSH_ERR_ALLOC_FAIL;
-+		goto out;
++	ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_HOSTKEY, NULL);
++	ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_CONTINUE, NULL);
++	ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_COMPLETE, NULL);
++	ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_ERROR, NULL);
++
++	debug("Received GSSAPI_COMPLETE");
++	if (gss->msg_tok.value != NULL)
++	        fatal("Received GSSAPI_COMPLETE twice?");
++	if ((r = sshpkt_getb_froms(ssh, &gss->server_blob)) != 0 ||
++	    (r = ssh_gssapi_sshpkt_get_buffer_desc(ssh, &gss->msg_tok)) != 0)
++		fatal("Failed to read message: %s", ssh_err(r));
++
++	/* Is there a token included? */
++	if ((r = sshpkt_get_u8(ssh, &c)) != 0)
++		fatal("sshpkt failed: %s", ssh_err(r));
++	if (c) {
++		if ((r = ssh_gssapi_sshpkt_get_buffer_desc(ssh, &recv_tok)) != 0)
++			fatal("Failed to read token: %s", ssh_err(r));
++		/* If we're already complete - protocol error */
++		if (gss->major == GSS_S_COMPLETE)
++			ssh_packet_disconnect(ssh, "Protocol error: received token when complete");
++	} else {
++		if (gss->major != GSS_S_COMPLETE)
++			ssh_packet_disconnect(ssh, "Protocol error: did not receive final token");
 +	}
++	if ((r = sshpkt_get_end(ssh)) != 0)
++		fatal("Expecting end of packet.");
 +
-+	if ((r = kex_dh_compute_key(kex, dh_server_pub, shared_secret)) != 0)
-+		goto out;
-+	if ((empty = sshbuf_new()) == NULL) {
-+		r = SSH_ERR_ALLOC_FAIL;
-+		goto out;
-+	}
++	if  (gss->major & GSS_S_CONTINUE_NEEDED)
++		return kexgssgex_init_ctx(ssh, &recv_tok);
 +
-+	DH_get0_pqg(kex->dh, &dh_p, NULL, &dh_g);
-+	hashlen = sizeof(hash);
-+	if ((r = kexgex_hash(
-+	    kex->hash_alg,
-+	    kex->client_version,
-+	    kex->server_version,
-+	    kex->my,
-+	    kex->peer,
-+	    (server_host_key_blob ? server_host_key_blob : empty),
-+ 	    kex->min, kex->nbits, kex->max,
-+	    dh_p, dh_g,
-+	    pub_key,
-+	    dh_server_pub,
-+	    sshbuf_ptr(shared_secret), sshbuf_len(shared_secret),
-+	    hash, &hashlen)) != 0)
-+		fatal("Failed to calculate hash: %s", ssh_err(r));
-+
-+	gssbuf.value = hash;
-+	gssbuf.length = hashlen;
-+
-+	/* Verify that the hash matches the MIC we just got. */
-+	if (GSS_ERROR(ssh_gssapi_checkmic(ctxt, &gssbuf, &msg_tok)))
-+		sshpkt_disconnect(ssh, "Hash's MIC didn't verify");
-+
-+	gss_release_buffer(&min_status, &msg_tok);
-+
-+	if (kex->gss_deleg_creds)
-+		ssh_gssapi_credentials_updated(ctxt);
-+
-+	if (gss_kex_context == NULL)
-+		gss_kex_context = ctxt;
-+	else
-+		ssh_gssapi_delete_ctx(&ctxt);
-+
-+	/* Finally derive the keys and send them */
-+	if ((r = kex_derive_keys(ssh, hash, hashlen, shared_secret)) == 0)
-+		r = kex_send_newkeys(ssh);
-+out:
-+	sshbuf_free(buf);
-+	sshbuf_free(server_blob);
-+	sshbuf_free(empty);
-+	explicit_bzero(hash, sizeof(hash));
-+	DH_free(kex->dh);
-+	kex->dh = NULL;
-+	BN_clear_free(dh_server_pub);
-+	sshbuf_free(shared_secret);
-+	sshbuf_free(server_host_key_blob);
-+	return r;
++	gss_release_buffer(&gss->minor, &recv_tok);
++	return kexgssgex_final(ssh);
 +}
 +
 +#endif /* defined(GSSAPI) && defined(WITH_OPENSSL) */
 diff --color -ruNp a/kexgsss.c b/kexgsss.c
 --- a/kexgsss.c	1970-01-01 01:00:00.000000000 +0100
-+++ b/kexgsss.c	2024-08-28 12:35:41.250432122 +0200
-@@ -0,0 +1,482 @@
++++ b/kexgsss.c	2026-03-13 12:32:17.556172591 +0100
+@@ -0,0 +1,603 @@
 +/*
 + * Copyright (c) 2001-2009 Simon Wilkinson. All rights reserved.
 + *
@@ -1889,33 +2004,18 @@ diff --color -ruNp a/kexgsss.c b/kexgsss.c
 +
 +extern ServerOptions options;
 +
++static int input_kexgss_init(int, u_int32_t, struct ssh *);
++static int input_kexgss_continue(int, u_int32_t, struct ssh *);
++static int input_kexgssgex_groupreq(int, u_int32_t, struct ssh *);
++static int input_kexgssgex_init(int, u_int32_t, struct ssh *);
++static int input_kexgssgex_continue(int, u_int32_t, struct ssh *);
++
 +int
 +kexgss_server(struct ssh *ssh)
 +{
 +	struct kex *kex = ssh->kex;
-+	OM_uint32 maj_status, min_status;
-+
-+	/*
-+	 * Some GSSAPI implementations use the input value of ret_flags (an
-+	 * output variable) as a means of triggering mechanism specific
-+	 * features. Initializing it to zero avoids inadvertently
-+	 * activating this non-standard behaviour.
-+	 */
-+
-+	OM_uint32 ret_flags = 0;
-+	gss_buffer_desc gssbuf = {0, NULL}, recv_tok, msg_tok;
-+	gss_buffer_desc send_tok = GSS_C_EMPTY_BUFFER;
-+	Gssctxt *ctxt = NULL;
-+	struct sshbuf *shared_secret = NULL;
-+	struct sshbuf *client_pubkey = NULL;
-+	struct sshbuf *server_pubkey = NULL;
-+	struct sshbuf *empty = sshbuf_new();
-+	int type = 0;
 +	gss_OID oid;
 +	char *mechs;
-+	u_char hash[SSH_DIGEST_MAX_LENGTH];
-+	size_t hashlen;
-+	int r;
 +
 +	/* Initialise GSSAPI */
 +
@@ -1931,135 +2031,94 @@ diff --color -ruNp a/kexgsss.c b/kexgsss.c
 +	debug2_f("Identifying %s", kex->name);
 +	oid = ssh_gssapi_id_kex(NULL, kex->name, kex->kex_type);
 +	if (oid == GSS_C_NO_OID)
-+	   fatal("Unknown gssapi mechanism");
++		fatal("Unknown gssapi mechanism");
 +
 +	debug2_f("Acquiring credentials");
 +
-+	if (GSS_ERROR(mm_ssh_gssapi_server_ctx(&ctxt, oid)))
++	if (GSS_ERROR(mm_ssh_gssapi_server_ctx(&kex->gss, oid)))
 +		fatal("Unable to acquire credentials for the server");
 +
-+	do {
-+		debug("Wait SSH2_MSG_KEXGSS_INIT");
-+		type = ssh_packet_read(ssh);
-+		switch(type) {
-+		case SSH2_MSG_KEXGSS_INIT:
-+			if (gssbuf.value != NULL)
-+				fatal("Received KEXGSS_INIT after initialising");
-+			if ((r = ssh_gssapi_sshpkt_get_buffer_desc(ssh,
-+			        &recv_tok)) != 0 ||
-+			    (r = sshpkt_getb_froms(ssh, &client_pubkey)) != 0 ||
-+			    (r = sshpkt_get_end(ssh)) != 0)
-+				fatal("sshpkt failed: %s", ssh_err(r));
++	ssh_gssapi_build_ctx(&kex->gss);
++	if (kex->gss == NULL)
++		fatal("Unable to allocate memory for gss context");
 +
-+			switch (kex->kex_type) {
-+			case KEX_GSS_GRP1_SHA1:
-+			case KEX_GSS_GRP14_SHA1:
-+			case KEX_GSS_GRP14_SHA256:
-+			case KEX_GSS_GRP16_SHA512:
-+				r = kex_dh_enc(kex, client_pubkey, &server_pubkey,
-+				    &shared_secret);
-+				break;
-+			case KEX_GSS_NISTP256_SHA256:
-+				r = kex_ecdh_enc(kex, client_pubkey, &server_pubkey,
-+				    &shared_secret);
-+				break;
-+			case KEX_GSS_C25519_SHA256:
-+				r = kex_c25519_enc(kex, client_pubkey, &server_pubkey,
-+				    &shared_secret);
-+				break;
-+			default:
-+				fatal_f("Unexpected KEX type %d", kex->kex_type);
-+			}
-+			if (r != 0)
-+				goto out;
++	ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_INIT, &input_kexgss_init);
++	ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_CONTINUE, &input_kexgss_continue);
++	debug("Wait SSH2_MSG_KEXGSS_INIT");
++	return 0;
++}
 +
-+			/* Send SSH_MSG_KEXGSS_HOSTKEY here, if we want */
++static inline void
++kexgss_accept_ctx(struct ssh *ssh,
++		  gss_buffer_desc *recv_tok,
++		  gss_buffer_desc *send_tok,
++		  OM_uint32 *ret_flags)
++{
++	Gssctxt *gss = ssh->kex->gss;
++	int r;
 +
-+			/* Calculate the hash early so we can free the
-+			* client_pubkey, which has reference to the parent
-+			* buffer state->incoming_packet
-+			*/
-+			hashlen = sizeof(hash);
-+			if ((r = kex_gen_hash(
-+			    kex->hash_alg,
-+			    kex->client_version,
-+			    kex->server_version,
-+			    kex->peer,
-+			    kex->my,
-+			    empty,
-+			    client_pubkey,
-+			    server_pubkey,
-+			    shared_secret,
-+			    hash, &hashlen)) != 0)
-+				goto out;
++	gss->major = mm_ssh_gssapi_accept_ctx(gss, recv_tok, send_tok, ret_flags);
++	gss_release_buffer(&gss->minor, recv_tok);
 +
-+			gssbuf.value = hash;
-+			gssbuf.length = hashlen;
++	if (gss->major != GSS_S_COMPLETE && send_tok->length == 0)
++		fatal("Zero length token output when incomplete");
 +
-+			sshbuf_free(client_pubkey);
-+			client_pubkey = NULL;
++	if (gss->buf.value == NULL)
++		fatal("No client public key");
 +
-+			break;
-+		case SSH2_MSG_KEXGSS_CONTINUE:
-+			if ((r = ssh_gssapi_sshpkt_get_buffer_desc(ssh,
-+			        &recv_tok)) != 0 ||
-+			    (r = sshpkt_get_end(ssh)) != 0)
-+				fatal("sshpkt failed: %s", ssh_err(r));
-+			break;
-+		default:
-+			sshpkt_disconnect(ssh,
-+			    "Protocol error: didn't expect packet type %d",
-+			    type);
-+		}
++	if (gss->major & GSS_S_CONTINUE_NEEDED) {
++		debug("Sending GSSAPI_CONTINUE");
++		if ((r = sshpkt_start(ssh, SSH2_MSG_KEXGSS_CONTINUE)) != 0 ||
++		    (r = sshpkt_put_string(ssh, send_tok->value, send_tok->length)) != 0 ||
++		    (r = sshpkt_send(ssh)) != 0)
++			fatal("sshpkt failed: %s", ssh_err(r));
++		gss_release_buffer(&gss->minor, send_tok);
++	}
++}
 +
-+		maj_status = mm_ssh_gssapi_accept_ctx(ctxt, &recv_tok,
-+		    &send_tok, &ret_flags);
++static inline int
++kexgss_final(struct ssh *ssh,
++	     gss_buffer_desc *send_tok,
++	     OM_uint32 *ret_flags)
++{
++	struct kex *kex = ssh->kex;
++	Gssctxt *gss = kex->gss;
++	gss_buffer_desc msg_tok = GSS_C_EMPTY_BUFFER;
++	u_char hash[SSH_DIGEST_MAX_LENGTH];
++	size_t hashlen;
++	struct sshbuf *shared_secret = NULL;
++	int r;
 +
-+		gss_release_buffer(&min_status, &recv_tok);
++	ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_INIT, NULL);
++	ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_CONTINUE, NULL);
 +
-+		if (maj_status != GSS_S_COMPLETE && send_tok.length == 0)
-+			fatal("Zero length token output when incomplete");
-+
-+		if (gssbuf.value == NULL)
-+			fatal("No client public key");
-+
-+		if (maj_status & GSS_S_CONTINUE_NEEDED) {
-+			debug("Sending GSSAPI_CONTINUE");
++	if (GSS_ERROR(gss->major)) {
++		if (send_tok->length > 0) {
 +			if ((r = sshpkt_start(ssh, SSH2_MSG_KEXGSS_CONTINUE)) != 0 ||
-+			    (r = sshpkt_put_string(ssh, send_tok.value, send_tok.length)) != 0 ||
-+			    (r = sshpkt_send(ssh)) != 0)
-+				fatal("sshpkt failed: %s", ssh_err(r));
-+			gss_release_buffer(&min_status, &send_tok);
-+		}
-+	} while (maj_status & GSS_S_CONTINUE_NEEDED);
-+
-+	if (GSS_ERROR(maj_status)) {
-+		if (send_tok.length > 0) {
-+			if ((r = sshpkt_start(ssh, SSH2_MSG_KEXGSS_CONTINUE)) != 0 ||
-+			    (r = sshpkt_put_string(ssh, send_tok.value, send_tok.length)) != 0 ||
++			    (r = sshpkt_put_string(ssh, send_tok->value, send_tok->length)) != 0 ||
 +			    (r = sshpkt_send(ssh)) != 0)
 +				fatal("sshpkt failed: %s", ssh_err(r));
 +		}
 +		fatal("accept_ctx died");
 +	}
 +
-+	if (!(ret_flags & GSS_C_MUTUAL_FLAG))
++	if (!(*ret_flags & GSS_C_MUTUAL_FLAG))
 +		fatal("Mutual Authentication flag wasn't set");
 +
-+	if (!(ret_flags & GSS_C_INTEG_FLAG))
++	if (!(*ret_flags & GSS_C_INTEG_FLAG))
 +		fatal("Integrity flag wasn't set");
 +
-+	if (GSS_ERROR(mm_ssh_gssapi_sign(ctxt, &gssbuf, &msg_tok)))
++	if (GSS_ERROR(mm_ssh_gssapi_sign(gss, &gss->buf, &msg_tok)))
 +		fatal("Couldn't get MIC");
 +
 +	if ((r = sshpkt_start(ssh, SSH2_MSG_KEXGSS_COMPLETE)) != 0 ||
-+	    (r = sshpkt_put_stringb(ssh, server_pubkey)) != 0 ||
++	    (r = sshpkt_put_stringb(ssh, gss->server_pubkey)) != 0 ||
 +	    (r = sshpkt_put_string(ssh, msg_tok.value, msg_tok.length)) != 0)
 +		fatal("sshpkt failed: %s", ssh_err(r));
 +
-+	if (send_tok.length != 0) {
++	if (send_tok->length != 0) {
 +		if ((r = sshpkt_put_u8(ssh, 1)) != 0 || /* true */
-+		    (r = sshpkt_put_string(ssh, send_tok.value, send_tok.length)) != 0)
++		    (r = sshpkt_put_string(ssh, send_tok->value, send_tok->length)) != 0)
 +			fatal("sshpkt failed: %s", ssh_err(r));
 +	} else {
 +		if ((r = sshpkt_put_u8(ssh, 0)) != 0) /* false */
@@ -2068,13 +2127,19 @@ diff --color -ruNp a/kexgsss.c b/kexgsss.c
 +	if ((r = sshpkt_send(ssh)) != 0)
 +		fatal("sshpkt_send failed: %s", ssh_err(r));
 +
-+	gss_release_buffer(&min_status, &send_tok);
-+	gss_release_buffer(&min_status, &msg_tok);
++	gss_release_buffer(&gss->minor, send_tok);
++	gss_release_buffer(&gss->minor, &msg_tok);
++
++	hashlen = gss->hashlen;
++	memcpy(hash, gss->hash, hashlen);
++	explicit_bzero(gss->hash, sizeof(gss->hash));
++	shared_secret = gss->shared_secret;
++	gss->shared_secret = NULL;
 +
 +	if (gss_kex_context == NULL)
-+		gss_kex_context = ctxt;
++		gss_kex_context = gss;
 +	else
-+		ssh_gssapi_delete_ctx(&ctxt);
++		ssh_gssapi_delete_ctx(&kex->gss);
 +
 +	if ((r = kex_derive_keys(ssh, hash, hashlen, shared_secret)) == 0)
 +		r = kex_send_newkeys(ssh);
@@ -2083,44 +2148,128 @@ diff --color -ruNp a/kexgsss.c b/kexgsss.c
 +	 * just exchanged.  */
 +	if (options.gss_store_rekey)
 +		ssh_gssapi_rekey_creds();
-+out:
-+	sshbuf_free(empty);
++
++	if (kex->gss != NULL) {
++		sshbuf_free(gss->server_pubkey);
++		gss->server_pubkey = NULL;
++	}
 +	explicit_bzero(hash, sizeof(hash));
 +	sshbuf_free(shared_secret);
-+	sshbuf_free(client_pubkey);
-+	sshbuf_free(server_pubkey);
 +	return r;
 +}
++
++static int
++input_kexgss_init(int type,
++		  u_int32_t seq,
++		  struct ssh *ssh)
++{
++	struct kex *kex = ssh->kex;
++	Gssctxt *gss = kex->gss;
++	struct sshbuf *empty;
++	struct sshbuf *client_pubkey = NULL;
++	gss_buffer_desc recv_tok = GSS_C_EMPTY_BUFFER;
++	gss_buffer_desc send_tok = GSS_C_EMPTY_BUFFER;
++	OM_uint32 ret_flags = 0;
++	int r;
++
++	debug("SSH2_MSG_KEXGSS_INIT received");
++	ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_INIT, NULL);
++
++	if ((r = ssh_gssapi_sshpkt_get_buffer_desc(ssh, &recv_tok)) != 0 ||
++	    (r = sshpkt_getb_froms(ssh, &client_pubkey)) != 0 ||
++	    (r = sshpkt_get_end(ssh)) != 0)
++		fatal("sshpkt failed: %s", ssh_err(r));
++
++	switch (kex->kex_type) {
++	case KEX_GSS_GRP1_SHA1:
++	case KEX_GSS_GRP14_SHA1:
++	case KEX_GSS_GRP14_SHA256:
++	case KEX_GSS_GRP16_SHA512:
++		r = kex_dh_enc(kex, client_pubkey, &gss->server_pubkey, &gss->shared_secret);
++		break;
++	case KEX_GSS_NISTP256_SHA256:
++		r = kex_ecdh_enc(kex, client_pubkey, &gss->server_pubkey, &gss->shared_secret);
++		break;
++	case KEX_GSS_C25519_SHA256:
++		r = kex_c25519_enc(kex, client_pubkey, &gss->server_pubkey, &gss->shared_secret);
++		break;
++	default:
++		fatal_f("Unexpected KEX type %d", kex->kex_type);
++	}
++	if (r != 0) {
++		sshbuf_free(client_pubkey);
++		gss_release_buffer(&gss->minor, &recv_tok);
++		ssh_gssapi_delete_ctx(&kex->gss);
++		return r;
++	}
++
++	/* Send SSH_MSG_KEXGSS_HOSTKEY here, if we want */
++
++	if ((empty = sshbuf_new()) == NULL) {
++		sshbuf_free(client_pubkey);
++		gss_release_buffer(&gss->minor, &recv_tok);
++		ssh_gssapi_delete_ctx(&kex->gss);
++		return SSH_ERR_ALLOC_FAIL;
++	}
++
++	/* Calculate the hash early so we can free the
++	 * client_pubkey, which has reference to the parent
++	 * buffer state->incoming_packet
++	 */
++	gss->hashlen = sizeof(gss->hash);
++	r = kex_gen_hash(kex->hash_alg, kex->client_version, kex->server_version,
++			 kex->peer, kex->my, empty, client_pubkey, gss->server_pubkey,
++			 gss->shared_secret, gss->hash, &gss->hashlen);
++	sshbuf_free(empty);
++	sshbuf_free(client_pubkey);
++	if (r != 0) {
++		gss_release_buffer(&gss->minor, &recv_tok);
++		ssh_gssapi_delete_ctx(&kex->gss);
++		return r;
++	}
++
++	gss->buf.value = gss->hash;
++	gss->buf.length = gss->hashlen;
++
++	kexgss_accept_ctx(ssh, &recv_tok, &send_tok, &ret_flags);
++	if (gss->major & GSS_S_CONTINUE_NEEDED)
++		return 0;
++
++	return kexgss_final(ssh, &send_tok, &ret_flags);
++}
++
++static int
++input_kexgss_continue(int type,
++		      u_int32_t seq,
++		      struct ssh *ssh)
++{
++	Gssctxt *gss = ssh->kex->gss;
++	gss_buffer_desc recv_tok = GSS_C_EMPTY_BUFFER;
++	gss_buffer_desc send_tok = GSS_C_EMPTY_BUFFER;
++	OM_uint32 ret_flags = 0;
++	int r;
++
++	if ((r = ssh_gssapi_sshpkt_get_buffer_desc(ssh, &recv_tok)) != 0 ||
++	    (r = sshpkt_get_end(ssh)) != 0)
++		fatal("sshpkt failed: %s", ssh_err(r));
++
++	kexgss_accept_ctx(ssh, &recv_tok, &send_tok, &ret_flags);
++	if (gss->major & GSS_S_CONTINUE_NEEDED)
++		return 0;
++
++	return kexgss_final(ssh, &send_tok, &ret_flags);
++}
++
++/*******************************************************/
++/******************** KEXGSSGEX ************************/
++/*******************************************************/
 +
 +int
 +kexgssgex_server(struct ssh *ssh)
 +{
 +	struct kex *kex = ssh->kex;
-+	OM_uint32 maj_status, min_status;
-+
-+	/*
-+	 * Some GSSAPI implementations use the input value of ret_flags (an
-+	 * output variable) as a means of triggering mechanism specific
-+	 * features. Initializing it to zero avoids inadvertently
-+	 * activating this non-standard behaviour.
-+	 */
-+
-+	OM_uint32 ret_flags = 0;
-+	gss_buffer_desc gssbuf, recv_tok, msg_tok;
-+	gss_buffer_desc send_tok = GSS_C_EMPTY_BUFFER;
-+	Gssctxt *ctxt = NULL;
-+	struct sshbuf *shared_secret = NULL;
-+	int type = 0;
 +	gss_OID oid;
 +	char *mechs;
-+	u_char hash[SSH_DIGEST_MAX_LENGTH];
-+	size_t hashlen;
-+	BIGNUM *dh_client_pub = NULL;
-+	const BIGNUM *pub_key, *dh_p, *dh_g;
-+	int min = -1, max = -1, nbits = -1;
-+	int cmin = -1, cmax = -1; /* client proposal */
-+	struct sshbuf *empty = sshbuf_new();
-+	int r;
 +
 +	/* Initialise GSSAPI */
 +
@@ -2128,29 +2277,194 @@ diff --color -ruNp a/kexgsss.c b/kexgsss.c
 +	 * in the GSSAPI code are no longer available. This kludges them back
 +	 * into life
 +	 */
-+	if (!ssh_gssapi_oid_table_ok())
-+		if ((mechs = ssh_gssapi_server_mechanisms()))
-+			free(mechs);
++	if (!ssh_gssapi_oid_table_ok()) {
++		mechs = ssh_gssapi_server_mechanisms();
++		free(mechs);
++	}
 +
 +	debug2_f("Identifying %s", kex->name);
 +	oid = ssh_gssapi_id_kex(NULL, kex->name, kex->kex_type);
 +	if (oid == GSS_C_NO_OID)
-+	   fatal("Unknown gssapi mechanism");
++		fatal("Unknown gssapi mechanism");
 +
 +	debug2_f("Acquiring credentials");
 +
-+	if (GSS_ERROR(mm_ssh_gssapi_server_ctx(&ctxt, oid)))
++	if (GSS_ERROR(mm_ssh_gssapi_server_ctx(&kex->gss, oid)))
 +		fatal("Unable to acquire credentials for the server");
 +
-+	/* 5. S generates an ephemeral key pair (do the allocations early) */
++	ssh_gssapi_build_ctx(&kex->gss);
++	if (kex->gss == NULL)
++		fatal("Unable to allocate memory for gss context");
++
 +	debug("Doing group exchange");
-+	ssh_packet_read_expect(ssh, SSH2_MSG_KEXGSS_GROUPREQ);
++	ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_GROUPREQ, &input_kexgssgex_groupreq);
++	return 0;
++}
++
++static inline void
++kexgssgex_accept_ctx(struct ssh *ssh,
++		     gss_buffer_desc *recv_tok,
++		     gss_buffer_desc *send_tok,
++		     OM_uint32 *ret_flags)
++{
++	Gssctxt *gss = ssh->kex->gss;
++	int r;
++
++	gss->major = mm_ssh_gssapi_accept_ctx(gss, recv_tok, send_tok, ret_flags);
++	gss_release_buffer(&gss->minor, recv_tok);
++
++	if (gss->major != GSS_S_COMPLETE && send_tok->length == 0)
++		fatal("Zero length token output when incomplete");
++
++	if (gss->dh_client_pub == NULL)
++		fatal("No client public key");
++
++	if (gss->major & GSS_S_CONTINUE_NEEDED) {
++		debug("Sending GSSAPI_CONTINUE");
++		if ((r = sshpkt_start(ssh, SSH2_MSG_KEXGSS_CONTINUE)) != 0 ||
++		    (r = sshpkt_put_string(ssh, send_tok->value, send_tok->length)) != 0 ||
++		    (r = sshpkt_send(ssh)) != 0)
++			fatal("sshpkt failed: %s", ssh_err(r));
++		gss_release_buffer(&gss->minor, send_tok);
++	}
++}
++
++static inline int
++kexgssgex_final(struct ssh *ssh,
++		gss_buffer_desc *send_tok,
++		OM_uint32 *ret_flags)
++{
++	struct kex *kex = ssh->kex;
++	Gssctxt *gss = kex->gss;
++	gss_buffer_desc msg_tok = GSS_C_EMPTY_BUFFER;
++	u_char hash[SSH_DIGEST_MAX_LENGTH];
++	size_t hashlen;
++	const BIGNUM *pub_key, *dh_p, *dh_g;
++	struct sshbuf *shared_secret = NULL;
++	struct sshbuf *empty = NULL;
++	int r;
++
++	ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_INIT, NULL);
++	ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_CONTINUE, NULL);
++
++	if (GSS_ERROR(gss->major)) {
++		if (send_tok->length > 0) {
++			if ((r = sshpkt_start(ssh, SSH2_MSG_KEXGSS_CONTINUE)) != 0 ||
++			    (r = sshpkt_put_string(ssh, send_tok->value, send_tok->length)) != 0 ||
++			    (r = sshpkt_send(ssh)) != 0)
++				fatal("sshpkt failed: %s", ssh_err(r));
++		}
++		fatal("accept_ctx died");
++	}
++
++	if (!(*ret_flags & GSS_C_MUTUAL_FLAG))
++		fatal("Mutual Authentication flag wasn't set");
++
++	if (!(*ret_flags & GSS_C_INTEG_FLAG))
++		fatal("Integrity flag wasn't set");
++
++	/* calculate shared secret */
++	shared_secret = sshbuf_new();
++	if (shared_secret == NULL) {
++		ssh_gssapi_delete_ctx(&kex->gss);
++		r = SSH_ERR_ALLOC_FAIL;
++		goto out;
++	}
++	if ((r = kex_dh_compute_key(kex, gss->dh_client_pub, shared_secret)) != 0) {
++		ssh_gssapi_delete_ctx(&kex->gss);
++		goto out;
++	}
++
++	if ((empty = sshbuf_new()) == NULL) {
++		ssh_gssapi_delete_ctx(&kex->gss);
++		r = SSH_ERR_ALLOC_FAIL;
++		goto out;
++	}
++
++	DH_get0_key(kex->dh, &pub_key, NULL);
++	DH_get0_pqg(kex->dh, &dh_p, NULL, &dh_g);
++	hashlen = sizeof(hash);
++	r = kexgex_hash(kex->hash_alg, kex->client_version, kex->server_version,
++			kex->peer, kex->my, empty, kex->min, kex->nbits, kex->max, dh_p, dh_g,
++			gss->dh_client_pub, pub_key, sshbuf_ptr(shared_secret),
++			sshbuf_len(shared_secret), hash, &hashlen);
++	sshbuf_free(empty);
++	if (r != 0)
++		fatal("kexgex_hash failed: %s", ssh_err(r));
++
++	gss->buf.value = hash;
++	gss->buf.length = hashlen;
++
++	if (GSS_ERROR(mm_ssh_gssapi_sign(gss, &gss->buf, &msg_tok)))
++		fatal("Couldn't get MIC");
++
++	if ((r = sshpkt_start(ssh, SSH2_MSG_KEXGSS_COMPLETE)) != 0 ||
++	    (r = sshpkt_put_bignum2(ssh, pub_key)) != 0 ||
++	    (r = sshpkt_put_string(ssh, msg_tok.value, msg_tok.length)) != 0)
++		fatal("sshpkt failed: %s", ssh_err(r));
++
++	if (send_tok->length != 0) {
++		if ((r = sshpkt_put_u8(ssh, 1)) != 0 || /* true */
++		    (r = sshpkt_put_string(ssh, send_tok->value, send_tok->length)) != 0)
++			fatal("sshpkt failed: %s", ssh_err(r));
++	} else {
++		if ((r = sshpkt_put_u8(ssh, 0)) != 0) /* false */
++			fatal("sshpkt failed: %s", ssh_err(r));
++	}
++	if ((r = sshpkt_send(ssh)) != 0)
++		fatal("sshpkt_send failed: %s", ssh_err(r));
++
++	gss_release_buffer(&gss->minor, send_tok);
++	gss_release_buffer(&gss->minor, &msg_tok);
++
++	if (gss_kex_context == NULL)
++		gss_kex_context = gss;
++	else
++		ssh_gssapi_delete_ctx(&kex->gss);
++
++	/* Finally derive the keys and send them */
++	if ((r = kex_derive_keys(ssh, hash, hashlen, shared_secret)) == 0)
++		r = kex_send_newkeys(ssh);
++
++	/* If this was a rekey, then save out any delegated credentials we
++	 * just exchanged.  */
++	if (options.gss_store_rekey)
++		ssh_gssapi_rekey_creds();
++
++	if (kex->gss != NULL)
++		BN_clear_free(gss->dh_client_pub);
++
++out:
++	explicit_bzero(hash, sizeof(hash));
++	DH_free(kex->dh);
++	kex->dh = NULL;
++	sshbuf_free(shared_secret);
++	return r;
++}
++
++static int
++input_kexgssgex_groupreq(int type,
++			 u_int32_t seq,
++			 struct ssh *ssh)
++{
++	struct kex *kex = ssh->kex;
++	const BIGNUM *dh_p, *dh_g;
++	int min = -1, max = -1, nbits = -1;
++	int cmin = -1, cmax = -1; /* client proposal */
++	int r;
++
++	/* 5. S generates an ephemeral key pair (do the allocations early) */
++
++	debug("SSH2_MSG_KEXGSS_GROUPREQ received");
++	ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_GROUPREQ, NULL);
++
 +	/* store client proposal to provide valid signature */
 +	if ((r = sshpkt_get_u32(ssh, &cmin)) != 0 ||
 +	    (r = sshpkt_get_u32(ssh, &nbits)) != 0 ||
 +	    (r = sshpkt_get_u32(ssh, &cmax)) != 0 ||
 +	    (r = sshpkt_get_end(ssh)) != 0)
 +		fatal("sshpkt failed: %s", ssh_err(r));
++
 +	kex->nbits = nbits;
 +	kex->min = cmin;
 +	kex->max = cmax;
@@ -2158,14 +2472,13 @@ diff --color -ruNp a/kexgsss.c b/kexgsss.c
 +	max = MIN(DH_GRP_MAX, cmax);
 +	nbits = MAXIMUM(DH_GRP_MIN, nbits);
 +	nbits = MINIMUM(DH_GRP_MAX, nbits);
++
 +	if (max < min || nbits < min || max < nbits)
-+		fatal("GSS_GEX, bad parameters: %d !< %d !< %d",
-+		    min, nbits, max);
++		fatal("GSS_GEX, bad parameters: %d !< %d !< %d", min, nbits, max);
++
 +	kex->dh = mm_choose_dh(min, nbits, max);
-+	if (kex->dh == NULL) {
-+		sshpkt_disconnect(ssh, "Protocol error: no matching group found");
-+		fatal("Protocol error: no matching group found");
-+	}
++	if (kex->dh == NULL)
++		ssh_packet_disconnect(ssh, "Protocol error: no matching group found");
 +
 +	DH_get0_pqg(kex->dh, &dh_p, NULL, &dh_g);
 +	if ((r = sshpkt_start(ssh, SSH2_MSG_KEXGSS_GROUP)) != 0 ||
@@ -2178,154 +2491,88 @@ diff --color -ruNp a/kexgsss.c b/kexgsss.c
 +		fatal("ssh_packet_write_wait: %s", ssh_err(r));
 +
 +	/* Compute our exchange value in parallel with the client */
-+	if ((r = dh_gen_key(kex->dh, kex->we_need * 8)) != 0)
-+		goto out;
-+
-+	do {
-+		debug("Wait SSH2_MSG_GSSAPI_INIT");
-+		type = ssh_packet_read(ssh);
-+		switch(type) {
-+		case SSH2_MSG_KEXGSS_INIT:
-+			if (dh_client_pub != NULL)
-+				fatal("Received KEXGSS_INIT after initialising");
-+			if ((r = ssh_gssapi_sshpkt_get_buffer_desc(ssh,
-+			        &recv_tok)) != 0 ||
-+			    (r = sshpkt_get_bignum2(ssh, &dh_client_pub)) != 0 ||
-+			    (r = sshpkt_get_end(ssh)) != 0)
-+				fatal("sshpkt failed: %s", ssh_err(r));
-+
-+			/* Send SSH_MSG_KEXGSS_HOSTKEY here, if we want */
-+			break;
-+		case SSH2_MSG_KEXGSS_CONTINUE:
-+			if ((r = ssh_gssapi_sshpkt_get_buffer_desc(ssh,
-+			        &recv_tok)) != 0 ||
-+			    (r = sshpkt_get_end(ssh)) != 0)
-+				fatal("sshpkt failed: %s", ssh_err(r));
-+			break;
-+		default:
-+			sshpkt_disconnect(ssh,
-+			    "Protocol error: didn't expect packet type %d",
-+			    type);
-+		}
-+
-+		maj_status = mm_ssh_gssapi_accept_ctx(ctxt, &recv_tok,
-+		    &send_tok, &ret_flags);
-+
-+		gss_release_buffer(&min_status, &recv_tok);
-+
-+		if (maj_status != GSS_S_COMPLETE && send_tok.length == 0)
-+			fatal("Zero length token output when incomplete");
-+
-+		if (dh_client_pub == NULL)
-+			fatal("No client public key");
-+
-+		if (maj_status & GSS_S_CONTINUE_NEEDED) {
-+			debug("Sending GSSAPI_CONTINUE");
-+			if ((r = sshpkt_start(ssh, SSH2_MSG_KEXGSS_CONTINUE)) != 0 ||
-+			    (r = sshpkt_put_string(ssh, send_tok.value, send_tok.length)) != 0 ||
-+			    (r = sshpkt_send(ssh)) != 0)
-+				fatal("sshpkt failed: %s", ssh_err(r));
-+			gss_release_buffer(&min_status, &send_tok);
-+		}
-+	} while (maj_status & GSS_S_CONTINUE_NEEDED);
-+
-+	if (GSS_ERROR(maj_status)) {
-+		if (send_tok.length > 0) {
-+			if ((r = sshpkt_start(ssh, SSH2_MSG_KEXGSS_CONTINUE)) != 0 ||
-+			    (r = sshpkt_put_string(ssh, send_tok.value, send_tok.length)) != 0 ||
-+			    (r = sshpkt_send(ssh)) != 0)
-+				fatal("sshpkt failed: %s", ssh_err(r));
-+		}
-+		fatal("accept_ctx died");
++	if ((r = dh_gen_key(kex->dh, kex->we_need * 8)) != 0) {
++		ssh_gssapi_delete_ctx(&kex->gss);
++		DH_free(kex->dh);
++		kex->dh = NULL;
++		return r;
 +	}
 +
-+	if (!(ret_flags & GSS_C_MUTUAL_FLAG))
-+		fatal("Mutual Authentication flag wasn't set");
-+
-+	if (!(ret_flags & GSS_C_INTEG_FLAG))
-+		fatal("Integrity flag wasn't set");
-+
-+	/* calculate shared secret */
-+	if ((shared_secret = sshbuf_new()) == NULL) {
-+		r = SSH_ERR_ALLOC_FAIL;
-+		goto out;
-+	}
-+	if ((r = kex_dh_compute_key(kex, dh_client_pub, shared_secret)) != 0)
-+		goto out;
-+
-+	DH_get0_key(kex->dh, &pub_key, NULL);
-+	DH_get0_pqg(kex->dh, &dh_p, NULL, &dh_g);
-+	hashlen = sizeof(hash);
-+	if ((r = kexgex_hash(
-+	    kex->hash_alg,
-+	    kex->client_version,
-+	    kex->server_version,
-+	    kex->peer,
-+	    kex->my,
-+	    empty,
-+	    cmin, nbits, cmax,
-+	    dh_p, dh_g,
-+	    dh_client_pub,
-+	    pub_key,
-+	    sshbuf_ptr(shared_secret), sshbuf_len(shared_secret),
-+	    hash, &hashlen)) != 0)
-+		fatal("kexgex_hash failed: %s", ssh_err(r));
-+
-+	gssbuf.value = hash;
-+	gssbuf.length = hashlen;
-+
-+	if (GSS_ERROR(mm_ssh_gssapi_sign(ctxt, &gssbuf, &msg_tok)))
-+		fatal("Couldn't get MIC");
-+
-+	if ((r = sshpkt_start(ssh, SSH2_MSG_KEXGSS_COMPLETE)) != 0 ||
-+	    (r = sshpkt_put_bignum2(ssh, pub_key)) != 0 ||
-+	    (r = sshpkt_put_string(ssh, msg_tok.value, msg_tok.length)) != 0)
-+		fatal("sshpkt failed: %s", ssh_err(r));
-+
-+	if (send_tok.length != 0) {
-+		if ((r = sshpkt_put_u8(ssh, 1)) != 0 || /* true */
-+		    (r = sshpkt_put_string(ssh, send_tok.value, send_tok.length)) != 0)
-+			fatal("sshpkt failed: %s", ssh_err(r));
-+	} else {
-+		if ((r = sshpkt_put_u8(ssh, 0)) != 0) /* false */
-+			fatal("sshpkt failed: %s", ssh_err(r));
-+	}
-+	if ((r = sshpkt_send(ssh)) != 0)
-+		fatal("sshpkt failed: %s", ssh_err(r));
-+
-+	gss_release_buffer(&min_status, &send_tok);
-+	gss_release_buffer(&min_status, &msg_tok);
-+
-+	if (gss_kex_context == NULL)
-+		gss_kex_context = ctxt;
-+	else
-+		ssh_gssapi_delete_ctx(&ctxt);
-+
-+	/* Finally derive the keys and send them */
-+	if ((r = kex_derive_keys(ssh, hash, hashlen, shared_secret)) == 0)
-+		r = kex_send_newkeys(ssh);
-+
-+	/* If this was a rekey, then save out any delegated credentials we
-+	 * just exchanged.  */
-+	if (options.gss_store_rekey)
-+		ssh_gssapi_rekey_creds();
-+out:
-+	sshbuf_free(empty);
-+	explicit_bzero(hash, sizeof(hash));
-+	DH_free(kex->dh);
-+	kex->dh = NULL;
-+	BN_clear_free(dh_client_pub);
-+	sshbuf_free(shared_secret);
-+	return r;
++	ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_INIT, &input_kexgssgex_init);
++	ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_CONTINUE, &input_kexgssgex_continue);
++	debug("Wait SSH2_MSG_KEXGSS_INIT");
++	return 0;
 +}
++
++static int
++input_kexgssgex_init(int type,
++		     u_int32_t seq,
++		     struct ssh *ssh)
++{
++	Gssctxt *gss = ssh->kex->gss;
++	gss_buffer_desc recv_tok = GSS_C_EMPTY_BUFFER;
++	gss_buffer_desc send_tok = GSS_C_EMPTY_BUFFER;
++	OM_uint32 ret_flags = 0;
++	int r;
++
++	debug("SSH2_MSG_KEXGSS_INIT received");
++	ssh_dispatch_set(ssh, SSH2_MSG_KEXGSS_INIT, NULL);
++
++	if ((r = ssh_gssapi_sshpkt_get_buffer_desc(ssh, &recv_tok)) != 0 ||
++	    (r = sshpkt_get_bignum2(ssh, &gss->dh_client_pub)) != 0 ||
++	    (r = sshpkt_get_end(ssh)) != 0)
++		fatal("sshpkt failed: %s", ssh_err(r));
++
++	/* Send SSH_MSG_KEXGSS_HOSTKEY here, if we want */
++
++	kexgssgex_accept_ctx(ssh, &recv_tok, &send_tok, &ret_flags);
++	if (gss->major & GSS_S_CONTINUE_NEEDED)
++		return 0;
++
++	return kexgssgex_final(ssh, &send_tok, &ret_flags);
++}
++
++static int
++input_kexgssgex_continue(int type,
++			 u_int32_t seq,
++			 struct ssh *ssh)
++{
++	Gssctxt *gss = ssh->kex->gss;
++	gss_buffer_desc recv_tok = GSS_C_EMPTY_BUFFER;
++	gss_buffer_desc send_tok = GSS_C_EMPTY_BUFFER;
++	OM_uint32 ret_flags = 0;
++	int r;
++
++	if ((r = ssh_gssapi_sshpkt_get_buffer_desc(ssh, &recv_tok)) != 0 ||
++	    (r = sshpkt_get_end(ssh)) != 0)
++		fatal("sshpkt failed: %s", ssh_err(r));
++
++	kexgssgex_accept_ctx(ssh, &recv_tok, &send_tok, &ret_flags);
++	if (gss->major & GSS_S_CONTINUE_NEEDED)
++		return 0;
++
++	return kexgssgex_final(ssh, &send_tok, &ret_flags);
++}
++
 +#endif /* defined(GSSAPI) && defined(WITH_OPENSSL) */
 diff --color -ruNp a/kex.h b/kex.h
---- a/kex.h	2024-07-01 06:36:28.000000000 +0200
-+++ b/kex.h	2024-08-28 12:35:41.249432103 +0200
-@@ -102,6 +102,15 @@ enum kex_exchange {
- 	KEX_ECDH_SHA2,
+--- a/kex.h	2024-09-20 00:20:48.000000000 +0200
++++ b/kex.h	2026-03-13 12:16:40.013688997 +0100
+@@ -29,6 +29,10 @@
+ #include "mac.h"
+ #include "crypto_api.h"
+ 
++#ifdef GSSAPI
++# include "ssh-gss.h" /* Gssctxt */
++#endif
++
+ #ifdef WITH_OPENSSL
+ # include <openssl/bn.h>
+ # include <openssl/dh.h>
+@@ -103,6 +107,15 @@ enum kex_exchange {
  	KEX_C25519_SHA256,
  	KEX_KEM_SNTRUP761X25519_SHA512,
+ 	KEX_KEM_MLKEM768X25519_SHA256,
 +#ifdef GSSAPI
 +	KEX_GSS_GRP1_SHA1,
 +	KEX_GSS_GRP14_SHA1,
@@ -2338,11 +2585,12 @@ diff --color -ruNp a/kex.h b/kex.h
  	KEX_MAX
  };
  
-@@ -164,6 +173,12 @@ struct kex {
+@@ -165,6 +178,13 @@ struct kex {
  	u_int	flags;
  	int	hash_alg;
  	int	ec_nid;
 +#ifdef GSSAPI
++	Gssctxt *gss;
 +	int	gss_deleg_creds;
 +	int	gss_trust_dns;
 +	char    *gss_host;
@@ -2351,7 +2599,7 @@ diff --color -ruNp a/kex.h b/kex.h
  	char	*failed_choice;
  	int	(*verify_host_key)(struct sshkey *, struct ssh *);
  	struct sshkey *(*load_host_public_key)(int, int, struct ssh *);
-@@ -189,8 +204,10 @@ int	 kex_hash_from_name(const char *);
+@@ -191,8 +211,10 @@ int	 kex_hash_from_name(const char *);
  int	 kex_nid_from_name(const char *);
  int	 kex_names_valid(const char *);
  char	*kex_alg_list(char);
@@ -2362,7 +2610,7 @@ diff --color -ruNp a/kex.h b/kex.h
  int	 kex_assemble_names(char **, const char *, const char *);
  void	 kex_proposal_populate_entries(struct ssh *, char *prop[PROPOSAL_MAX],
      const char *, const char *, const char *, const char *, const char *);
-@@ -224,6 +241,12 @@ int	 kexgex_client(struct ssh *);
+@@ -226,6 +248,12 @@ int	 kexgex_client(struct ssh *);
  int	 kexgex_server(struct ssh *);
  int	 kex_gen_client(struct ssh *);
  int	 kex_gen_server(struct ssh *);
@@ -2375,7 +2623,7 @@ diff --color -ruNp a/kex.h b/kex.h
  
  int	 kex_dh_keypair(struct kex *);
  int	 kex_dh_enc(struct kex *, const struct sshbuf *, struct sshbuf **,
-@@ -256,6 +279,12 @@ int	 kexgex_hash(int, const struct sshbu
+@@ -264,6 +292,12 @@ int	 kexgex_hash(int, const struct sshbu
      const BIGNUM *, const u_char *, size_t,
      u_char *, size_t *);
  
@@ -2389,8 +2637,8 @@ diff --color -ruNp a/kex.h b/kex.h
  	__attribute__((__bounded__(__minbytes__, 1, CURVE25519_SIZE)))
  	__attribute__((__bounded__(__minbytes__, 2, CURVE25519_SIZE)));
 diff --color -ruNp a/kex-names.c b/kex-names.c
---- a/kex-names.c	2024-07-01 06:36:28.000000000 +0200
-+++ b/kex-names.c	2024-08-28 12:35:41.249432103 +0200
+--- a/kex-names.c	2024-09-20 00:20:48.000000000 +0200
++++ b/kex-names.c	2026-03-13 12:16:39.979603048 +0100
 @@ -45,6 +45,10 @@
  #include "ssherr.h"
  #include "xmalloc.h"
@@ -2402,7 +2650,7 @@ diff --color -ruNp a/kex-names.c b/kex-names.c
  struct kexalg {
  	char *name;
  	u_int type;
-@@ -83,15 +87,28 @@ static const struct kexalg kexalgs[] = {
+@@ -89,15 +93,28 @@ static const struct kexalg kexalgs[] = {
  #endif /* HAVE_EVP_SHA256 || !WITH_OPENSSL */
  	{ NULL, 0, -1, -1},
  };
@@ -2434,7 +2682,7 @@ diff --color -ruNp a/kex-names.c b/kex-names.c
  		if (ret != NULL)
  			ret[rlen++] = sep;
  		nlen = strlen(k->name);
-@@ -106,6 +123,18 @@ kex_alg_list(char sep)
+@@ -112,6 +129,18 @@ kex_alg_list(char sep)
  	return ret;
  }
  
@@ -2453,7 +2701,7 @@ diff --color -ruNp a/kex-names.c b/kex-names.c
  static const struct kexalg *
  kex_alg_by_name(const char *name)
  {
-@@ -115,6 +144,10 @@ kex_alg_by_name(const char *name)
+@@ -121,6 +150,10 @@ kex_alg_by_name(const char *name)
  		if (strcmp(k->name, name) == 0)
  			return k;
  	}
@@ -2464,7 +2712,7 @@ diff --color -ruNp a/kex-names.c b/kex-names.c
  	return NULL;
  }
  
-@@ -328,3 +361,26 @@ kex_assemble_names(char **listp, const c
+@@ -334,3 +367,26 @@ kex_assemble_names(char **listp, const c
  	free(ret);
  	return r;
  }
@@ -2492,12 +2740,12 @@ diff --color -ruNp a/kex-names.c b/kex-names.c
 +	return 1;
 +}
 diff --color -ruNp a/Makefile.in b/Makefile.in
---- a/Makefile.in	2024-08-28 12:35:01.200659705 +0200
-+++ b/Makefile.in	2024-08-28 12:35:41.244432006 +0200
+--- a/Makefile.in	2026-03-13 12:32:48.475081074 +0100
++++ b/Makefile.in	2026-03-13 12:16:39.979453307 +0100
 @@ -114,6 +114,7 @@ LIBSSH_OBJS=${LIBOPENSSH_OBJS} \
  	kex.o kex-names.o kexdh.o kexgex.o kexecdh.o kexc25519.o \
  	kexgexc.o kexgexs.o \
- 	kexsntrup761x25519.o sntrup761.o kexgen.o \
+ 	kexsntrup761x25519.o kexmlkem768x25519.o sntrup761.o kexgen.o \
 +	kexgssc.o \
  	sftp-realpath.o platform-pledge.o platform-tracing.o platform-misc.o \
  	sshbuf-io.o
@@ -2521,9 +2769,9 @@ diff --color -ruNp a/Makefile.in b/Makefile.in
  regress/modpipe$(EXEEXT): $(srcdir)/regress/modpipe.c $(REGRESSLIBS)
  	$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ $(srcdir)/regress/modpipe.c \
 diff --color -ruNp a/monitor.c b/monitor.c
---- a/monitor.c	2024-08-28 12:35:01.192659551 +0200
-+++ b/monitor.c	2024-08-28 12:35:41.251432142 +0200
-@@ -143,6 +143,8 @@ int mm_answer_gss_setup_ctx(struct ssh *
+--- a/monitor.c	2026-03-13 12:32:48.467311058 +0100
++++ b/monitor.c	2026-03-13 12:16:40.012477799 +0100
+@@ -144,6 +144,8 @@ int mm_answer_gss_setup_ctx(struct ssh *
  int mm_answer_gss_accept_ctx(struct ssh *, int, struct sshbuf *);
  int mm_answer_gss_userok(struct ssh *, int, struct sshbuf *);
  int mm_answer_gss_checkmic(struct ssh *, int, struct sshbuf *);
@@ -2532,7 +2780,7 @@ diff --color -ruNp a/monitor.c b/monitor.c
  #endif
  
  #ifdef SSH_AUDIT_EVENTS
-@@ -219,11 +221,18 @@ struct mon_table mon_dispatch_proto20[]
+@@ -220,11 +222,18 @@ struct mon_table mon_dispatch_proto20[]
      {MONITOR_REQ_GSSSTEP, 0, mm_answer_gss_accept_ctx},
      {MONITOR_REQ_GSSUSEROK, MON_ONCE|MON_AUTHDECIDE, mm_answer_gss_userok},
      {MONITOR_REQ_GSSCHECKMIC, MON_ONCE, mm_answer_gss_checkmic},
@@ -2551,7 +2799,7 @@ diff --color -ruNp a/monitor.c b/monitor.c
  #ifdef WITH_OPENSSL
      {MONITOR_REQ_MODULI, 0, mm_answer_moduli},
  #endif
-@@ -292,6 +301,10 @@ monitor_child_preauth(struct ssh *ssh, s
+@@ -293,6 +302,10 @@ monitor_child_preauth(struct ssh *ssh, s
  	/* Permit requests for moduli and signatures */
  	monitor_permit(mon_dispatch, MONITOR_REQ_MODULI, 1);
  	monitor_permit(mon_dispatch, MONITOR_REQ_SIGN, 1);
@@ -2562,7 +2810,7 @@ diff --color -ruNp a/monitor.c b/monitor.c
  
  	/* The first few requests do not require asynchronous access */
  	while (!authenticated) {
-@@ -344,8 +357,15 @@ monitor_child_preauth(struct ssh *ssh, s
+@@ -345,8 +358,15 @@ monitor_child_preauth(struct ssh *ssh, s
  		if (ent->flags & (MON_AUTHDECIDE|MON_ALOG)) {
  			auth_log(ssh, authenticated, partial,
  			    auth_method, auth_submethod);
@@ -2579,7 +2827,7 @@ diff --color -ruNp a/monitor.c b/monitor.c
  			if (authenticated || partial) {
  				auth2_update_session_info(authctxt,
  				    auth_method, auth_submethod);
-@@ -413,6 +433,10 @@ monitor_child_postauth(struct ssh *ssh,
+@@ -414,6 +434,10 @@ monitor_child_postauth(struct ssh *ssh,
  	monitor_permit(mon_dispatch, MONITOR_REQ_MODULI, 1);
  	monitor_permit(mon_dispatch, MONITOR_REQ_SIGN, 1);
  	monitor_permit(mon_dispatch, MONITOR_REQ_TERM, 1);
@@ -2590,7 +2838,7 @@ diff --color -ruNp a/monitor.c b/monitor.c
  
  	if (auth_opts->permit_pty_flag) {
  		monitor_permit(mon_dispatch, MONITOR_REQ_PTY, 1);
-@@ -1793,6 +1817,17 @@ monitor_apply_keystate(struct ssh *ssh,
+@@ -1803,6 +1827,17 @@ monitor_apply_keystate(struct ssh *ssh,
  # ifdef OPENSSL_HAS_ECC
  	kex->kex[KEX_ECDH_SHA2] = kex_gen_server;
  # endif
@@ -2608,7 +2856,7 @@ diff --color -ruNp a/monitor.c b/monitor.c
  #endif /* WITH_OPENSSL */
  	kex->kex[KEX_C25519_SHA256] = kex_gen_server;
  	kex->kex[KEX_KEM_SNTRUP761X25519_SHA512] = kex_gen_server;
-@@ -1885,8 +1920,8 @@ mm_answer_gss_setup_ctx(struct ssh *ssh,
+@@ -1896,8 +1931,8 @@ mm_answer_gss_setup_ctx(struct ssh *ssh,
  	u_char *p;
  	int r;
  
@@ -2619,7 +2867,7 @@ diff --color -ruNp a/monitor.c b/monitor.c
  
  	if ((r = sshbuf_get_string(m, &p, &len)) != 0)
  		fatal_fr(r, "parse");
-@@ -1918,8 +1953,8 @@ mm_answer_gss_accept_ctx(struct ssh *ssh
+@@ -1929,8 +1964,8 @@ mm_answer_gss_accept_ctx(struct ssh *ssh
  	OM_uint32 flags = 0; /* GSI needs this */
  	int r;
  
@@ -2630,7 +2878,7 @@ diff --color -ruNp a/monitor.c b/monitor.c
  
  	if ((r = ssh_gssapi_get_buffer_desc(m, &in)) != 0)
  		fatal_fr(r, "ssh_gssapi_get_buffer_desc");
-@@ -1939,6 +1974,7 @@ mm_answer_gss_accept_ctx(struct ssh *ssh
+@@ -1950,6 +1985,7 @@ mm_answer_gss_accept_ctx(struct ssh *ssh
  		monitor_permit(mon_dispatch, MONITOR_REQ_GSSSTEP, 0);
  		monitor_permit(mon_dispatch, MONITOR_REQ_GSSUSEROK, 1);
  		monitor_permit(mon_dispatch, MONITOR_REQ_GSSCHECKMIC, 1);
@@ -2638,7 +2886,7 @@ diff --color -ruNp a/monitor.c b/monitor.c
  	}
  	return (0);
  }
-@@ -1950,8 +1986,8 @@ mm_answer_gss_checkmic(struct ssh *ssh,
+@@ -1961,8 +1997,8 @@ mm_answer_gss_checkmic(struct ssh *ssh,
  	OM_uint32 ret;
  	int r;
  
@@ -2649,7 +2897,7 @@ diff --color -ruNp a/monitor.c b/monitor.c
  
  	if ((r = ssh_gssapi_get_buffer_desc(m, &gssbuf)) != 0 ||
  	    (r = ssh_gssapi_get_buffer_desc(m, &mic)) != 0)
-@@ -1977,13 +2013,17 @@ mm_answer_gss_checkmic(struct ssh *ssh,
+@@ -1988,13 +2024,17 @@ mm_answer_gss_checkmic(struct ssh *ssh,
  int
  mm_answer_gss_userok(struct ssh *ssh, int sock, struct sshbuf *m)
  {
@@ -2671,7 +2919,7 @@ diff --color -ruNp a/monitor.c b/monitor.c
  
  	sshbuf_reset(m);
  	if ((r = sshbuf_put_u32(m, authenticated)) != 0)
-@@ -1992,7 +2032,11 @@ mm_answer_gss_userok(struct ssh *ssh, in
+@@ -2003,7 +2043,11 @@ mm_answer_gss_userok(struct ssh *ssh, in
  	debug3_f("sending result %d", authenticated);
  	mm_request_send(sock, MONITOR_ANS_GSSUSEROK, m);
  
@@ -2684,7 +2932,7 @@ diff --color -ruNp a/monitor.c b/monitor.c
  
  	if ((displayname = ssh_gssapi_displayname()) != NULL)
  		auth2_record_info(authctxt, "%s", displayname);
-@@ -2000,5 +2044,84 @@ mm_answer_gss_userok(struct ssh *ssh, in
+@@ -2011,5 +2055,84 @@ mm_answer_gss_userok(struct ssh *ssh, in
  	/* Monitor loop will terminate if authenticated */
  	return (authenticated);
  }
@@ -2770,8 +3018,8 @@ diff --color -ruNp a/monitor.c b/monitor.c
  #endif /* GSSAPI */
  
 diff --color -ruNp a/monitor.h b/monitor.h
---- a/monitor.h	2024-08-28 12:35:01.192659551 +0200
-+++ b/monitor.h	2024-08-28 12:35:41.251432142 +0200
+--- a/monitor.h	2026-03-13 12:32:48.467853845 +0100
++++ b/monitor.h	2026-03-13 12:16:40.011929029 +0100
 @@ -67,6 +67,8 @@ enum monitor_reqtype {
  	MONITOR_REQ_PAM_FREE_CTX = 110, MONITOR_ANS_PAM_FREE_CTX = 111,
  	MONITOR_REQ_AUDIT_EVENT = 112, MONITOR_REQ_AUDIT_COMMAND = 113,
@@ -2782,8 +3030,8 @@ diff --color -ruNp a/monitor.h b/monitor.h
  
  struct ssh;
 diff --color -ruNp a/monitor_wrap.c b/monitor_wrap.c
---- a/monitor_wrap.c	2024-08-28 12:35:01.192659551 +0200
-+++ b/monitor_wrap.c	2024-08-28 12:35:41.251432142 +0200
+--- a/monitor_wrap.c	2026-03-13 12:32:48.468148305 +0100
++++ b/monitor_wrap.c	2026-03-13 12:16:40.011969272 +0100
 @@ -1075,13 +1075,15 @@ mm_ssh_gssapi_checkmic(Gssctxt *ctx, gss
  }
  
@@ -2862,8 +3110,8 @@ diff --color -ruNp a/monitor_wrap.c b/monitor_wrap.c
  
  /*
 diff --color -ruNp a/monitor_wrap.h b/monitor_wrap.h
---- a/monitor_wrap.h	2024-08-28 12:35:01.193659570 +0200
-+++ b/monitor_wrap.h	2024-08-28 12:35:41.251432142 +0200
+--- a/monitor_wrap.h	2026-03-13 12:32:48.468446940 +0100
++++ b/monitor_wrap.h	2026-03-13 12:16:40.012015851 +0100
 @@ -67,8 +67,10 @@ void mm_decode_activate_server_options(s
  OM_uint32 mm_ssh_gssapi_server_ctx(Gssctxt **, gss_OID);
  OM_uint32 mm_ssh_gssapi_accept_ctx(Gssctxt *,
@@ -2876,53 +3124,9 @@ diff --color -ruNp a/monitor_wrap.h b/monitor_wrap.h
  #endif
  
  #ifdef USE_PAM
-diff --color -ruNp a/packet.c b/packet.c
---- a/packet.c	2024-07-01 06:36:28.000000000 +0200
-+++ b/packet.c	2024-08-28 12:35:41.260432315 +0200
-@@ -1517,6 +1517,29 @@ ssh_packet_read(struct ssh *ssh)
- 	return type;
- }
- 
-+/*
-+ * Waits until a packet has been received, verifies that its type matches
-+ * that given, and gives a fatal error and exits if there is a mismatch.
-+ */
-+
-+int
-+ssh_packet_read_expect(struct ssh *ssh, u_int expected_type)
-+{
-+	int r;
-+	u_char type;
-+
-+	if ((r = ssh_packet_read_seqnr(ssh, &type, NULL)) != 0)
-+		return r;
-+	if (type != expected_type) {
-+		if ((r = sshpkt_disconnect(ssh,
-+		    "Protocol error: expected packet type %d, got %d",
-+		    expected_type, type)) != 0)
-+			return r;
-+		return SSH_ERR_PROTOCOL_ERROR;
-+	}
-+	return 0;
-+}
-+
- static int
- ssh_packet_read_poll2_mux(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
- {
-diff --color -ruNp a/packet.h b/packet.h
---- a/packet.h	2024-07-01 06:36:28.000000000 +0200
-+++ b/packet.h	2024-08-28 12:35:41.260432315 +0200
-@@ -124,6 +124,7 @@ int	 ssh_packet_send2_wrapped(struct ssh
- int	 ssh_packet_send2(struct ssh *);
- 
- int      ssh_packet_read(struct ssh *);
-+int	 ssh_packet_read_expect(struct ssh *, u_int type);
- int ssh_packet_read_poll2(struct ssh *, u_char *, u_int32_t *seqnr_p);
- int	 ssh_packet_process_incoming(struct ssh *, const char *buf, u_int len);
- int	 ssh_packet_process_read(struct ssh *, int);
 diff --color -ruNp a/readconf.c b/readconf.c
---- a/readconf.c	2024-07-01 06:36:28.000000000 +0200
-+++ b/readconf.c	2024-08-28 12:35:41.253432180 +0200
+--- a/readconf.c	2024-09-20 00:20:48.000000000 +0200
++++ b/readconf.c	2026-03-13 12:16:40.012058137 +0100
 @@ -70,6 +70,7 @@
  #include "uidswap.h"
  #include "myproposal.h"
@@ -2963,7 +3167,7 @@ diff --color -ruNp a/readconf.c b/readconf.c
  #endif
  #ifdef ENABLE_PKCS11
  	{ "pkcs11provider", oPKCS11Provider },
-@@ -1227,10 +1242,42 @@ parse_time:
+@@ -1256,10 +1271,42 @@ parse_time:
  		intptr = &options->gss_authentication;
  		goto parse_flag;
  
@@ -3006,7 +3210,7 @@ diff --color -ruNp a/readconf.c b/readconf.c
  	case oBatchMode:
  		intptr = &options->batch_mode;
  		goto parse_flag;
-@@ -2542,7 +2589,13 @@ initialize_options(Options * options)
+@@ -2576,7 +2623,13 @@ initialize_options(Options * options)
  	options->fwd_opts.streamlocal_bind_unlink = -1;
  	options->pubkey_authentication = -1;
  	options->gss_authentication = -1;
@@ -3020,7 +3224,7 @@ diff --color -ruNp a/readconf.c b/readconf.c
  	options->password_authentication = -1;
  	options->kbd_interactive_authentication = -1;
  	options->kbd_interactive_devices = NULL;
-@@ -2705,8 +2758,18 @@ fill_default_options(Options * options)
+@@ -2739,8 +2792,18 @@ fill_default_options(Options * options)
  		options->pubkey_authentication = SSH_PUBKEY_AUTH_ALL;
  	if (options->gss_authentication == -1)
  		options->gss_authentication = 0;
@@ -3039,7 +3243,7 @@ diff --color -ruNp a/readconf.c b/readconf.c
  	if (options->password_authentication == -1)
  		options->password_authentication = 1;
  	if (options->kbd_interactive_authentication == -1)
-@@ -3533,7 +3596,14 @@ dump_client_config(Options *o, const cha
+@@ -3567,7 +3630,14 @@ dump_client_config(Options *o, const cha
  	dump_cfg_fmtint(oGatewayPorts, o->fwd_opts.gateway_ports);
  #ifdef GSSAPI
  	dump_cfg_fmtint(oGssAuthentication, o->gss_authentication);
@@ -3055,8 +3259,8 @@ diff --color -ruNp a/readconf.c b/readconf.c
  	dump_cfg_fmtint(oHashKnownHosts, o->hash_known_hosts);
  	dump_cfg_fmtint(oHostbasedAuthentication, o->hostbased_authentication);
 diff --color -ruNp a/readconf.h b/readconf.h
---- a/readconf.h	2024-07-01 06:36:28.000000000 +0200
-+++ b/readconf.h	2024-08-28 12:35:41.254432199 +0200
+--- a/readconf.h	2024-09-20 00:20:48.000000000 +0200
++++ b/readconf.h	2026-03-13 12:16:39.991140430 +0100
 @@ -40,7 +40,13 @@ typedef struct {
  	int     pubkey_authentication;	/* Try ssh2 pubkey authentication. */
  	int     hostbased_authentication;	/* ssh2's rhosts_rsa */
@@ -3072,8 +3276,8 @@ diff --color -ruNp a/readconf.h b/readconf.h
  						 * authentication. */
  	int     kbd_interactive_authentication; /* Try keyboard-interactive auth. */
 diff --color -ruNp a/servconf.c b/servconf.c
---- a/servconf.c	2024-07-01 06:36:28.000000000 +0200
-+++ b/servconf.c	2024-08-28 12:35:41.255432218 +0200
+--- a/servconf.c	2024-09-20 00:20:48.000000000 +0200
++++ b/servconf.c	2026-03-13 12:16:39.991185528 +0100
 @@ -68,6 +68,7 @@
  #include "auth.h"
  #include "myproposal.h"
@@ -3094,7 +3298,7 @@ diff --color -ruNp a/servconf.c b/servconf.c
  	options->password_authentication = -1;
  	options->kbd_interactive_authentication = -1;
  	options->permit_empty_passwd = -1;
-@@ -376,10 +380,18 @@ fill_default_server_options(ServerOption
+@@ -378,10 +382,18 @@ fill_default_server_options(ServerOption
  		options->kerberos_get_afs_token = 0;
  	if (options->gss_authentication == -1)
  		options->gss_authentication = 0;
@@ -3113,7 +3317,7 @@ diff --color -ruNp a/servconf.c b/servconf.c
  	if (options->password_authentication == -1)
  		options->password_authentication = 1;
  	if (options->kbd_interactive_authentication == -1)
-@@ -558,6 +570,7 @@ typedef enum {
+@@ -564,6 +576,7 @@ typedef enum {
  	sPerSourcePenalties, sPerSourcePenaltyExemptList,
  	sClientAliveInterval, sClientAliveCountMax, sAuthorizedKeysFile,
  	sGssAuthentication, sGssCleanupCreds, sGssStrictAcceptor,
@@ -3121,7 +3325,7 @@ diff --color -ruNp a/servconf.c b/servconf.c
  	sAcceptEnv, sSetEnv, sPermitTunnel,
  	sMatch, sPermitOpen, sPermitListen, sForceCommand, sChrootDirectory,
  	sUsePrivilegeSeparation, sAllowAgentForwarding,
-@@ -643,12 +656,22 @@ static struct {
+@@ -649,12 +662,22 @@ static struct {
  #ifdef GSSAPI
  	{ "gssapiauthentication", sGssAuthentication, SSHCFG_ALL },
  	{ "gssapicleanupcredentials", sGssCleanupCreds, SSHCFG_GLOBAL },
@@ -3144,7 +3348,7 @@ diff --color -ruNp a/servconf.c b/servconf.c
  	{ "passwordauthentication", sPasswordAuthentication, SSHCFG_ALL },
  	{ "kbdinteractiveauthentication", sKbdInteractiveAuthentication, SSHCFG_ALL },
  	{ "challengeresponseauthentication", sKbdInteractiveAuthentication, SSHCFG_ALL }, /* alias */
-@@ -1585,6 +1608,10 @@ process_server_config_line_depth(ServerO
+@@ -1605,6 +1628,10 @@ process_server_config_line_depth(ServerO
  		intptr = &options->gss_authentication;
  		goto parse_flag;
  
@@ -3155,7 +3359,7 @@ diff --color -ruNp a/servconf.c b/servconf.c
  	case sGssCleanupCreds:
  		intptr = &options->gss_cleanup_creds;
  		goto parse_flag;
-@@ -1593,6 +1620,22 @@ process_server_config_line_depth(ServerO
+@@ -1613,6 +1640,22 @@ process_server_config_line_depth(ServerO
  		intptr = &options->gss_strict_acceptor;
  		goto parse_flag;
  
@@ -3178,7 +3382,7 @@ diff --color -ruNp a/servconf.c b/servconf.c
  	case sPasswordAuthentication:
  		intptr = &options->password_authentication;
  		goto parse_flag;
-@@ -3178,6 +3221,10 @@ dump_config(ServerOptions *o)
+@@ -3204,6 +3247,10 @@ dump_config(ServerOptions *o)
  #ifdef GSSAPI
  	dump_cfg_fmtint(sGssAuthentication, o->gss_authentication);
  	dump_cfg_fmtint(sGssCleanupCreds, o->gss_cleanup_creds);
@@ -3190,9 +3394,9 @@ diff --color -ruNp a/servconf.c b/servconf.c
  	dump_cfg_fmtint(sPasswordAuthentication, o->password_authentication);
  	dump_cfg_fmtint(sKbdInteractiveAuthentication,
 diff --color -ruNp a/servconf.h b/servconf.h
---- a/servconf.h	2024-07-01 06:36:28.000000000 +0200
-+++ b/servconf.h	2024-08-28 12:35:41.255432218 +0200
-@@ -149,8 +149,11 @@ typedef struct {
+--- a/servconf.h	2024-09-20 00:20:48.000000000 +0200
++++ b/servconf.h	2026-03-13 12:16:40.004993534 +0100
+@@ -150,8 +150,11 @@ typedef struct {
  	int     kerberos_get_afs_token;		/* If true, try to get AFS token if
  						 * authenticated with Kerberos. */
  	int     gss_authentication;	/* If true, permit GSSAPI authentication */
@@ -3205,8 +3409,8 @@ diff --color -ruNp a/servconf.h b/servconf.h
  						 * authentication. */
  	int     kbd_interactive_authentication;	/* If true, permit */
 diff --color -ruNp a/session.c b/session.c
---- a/session.c	2024-08-28 12:35:01.197659647 +0200
-+++ b/session.c	2024-08-28 12:35:41.255432218 +0200
+--- a/session.c	2026-03-13 12:32:48.472280104 +0100
++++ b/session.c	2026-03-13 12:16:40.005034524 +0100
 @@ -2674,13 +2674,19 @@ do_cleanup(struct ssh *ssh, Authctxt *au
  
  #ifdef KRB5
@@ -3230,9 +3434,9 @@ diff --color -ruNp a/session.c b/session.c
  
  	/* remove agent socket */
 diff --color -ruNp a/ssh.1 b/ssh.1
---- a/ssh.1	2024-08-28 12:35:01.207659840 +0200
-+++ b/ssh.1	2024-08-28 12:35:41.256432238 +0200
-@@ -536,7 +536,13 @@ For full details of the options listed b
+--- a/ssh.1	2026-03-13 12:32:48.479681434 +0100
++++ b/ssh.1	2026-03-13 12:16:40.012217780 +0100
+@@ -538,7 +538,13 @@ For full details of the options listed b
  .It GatewayPorts
  .It GlobalKnownHostsFile
  .It GSSAPIAuthentication
@@ -3246,7 +3450,7 @@ diff --color -ruNp a/ssh.1 b/ssh.1
  .It HashKnownHosts
  .It Host
  .It HostbasedAcceptedAlgorithms
-@@ -624,6 +630,8 @@ flag),
+@@ -626,6 +632,8 @@ flag),
  (supported message integrity codes),
  .Ar kex
  (key exchange algorithms),
@@ -3256,8 +3460,8 @@ diff --color -ruNp a/ssh.1 b/ssh.1
  (key types),
  .Ar key-ca-sign
 diff --color -ruNp a/ssh.c b/ssh.c
---- a/ssh.c	2024-07-01 06:36:28.000000000 +0200
-+++ b/ssh.c	2024-08-28 12:35:41.256432238 +0200
+--- a/ssh.c	2024-09-20 00:20:48.000000000 +0200
++++ b/ssh.c	2026-03-13 12:16:40.012768046 +0100
 @@ -827,6 +827,8 @@ main(int ac, char **av)
  			else if (strcmp(optarg, "kex") == 0 ||
  			    strcasecmp(optarg, "KexAlgorithms") == 0)
@@ -3279,8 +3483,8 @@ diff --color -ruNp a/ssh.c b/ssh.c
  			if (cp == NULL)
  				fatal("Unsupported query \"%s\"", optarg);
 diff --color -ruNp a/ssh_config b/ssh_config
---- a/ssh_config	2024-08-28 12:35:01.216660014 +0200
-+++ b/ssh_config	2024-08-28 12:35:41.256432238 +0200
+--- a/ssh_config	2026-03-13 12:32:48.487976307 +0100
++++ b/ssh_config	2026-03-13 12:16:40.007769377 +0100
 @@ -24,6 +24,8 @@
  #   HostbasedAuthentication no
  #   GSSAPIAuthentication no
@@ -3291,8 +3495,8 @@ diff --color -ruNp a/ssh_config b/ssh_config
  #   CheckHostIP no
  #   AddressFamily any
 diff --color -ruNp a/ssh_config.5 b/ssh_config.5
---- a/ssh_config.5	2024-07-01 06:36:28.000000000 +0200
-+++ b/ssh_config.5	2024-08-28 12:35:41.257432257 +0200
+--- a/ssh_config.5	2024-09-20 00:20:48.000000000 +0200
++++ b/ssh_config.5	2026-03-13 12:16:40.013000257 +0100
 @@ -938,10 +938,68 @@ The default is
  Specifies whether user authentication based on GSSAPI is allowed.
  The default is
@@ -3363,8 +3567,8 @@ diff --color -ruNp a/ssh_config.5 b/ssh_config.5
  Indicates that
  .Xr ssh 1
 diff --color -ruNp a/sshconnect2.c b/sshconnect2.c
---- a/sshconnect2.c	2024-07-01 06:36:28.000000000 +0200
-+++ b/sshconnect2.c	2024-08-28 12:35:41.258432276 +0200
+--- a/sshconnect2.c	2024-09-20 00:20:48.000000000 +0200
++++ b/sshconnect2.c	2026-03-13 12:16:40.008053898 +0100
 @@ -222,6 +222,11 @@ ssh_kex2(struct ssh *ssh, char *host, st
  	char *all_key, *hkalgs = NULL;
  	int r, use_known_hosts_order = 0;
@@ -3420,7 +3624,7 @@ diff --color -ruNp a/sshconnect2.c b/sshconnect2.c
  	free(hkalgs);
  
  	/* start key exchange */
-@@ -271,14 +312,44 @@ ssh_kex2(struct ssh *ssh, char *host, st
+@@ -271,15 +312,45 @@ ssh_kex2(struct ssh *ssh, char *host, st
  # ifdef OPENSSL_HAS_ECC
  	ssh->kex->kex[KEX_ECDH_SHA2] = kex_gen_client;
  # endif
@@ -3439,6 +3643,7 @@ diff --color -ruNp a/sshconnect2.c b/sshconnect2.c
 +#endif /* WITH_OPENSSL */
  	ssh->kex->kex[KEX_C25519_SHA256] = kex_gen_client;
  	ssh->kex->kex[KEX_KEM_SNTRUP761X25519_SHA512] = kex_gen_client;
+ 	ssh->kex->kex[KEX_KEM_MLKEM768X25519_SHA256] = kex_gen_client;
  	ssh->kex->verify_host_key=&verify_host_key_callback;
  
 +#if defined(GSSAPI) && defined(WITH_OPENSSL)
@@ -3466,7 +3671,7 @@ diff --color -ruNp a/sshconnect2.c b/sshconnect2.c
  #ifdef DEBUG_KEXDH
  	/* send 1st encrypted/maced/compressed message */
  	if ((r = sshpkt_start(ssh, SSH2_MSG_IGNORE)) != 0 ||
-@@ -368,6 +439,7 @@ static int input_gssapi_response(int typ
+@@ -369,6 +440,7 @@ static int input_gssapi_response(int typ
  static int input_gssapi_token(int type, u_int32_t, struct ssh *);
  static int input_gssapi_error(int, u_int32_t, struct ssh *);
  static int input_gssapi_errtok(int, u_int32_t, struct ssh *);
@@ -3474,7 +3679,7 @@ diff --color -ruNp a/sshconnect2.c b/sshconnect2.c
  #endif
  
  void	userauth(struct ssh *, char *);
-@@ -384,6 +456,11 @@ static char *authmethods_get(void);
+@@ -385,6 +457,11 @@ static char *authmethods_get(void);
  
  Authmethod authmethods[] = {
  #ifdef GSSAPI
@@ -3486,7 +3691,7 @@ diff --color -ruNp a/sshconnect2.c b/sshconnect2.c
  	{"gssapi-with-mic",
  		userauth_gssapi,
  		userauth_gssapi_cleanup,
-@@ -755,12 +832,32 @@ userauth_gssapi(struct ssh *ssh)
+@@ -756,12 +833,32 @@ userauth_gssapi(struct ssh *ssh)
  	OM_uint32 min;
  	int r, ok = 0;
  	gss_OID mech = NULL;
@@ -3520,7 +3725,7 @@ diff --color -ruNp a/sshconnect2.c b/sshconnect2.c
  
  	/* Check to see whether the mechanism is usable before we offer it */
  	while (authctxt->mech_tried < authctxt->gss_supported_mechs->count &&
-@@ -769,13 +866,15 @@ userauth_gssapi(struct ssh *ssh)
+@@ -770,13 +867,15 @@ userauth_gssapi(struct ssh *ssh)
  		    elements[authctxt->mech_tried];
  		/* My DER encoding requires length<128 */
  		if (mech->length < 128 && ssh_gssapi_check_mechanism(&gssctxt,
@@ -3537,7 +3742,7 @@ diff --color -ruNp a/sshconnect2.c b/sshconnect2.c
  	if (!ok || mech == NULL)
  		return 0;
  
-@@ -1009,6 +1108,55 @@ input_gssapi_error(int type, u_int32_t p
+@@ -1010,6 +1109,55 @@ input_gssapi_error(int type, u_int32_t p
  	free(lang);
  	return r;
  }
@@ -3594,9 +3799,9 @@ diff --color -ruNp a/sshconnect2.c b/sshconnect2.c
  
  static int
 diff --color -ruNp a/sshd.c b/sshd.c
---- a/sshd.c	2024-07-01 06:36:28.000000000 +0200
-+++ b/sshd.c	2024-08-28 12:35:41.258432276 +0200
-@@ -1551,7 +1551,8 @@ main(int ac, char **av)
+--- a/sshd.c	2024-09-20 00:20:48.000000000 +0200
++++ b/sshd.c	2026-03-13 12:16:40.008426802 +0100
+@@ -1558,7 +1558,8 @@ main(int ac, char **av)
  		free(fp);
  	}
  	accumulate_host_timing_secret(cfg, NULL);
@@ -3607,8 +3812,8 @@ diff --color -ruNp a/sshd.c b/sshd.c
  		exit(1);
  	}
 diff --color -ruNp a/sshd_config b/sshd_config
---- a/sshd_config	2024-08-28 12:35:01.221660110 +0200
-+++ b/sshd_config	2024-08-28 12:35:41.259432296 +0200
+--- a/sshd_config	2026-03-13 12:32:48.491841092 +0100
++++ b/sshd_config	2026-03-13 12:16:40.008629209 +0100
 @@ -77,6 +77,8 @@ AuthorizedKeysFile	.ssh/authorized_keys
  # GSSAPI options
  #GSSAPIAuthentication no
@@ -3619,8 +3824,8 @@ diff --color -ruNp a/sshd_config b/sshd_config
  # Set this to 'yes' to enable PAM authentication, account processing,
  # and session processing. If this is enabled, PAM authentication will
 diff --color -ruNp a/sshd_config.5 b/sshd_config.5
---- a/sshd_config.5	2024-08-28 12:35:01.218660052 +0200
-+++ b/sshd_config.5	2024-08-28 12:35:41.259432296 +0200
+--- a/sshd_config.5	2026-03-13 12:32:48.489069461 +0100
++++ b/sshd_config.5	2026-03-13 12:16:40.013495921 +0100
 @@ -739,6 +739,11 @@ Specifies whether to automatically destr
  on logout.
  The default is
@@ -3667,9 +3872,9 @@ diff --color -ruNp a/sshd_config.5 b/sshd_config.5
  Specifies the signature algorithms that will be accepted for hostbased
  authentication as a list of comma-separated patterns.
 diff --color -ruNp a/sshd-session.c b/sshd-session.c
---- a/sshd-session.c	2024-08-28 12:35:01.221660110 +0200
-+++ b/sshd-session.c	2024-08-28 12:35:41.263432373 +0200
-@@ -660,8 +660,8 @@ notify_hostkeys(struct ssh *ssh)
+--- a/sshd-session.c	2026-03-13 12:32:48.491392577 +0100
++++ b/sshd-session.c	2026-03-13 12:16:40.013202390 +0100
+@@ -662,8 +662,8 @@ notify_hostkeys(struct ssh *ssh)
  	}
  	debug3_f("sent %u hostkeys", nkeys);
  	if (nkeys == 0)
@@ -3680,7 +3885,7 @@ diff --color -ruNp a/sshd-session.c b/sshd-session.c
  		sshpkt_fatal(ssh, r, "%s: send", __func__);
  	sshbuf_free(buf);
  }
-@@ -1180,8 +1180,9 @@ main(int ac, char **av)
+@@ -1182,8 +1182,9 @@ main(int ac, char **av)
  			break;
  		}
  	}
@@ -3692,7 +3897,7 @@ diff --color -ruNp a/sshd-session.c b/sshd-session.c
  
  	/* Ensure that umask disallows at least group and world write */
  	new_umask = umask(0077) | 0022;
-@@ -1462,6 +1463,48 @@ do_ssh2_kex(struct ssh *ssh)
+@@ -1476,6 +1477,48 @@ do_ssh2_kex(struct ssh *ssh)
  
  	free(hkalgs);
  
@@ -3741,7 +3946,7 @@ diff --color -ruNp a/sshd-session.c b/sshd-session.c
  	/* start key exchange */
  	if ((r = kex_setup(ssh, myproposal)) != 0)
  		fatal_r(r, "kex_setup");
-@@ -1479,7 +1522,18 @@ do_ssh2_kex(struct ssh *ssh)
+@@ -1493,7 +1536,18 @@ do_ssh2_kex(struct ssh *ssh)
   #ifdef OPENSSL_HAS_ECC
  	kex->kex[KEX_ECDH_SHA2] = kex_gen_server;
   #endif
@@ -3760,11 +3965,11 @@ diff --color -ruNp a/sshd-session.c b/sshd-session.c
 +#endif /* WITH_OPENSSL */
  	kex->kex[KEX_C25519_SHA256] = kex_gen_server;
  	kex->kex[KEX_KEM_SNTRUP761X25519_SHA512] = kex_gen_server;
- 	kex->load_host_public_key=&get_hostkey_public_by_type;
+  	kex->kex[KEX_KEM_MLKEM768X25519_SHA256] = kex_gen_server;
 diff --color -ruNp a/ssh-gss.h b/ssh-gss.h
---- a/ssh-gss.h	2024-07-01 06:36:28.000000000 +0200
-+++ b/ssh-gss.h	2024-08-28 12:35:41.256432238 +0200
-@@ -61,10 +61,34 @@
+--- a/ssh-gss.h	2024-09-20 00:20:48.000000000 +0200
++++ b/ssh-gss.h	2026-03-13 12:16:40.013453154 +0100
+@@ -61,10 +61,36 @@
  
  #define SSH_GSS_OIDTYPE 0x06
  
@@ -3791,6 +3996,8 @@ diff --color -ruNp a/ssh-gss.h b/ssh-gss.h
 +	KEX_GSS_GRP14_SHA1_ID "," \
 +	KEX_GSS_GEX_SHA1_ID
 +
++#include "digest.h" /* SSH_DIGEST_MAX_LENGTH */
++
  typedef struct {
  	char *filename;
  	char *envvar;
@@ -3799,7 +4006,7 @@ diff --color -ruNp a/ssh-gss.h b/ssh-gss.h
  	void *data;
  } ssh_gssapi_ccache;
  
-@@ -72,8 +96,11 @@ typedef struct {
+@@ -72,8 +98,11 @@ typedef struct {
  	gss_buffer_desc displayname;
  	gss_buffer_desc exportedname;
  	gss_cred_id_t creds;
@@ -3811,7 +4018,7 @@ diff --color -ruNp a/ssh-gss.h b/ssh-gss.h
  } ssh_gssapi_client;
  
  typedef struct ssh_gssapi_mech_struct {
-@@ -84,6 +111,7 @@ typedef struct ssh_gssapi_mech_struct {
+@@ -84,6 +113,7 @@ typedef struct ssh_gssapi_mech_struct {
  	int (*userok) (ssh_gssapi_client *, char *);
  	int (*localname) (ssh_gssapi_client *, char **);
  	void (*storecreds) (ssh_gssapi_client *);
@@ -3819,12 +4026,22 @@ diff --color -ruNp a/ssh-gss.h b/ssh-gss.h
  } ssh_gssapi_mech;
  
  typedef struct {
-@@ -94,10 +122,11 @@ typedef struct {
+@@ -94,10 +124,21 @@ typedef struct {
  	gss_OID		oid; /* client */
  	gss_cred_id_t	creds; /* server */
  	gss_name_t	client; /* server */
 -	gss_cred_id_t	client_creds; /* server */
 +	gss_cred_id_t	client_creds; /* both */
++	struct sshbuf *shared_secret; /* both */
++	struct sshbuf *server_pubkey; /* server */
++	struct sshbuf *server_blob; /* client */
++	struct sshbuf *server_host_key_blob; /* client */
++	gss_buffer_desc msg_tok; /* client */
++	gss_buffer_desc buf; /* both */
++	u_char hash[SSH_DIGEST_MAX_LENGTH]; /* both */
++	size_t hashlen; /* both */
++	int first; /* client */
++	BIGNUM *dh_client_pub; /* server (gex) */
  } Gssctxt;
  
  extern ssh_gssapi_mech *supported_mechs[];
@@ -3832,7 +4049,7 @@ diff --color -ruNp a/ssh-gss.h b/ssh-gss.h
  
  int  ssh_gssapi_check_oid(Gssctxt *, void *, size_t);
  void ssh_gssapi_set_oid_data(Gssctxt *, void *, size_t);
-@@ -108,6 +137,7 @@ OM_uint32 ssh_gssapi_test_oid_supported(
+@@ -108,6 +149,7 @@ OM_uint32 ssh_gssapi_test_oid_supported(
  
  struct sshbuf;
  int ssh_gssapi_get_buffer_desc(struct sshbuf *, gss_buffer_desc *);
@@ -3840,7 +4057,7 @@ diff --color -ruNp a/ssh-gss.h b/ssh-gss.h
  
  OM_uint32 ssh_gssapi_import_name(Gssctxt *, const char *);
  OM_uint32 ssh_gssapi_init_ctx(Gssctxt *, int,
-@@ -122,17 +152,33 @@ void ssh_gssapi_delete_ctx(Gssctxt **);
+@@ -122,17 +164,33 @@ void ssh_gssapi_delete_ctx(Gssctxt **);
  OM_uint32 ssh_gssapi_sign(Gssctxt *, gss_buffer_t, gss_buffer_t);
  void ssh_gssapi_buildmic(struct sshbuf *, const char *,
      const char *, const char *, const struct sshbuf *);
@@ -3877,49 +4094,49 @@ diff --color -ruNp a/ssh-gss.h b/ssh-gss.h
  
  #endif /* _SSH_GSS_H */
 diff --color -ruNp a/sshkey.c b/sshkey.c
---- a/sshkey.c	2024-07-01 06:36:28.000000000 +0200
-+++ b/sshkey.c	2024-08-28 12:35:41.260432315 +0200
-@@ -131,6 +131,75 @@ extern const struct sshkey_impl sshkey_x
+--- a/sshkey.c	2024-09-20 00:20:48.000000000 +0200
++++ b/sshkey.c	2026-03-13 12:16:40.006634461 +0100
+@@ -132,6 +132,75 @@ extern const struct sshkey_impl sshkey_x
  extern const struct sshkey_impl sshkey_xmss_cert_impl;
  #endif
  
-+static int ssh_gss_equal(const struct sshkey *k1, const struct sshkey *k2)
++static int ssh_gss_equal(const struct sshkey *, const struct sshkey *)
 +{
 +	return SSH_ERR_FEATURE_UNSUPPORTED;
 +}
 +
-+static int ssh_gss_serialize_public(const struct sshkey *k, struct sshbuf *b,
-+	enum sshkey_serialize_rep sr)
++static int ssh_gss_serialize_public(const struct sshkey *, struct sshbuf *,
++	enum sshkey_serialize_rep)
 +{
 +	return SSH_ERR_FEATURE_UNSUPPORTED;
 +}
 +
-+static int ssh_gss_deserialize_public(const char *k1, struct sshbuf *b,
-+	     struct sshkey *k2)
++static int ssh_gss_deserialize_public(const char *, struct sshbuf *,
++	     struct sshkey *)
 +{
 +	return SSH_ERR_FEATURE_UNSUPPORTED;
 +}
 +
-+static int ssh_gss_serialize_private(const struct sshkey *k, struct sshbuf *b,
-+	     enum sshkey_serialize_rep sr)
++static int ssh_gss_serialize_private(const struct sshkey *, struct sshbuf *,
++	     enum sshkey_serialize_rep)
 +{
 +	return SSH_ERR_FEATURE_UNSUPPORTED;
 +}
 +
-+static int ssh_gss_deserialize_private(const char *c, struct sshbuf *b,
-+	     struct sshkey *k)
++static int ssh_gss_deserialize_private(const char *, struct sshbuf *,
++	     struct sshkey *)
 +{
 +	return SSH_ERR_FEATURE_UNSUPPORTED;
 +}
 +
-+static int ssh_gss_copy_public(const struct sshkey *k1, struct sshkey *k2)
++static int ssh_gss_copy_public(const struct sshkey *, struct sshkey *)
 +{
 +	return SSH_ERR_FEATURE_UNSUPPORTED;
 +}
 +
-+static int ssh_gss_verify(const struct sshkey *k, const u_char *uc1, size_t s1,
-+	    const u_char *uc2, size_t s2, const char *p, u_int i,
-+	    struct sshkey_sig_details **sd)
++static int ssh_gss_verify(const struct sshkey *, const u_char *, size_t,
++	    const u_char *, size_t, const char *, u_int,
++	    struct sshkey_sig_details **)
 +{
 +	return SSH_ERR_FEATURE_UNSUPPORTED;
 +}
@@ -3955,7 +4172,7 @@ diff --color -ruNp a/sshkey.c b/sshkey.c
  const struct sshkey_impl * const keyimpls[] = {
  	&sshkey_ed25519_impl,
  	&sshkey_ed25519_cert_impl,
-@@ -169,6 +238,7 @@ const struct sshkey_impl * const keyimpl
+@@ -170,6 +239,7 @@ const struct sshkey_impl * const keyimpl
  	&sshkey_xmss_impl,
  	&sshkey_xmss_cert_impl,
  #endif
@@ -3963,7 +4180,7 @@ diff --color -ruNp a/sshkey.c b/sshkey.c
  	NULL
  };
  
-@@ -324,7 +394,7 @@ sshkey_alg_list(int certs_only, int plai
+@@ -339,7 +409,7 @@ sshkey_alg_list(int certs_only, int plai
  
  	for (i = 0; keyimpls[i] != NULL; i++) {
  		impl = keyimpls[i];
@@ -3973,9 +4190,9 @@ diff --color -ruNp a/sshkey.c b/sshkey.c
  		if (!include_sigonly && impl->sigonly)
  			continue;
 diff --color -ruNp a/sshkey.h b/sshkey.h
---- a/sshkey.h	2024-07-01 06:36:28.000000000 +0200
-+++ b/sshkey.h	2024-08-28 12:35:41.260432315 +0200
-@@ -71,6 +71,7 @@ enum sshkey_types {
+--- a/sshkey.h	2024-09-20 00:20:48.000000000 +0200
++++ b/sshkey.h	2026-03-13 12:16:40.008972328 +0100
+@@ -73,6 +73,7 @@ enum sshkey_types {
  	KEY_ECDSA_SK_CERT,
  	KEY_ED25519_SK,
  	KEY_ED25519_SK_CERT,

@@ -23,7 +23,7 @@ for ((i = 1; i < SPLIT; i++)); do ii=$(printf %02d $i);
 done
 
 # work around a selinux restriction:
-chcon -t unconfined_exec_t ssh-sk-helper || :
+#chcon -t unconfined_exec_t ssh-sk-helper || :
 
 # work around something else that only crops up in brew
 export TEST_SSH_UNSAFE_PERMISSIONS=1
