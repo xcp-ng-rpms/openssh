@@ -1,5 +1,5 @@
 # XCP-ng sub release number
-%define xcpng_subrel 2
+%define xcpng_subrel 1
 
 # Do we want SELinux & Audit
 %if 0%{?!noselinux:1}
@@ -61,7 +61,7 @@
 Summary: An open source implementation of SSH protocol version 2
 Name: openssh
 Version: %{openssh_ver}
-Release: 30.%{xcpng_subrel}%{?dist}
+Release: 33.%{xcpng_subrel}%{?dist}
 URL: http://www.openssh.com/portable.html
 Source0: ftp://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-%{version}.tar.gz
 Source1: ftp://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-%{version}.tar.gz.asc
@@ -280,7 +280,6 @@ Patch1044: openssh-9.9p1-proxyjump-username-validity-checks.patch
 Patch1045: openssh-9.9p1-scp-remote-glob.patch
 # upstream e8bdfb151a356d0171fea4194dd205fbb252be23
 Patch1046: openssh-9.9p1-cve-2026-60002.patch
-# XCP-ng backports of upstream patches
 # upstream 8b05bbeb293c5f777915e37e9ed43a06fb8e7614
 # upstream 5a5e47740b6466d58242aca28b9e584bab4ccf1d
 Patch1047: openssh-9.9p1-copy-data-ext-self-copy.patch
@@ -295,6 +294,14 @@ Patch1049: openssh-10.4p1-CVE-2026-59999.patch
 Patch1050: openssh-10.5p1-CVE-2026-73281.patch
 # upstream 9910d5ef53124ce1157d57bc11e222658aa41299
 Patch1051: openssh-10.5p1-CVE-2026-73282.patch
+# upstream d43ba60c91cb323ca921049b7d43b1908c318454
+Patch1052: openssh-9.9p1-CVE-2026-60001.patch
+# upstream 8058c5bdb507591b79ec926221fbe6fcc296d432
+Patch1053: openssh-9.9p1-CVE-2026-59998.patch
+# upstream e9916c44c1324ab9ab022719e4df08a390a83014
+Patch1054: openssh-9.9p1-CVE-2026-59997.patch
+# upstream 5d04ca6af739b82fd30d84d2783ca802ebfa1192
+Patch1055: openssh-9.9p1-CVE-2026-60000.patch
 
 # XCP-ng patches
 # Name the parameters of the ssh_gss_* stub functions that
@@ -302,10 +309,6 @@ Patch1051: openssh-10.5p1-CVE-2026-73282.patch
 # definition; our build compiler rejects them with "parameter name
 # omitted").
 Patch2000: openssh-9.9p1-xcpng-gsskex-named-params.patch
-# upstream 5d04ca6af739b82fd30d84d2783ca802ebfa1192
-Patch2001: openssh-10.4p1-XCPNG-CVE-2026-60000.patch
-# upstream d43ba60c91cb323ca921049b7d43b1908c318454
-Patch2002: openssh-10.4p1-XCPNG-CVE-2026-60001.patch
 
 License: BSD-3-Clause AND BSD-2-Clause AND ISC AND SSH-OpenSSH AND ssh-keyscan AND snprintf AND LicenseRef-Fedora-Public-Domain AND X11-distribute-modifications-variant
 Requires: /sbin/nologin
@@ -544,13 +547,15 @@ gpgv2 --quiet --keyring %{SOURCE3} %{SOURCE1} %{SOURCE0}
 %patch -P 1049 -p1 -b .CVE-2026-59999
 %patch -P 1050 -p1 -b .CVE-2026-73281
 %patch -P 1051 -p1 -b .CVE-2026-73282
+%patch -P 1052 -p1 -b .CVE-2026-60001
+%patch -P 1053 -p1 -b .CVE-2026-59998
+%patch -P 1054 -p1 -b .CVE-2026-59997
+%patch -P 1055 -p1 -b .CVE-2026-60000
 
 %patch -P 100 -p1 -b .coverity
 
 # XCP-ng patches
 %patch -P 2000 -p1 -b .gsskex-named-params
-%patch -P 2001 -p1 -b .cve-2026-60000
-%patch -P 2002 -p1 -b .cve-2026-60001
 
 autoreconf
 
@@ -867,6 +872,33 @@ fi
 %attr(0755,root,root) %{_libdir}/sshtest/sk-dummy.so
 
 %changelog
+* Mon Nov 9 2026 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 9.9p1-33.1
+- Import OpenSSH 9.9p1-33 from Alma 10
+- Drop the XCP-ng backports of CVE-2026-60000 and CVE-2026-60001
+  (Patch2001 and Patch2002) in favour of the Alma patches
+- Fix of CVE-2026-59997
+- CVE-2026-59998 is only a documentation update.
+- Bring the 9.9p1-28 GSSAPI fixes missed in 9.9p1-30.1
+- *** UPSTREAM CHANGELOG ***
+  * Fri Oct 09 2026 Koichiro Iwao <meta@almalinux.org> - 9.9p1-33.alma.1
+  - Unpatch Red Hat help message
+
+  * Thu Oct 01 2026 Zoltan Fridrich <zfridric@redhat.com> - 9.9p1-33
+  - CVE-2026-59998: Document caveat regarding GSSAPIStrictAcceptorCheck
+    Resolves: RHEL-276921
+  - CVE-2026-59997: Fix internal-sftp server argument parsing limit
+    Resolves: RHEL-276929
+  - CVE-2026-60000: Fix DoS via excessive GSSAPI authentication attempts
+    Resolves: RHEL-276922
+
+  * Fri Sep 18 2026 Zoltan Fridrich <zfridric@redhat.com> - 9.9p1-32
+  - Bump release
+
+  * Thu Sep 17 2026 Zoltan Fridrich <zfridric@redhat.com> - 9.9p1-31
+  - CVE-2026-60001: Fix cases in GSSAPI and keyboard-interactive
+    authentication where the minimum per-attempt delay was not being enforced
+    Resolves: RHEL-258468
+
 * Wed Sep 30 2026 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 9.9p1-30.2
 - XCP-ng must not package redhat confs and must apply its own.
 - Create the initial XCP-ng configuration with post-quantum support.
