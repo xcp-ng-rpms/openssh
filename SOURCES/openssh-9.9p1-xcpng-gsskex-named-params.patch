@@ -1,0 +1,73 @@
+Name the parameters of the ssh_gss_* stub functions added by
+openssh-9.6p1-gssapi-keyex.patch in sshkey.c.
+
+Unnamed parameters are only legal in a C function *declaration*; these are
+function *definitions* (they have a body), so the compiler used to build
+this package on XCP-ng 8.3 rejects them:
+
+    sshkey.c:137:39: error: parameter name omitted
+     static int ssh_gss_equal(const struct sshkey *, const struct sshkey *)
+
+This is a separate, XCP-ng-only follow-up patch so that
+openssh-9.6p1-gssapi-keyex.patch itself stays byte-identical to the copy
+shipped in the AlmaLinux SRPM.
+
+--- a/sshkey.c
++++ b/sshkey.c
+@@ -132,43 +132,43 @@
+ extern const struct sshkey_impl sshkey_xmss_cert_impl;
+ #endif
+
+-static int ssh_gss_equal(const struct sshkey *, const struct sshkey *)
++static int ssh_gss_equal(const struct sshkey *a, const struct sshkey *b)
+ {
+ 	return SSH_ERR_FEATURE_UNSUPPORTED;
+ }
+
+-static int ssh_gss_serialize_public(const struct sshkey *, struct sshbuf *,
+-	enum sshkey_serialize_rep)
++static int ssh_gss_serialize_public(const struct sshkey *key, struct sshbuf *b,
++	enum sshkey_serialize_rep opts)
+ {
+ 	return SSH_ERR_FEATURE_UNSUPPORTED;
+ }
+
+-static int ssh_gss_deserialize_public(const char *, struct sshbuf *,
+-	     struct sshkey *)
++static int ssh_gss_deserialize_public(const char *pkalg, struct sshbuf *b,
++	     struct sshkey *key)
+ {
+ 	return SSH_ERR_FEATURE_UNSUPPORTED;
+ }
+
+-static int ssh_gss_serialize_private(const struct sshkey *, struct sshbuf *,
+-	     enum sshkey_serialize_rep)
++static int ssh_gss_serialize_private(const struct sshkey *key, struct sshbuf *b,
++	     enum sshkey_serialize_rep opts)
+ {
+ 	return SSH_ERR_FEATURE_UNSUPPORTED;
+ }
+
+-static int ssh_gss_deserialize_private(const char *, struct sshbuf *,
+-	     struct sshkey *)
++static int ssh_gss_deserialize_private(const char *pkalg, struct sshbuf *b,
++	     struct sshkey *key)
+ {
+ 	return SSH_ERR_FEATURE_UNSUPPORTED;
+ }
+
+-static int ssh_gss_copy_public(const struct sshkey *, struct sshkey *)
++static int ssh_gss_copy_public(const struct sshkey *from, struct sshkey *to)
+ {
+ 	return SSH_ERR_FEATURE_UNSUPPORTED;
+ }
+
+-static int ssh_gss_verify(const struct sshkey *, const u_char *, size_t,
+-	    const u_char *, size_t, const char *, u_int,
+-	    struct sshkey_sig_details **)
++static int ssh_gss_verify(const struct sshkey *key, const u_char *sig, size_t siglen,
++	    const u_char *data, size_t datalen, const char *alg, u_int compat,
++	    struct sshkey_sig_details **detailsp)
+ {
+ 	return SSH_ERR_FEATURE_UNSUPPORTED;
+ }

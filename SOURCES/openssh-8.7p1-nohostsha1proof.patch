@@ -94,47 +94,6 @@ diff -up openssh-8.7p1/monitor.c.sshrsacheck openssh-8.7p1/monitor.c
  	    is_proof ? "hostkey proof" : "KEX", siglen);
  
  	sshbuf_reset(m);
-diff -up openssh-8.7p1/regress/cert-userkey.sh.sshrsacheck openssh-8.7p1/regress/cert-userkey.sh
---- openssh-8.7p1/regress/cert-userkey.sh.sshrsacheck	2023-01-25 14:26:52.885963113 +0100
-+++ openssh-8.7p1/regress/cert-userkey.sh	2023-01-25 14:27:25.757219800 +0100
-@@ -7,7 +7,8 @@ rm -f $OBJ/authorized_keys_$USER $OBJ/us
- cp $OBJ/sshd_proxy $OBJ/sshd_proxy_bak
- cp $OBJ/ssh_proxy $OBJ/ssh_proxy_bak
- 
--PLAIN_TYPES=`$SSH -Q key-plain | maybe_filter_sk | sed 's/^ssh-dss/ssh-dsa/;s/^ssh-//'`
-+#ssh-dss keys are incompatible with DEFAULT crypto policy
-+PLAIN_TYPES=`$SSH -Q key-plain | maybe_filter_sk | grep -v 'ssh-dss' | sed 's/^ssh-dss/ssh-dsa/;s/^ssh-//'`
- EXTRA_TYPES=""
- rsa=""
- 
-diff -up openssh-8.7p1/regress/Makefile.sshrsacheck openssh-8.7p1/regress/Makefile
---- openssh-8.7p1/regress/Makefile.sshrsacheck	2023-01-20 13:07:54.169676051 +0100
-+++ openssh-8.7p1/regress/Makefile	2023-01-20 13:07:54.290677074 +0100
-@@ -2,7 +2,8 @@
- 
- tests:		prep file-tests t-exec unit
- 
--REGRESS_TARGETS=	t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12
-+#ssh-dss tests will not pass on DEFAULT crypto-policy because of SHA1, skipping
-+REGRESS_TARGETS=	t1 t2 t3 t4 t5 t7 t8 t9 t10 t11 t12
- 
- # File based tests
- file-tests: $(REGRESS_TARGETS)
-diff -up openssh-8.7p1/regress/test-exec.sh.sshrsacheck openssh-8.7p1/regress/test-exec.sh
---- openssh-8.7p1/regress/test-exec.sh.sshrsacheck	2023-01-25 14:24:54.778040819 +0100
-+++ openssh-8.7p1/regress/test-exec.sh	2023-01-25 14:26:39.500858590 +0100
-@@ -581,8 +581,9 @@ maybe_filter_sk() {
- 	fi
- }
- 
--SSH_KEYTYPES=`$SSH -Q key-plain | maybe_filter_sk`
--SSH_HOSTKEY_TYPES=`$SSH -Q key-plain | maybe_filter_sk`
-+#ssh-dss keys are incompatible with DEFAULT crypto policy
-+SSH_KEYTYPES=`$SSH -Q key-plain | maybe_filter_sk | grep -v 'ssh-dss'`
-+SSH_HOSTKEY_TYPES=`$SSH -Q key-plain | maybe_filter_sk | grep -v 'ssh-dss'`
- 
- for t in ${SSH_KEYTYPES}; do
- 	# generate user key
 diff -up openssh-8.7p1/regress/unittests/kex/test_kex.c.sshrsacheck openssh-8.7p1/regress/unittests/kex/test_kex.c
 --- openssh-8.7p1/regress/unittests/kex/test_kex.c.sshrsacheck	2023-01-26 13:34:52.645743677 +0100
 +++ openssh-8.7p1/regress/unittests/kex/test_kex.c	2023-01-26 13:36:56.220745823 +0100
