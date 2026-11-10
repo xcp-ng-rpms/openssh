@@ -309,6 +309,20 @@ Patch1055: openssh-9.9p1-CVE-2026-60000.patch
 # definition; our build compiler rejects them with "parameter name
 # omitted").
 Patch2000: openssh-9.9p1-xcpng-gsskex-named-params.patch
+# Security fixes backported from Alma (openssh-9.9p1-34)
+# upstream c07ea2180adebd6019a6ebdd89becb9d9f4b4897
+Patch2001: openssh-9.9p1-XCPNG-CVE-2026-106552.patch
+# upstream e0f85d83ccc15b1b218fa8a000fc29a2e3d2defd
+Patch2002: openssh-9.9p1-XCPNG-CVE-2026-106585.patch
+# upstream 0c4c9a7b320bd7ff61c4a2dc345cb2e27e9663b2
+Patch2003: openssh-9.9p1-XCPNG-CVE-2026-106583.patch
+# upstream 1d5340fce24526719e32aebc4c721fc228182ace
+Patch2004: openssh-9.9p1-XCPNG-CVE-2026-106582.patch
+# upstream 670510d1e190b0f4e47066f24498c04ada1da0f0
+# upstream 6f9cd19af05aa828d7778cfb047faaed1679e8b7
+# upstream d549f99da344c178c5f632a62a6aa60544d7236e
+# includes downstream specific modifications
+Patch2005: openssh-9.9p1-XCPNG-CVE-2026-106553.patch
 
 License: BSD-3-Clause AND BSD-2-Clause AND ISC AND SSH-OpenSSH AND ssh-keyscan AND snprintf AND LicenseRef-Fedora-Public-Domain AND X11-distribute-modifications-variant
 Requires: /sbin/nologin
@@ -556,6 +570,11 @@ gpgv2 --quiet --keyring %{SOURCE3} %{SOURCE1} %{SOURCE0}
 
 # XCP-ng patches
 %patch -P 2000 -p1 -b .gsskex-named-params
+%patch -P 2001 -p1 -b .CVE-2026-106552
+%patch -P 2002 -p1 -b .CVE-2026-106585
+%patch -P 2003 -p1 -b .CVE-2026-106583
+%patch -P 2004 -p1 -b .CVE-2026-106582
+%patch -P 2005 -p1 -b .CVE-2026-106553
 
 autoreconf
 
@@ -879,6 +898,15 @@ fi
 - Fix of CVE-2026-59997
 - CVE-2026-59998 is only a documentation update.
 - Bring the 9.9p1-28 GSSAPI fixes missed in 9.9p1-30.1
+- Fix CVE-2026-106552 (arbitrary file write via directory traversal
+  during sftp recursive copy)
+- Fix CVE-2026-106585 (DoS via oversized decompressed packets)
+- Fix CVE-2026-106583 (command injection via unvalidated command-line
+  username)
+- Fix CVE-2026-106582 (compression side-channel, the LZ77 dictionary
+  coder is disabled)
+- Fix CVE-2026-106553 (credentials persisting after GSSAPI authentication
+  attempt failure)
 - *** UPSTREAM CHANGELOG ***
   * Fri Oct 09 2026 Koichiro Iwao <meta@almalinux.org> - 9.9p1-33.alma.1
   - Unpatch Red Hat help message
