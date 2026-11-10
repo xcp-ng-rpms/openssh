@@ -1,5 +1,5 @@
 # XCP-ng sub release number
-%define xcpng_subrel 1
+%define xcpng_subrel 2
 
 # Do we want SELinux & Audit
 %if 0%{?!noselinux:1}
@@ -323,6 +323,10 @@ Patch2004: openssh-9.9p1-XCPNG-CVE-2026-106582.patch
 # upstream d549f99da344c178c5f632a62a6aa60544d7236e
 # includes downstream specific modifications
 Patch2005: openssh-9.9p1-XCPNG-CVE-2026-106553.patch
+# Fix backported from Alma (openssh-9.9p1-34)
+# upstream 14843e73b970e248b785d84df0e54ae9f3992cff
+# upstream 51400bde140baa15e312f7f7e9b4b694f5d4bf68
+Patch2006: openssh-9.9p1-XCPNG-ssh-copy-id-fail.patch
 
 License: BSD-3-Clause AND BSD-2-Clause AND ISC AND SSH-OpenSSH AND ssh-keyscan AND snprintf AND LicenseRef-Fedora-Public-Domain AND X11-distribute-modifications-variant
 Requires: /sbin/nologin
@@ -575,6 +579,7 @@ gpgv2 --quiet --keyring %{SOURCE3} %{SOURCE1} %{SOURCE0}
 %patch -P 2003 -p1 -b .CVE-2026-106583
 %patch -P 2004 -p1 -b .CVE-2026-106582
 %patch -P 2005 -p1 -b .CVE-2026-106553
+%patch -P 2006 -p1 -b .ssh-copy-id-fail
 
 autoreconf
 
@@ -891,6 +896,11 @@ fi
 %attr(0755,root,root) %{_libdir}/sshtest/sk-dummy.so
 
 %changelog
+* Tue Nov 10 2026 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 9.9p1-33.2
+- Fix temporary lockout when trying to copy public ssh-keys with
+  ssh-copy-id: public key queries no longer count against MaxAuthTries
+  until the new PubkeyAuthOptions max-pk-ok limit is reached (default 6)
+
 * Mon Nov 9 2026 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 9.9p1-33.1
 - Import OpenSSH 9.9p1-33 from Alma 10
 - Drop the XCP-ng backports of CVE-2026-60000 and CVE-2026-60001
