@@ -1,0 +1,198 @@
+Origin: https://git.almalinux.org/rpms/openssh/commit/213f4d44879861bc0b379786485466beade75ba5
+
+diff --color -ruNp a/auth2.c b/auth2.c
+--- a/auth2.c	2026-10-27 14:51:30.737614385 +0100
++++ b/auth2.c	2026-10-27 14:54:09.788208586 +0100
+@@ -358,6 +358,7 @@ input_userauth_request(int type, u_int32
+ 	auth2_authctxt_reset_info(authctxt);
+ 	authctxt->postponed = 0;
+ 	authctxt->server_caused_failure = 0;
++	authctxt->auth_failure_already_counted = 0;
+ 
+ 	/* try to authenticate user */
+ 	m = authmethod_lookup(authctxt, method);
+@@ -462,6 +463,7 @@ userauth_finish(struct ssh *ssh, int aut
+ 	} else {
+ 		/* Allow initial try of "none" auth without failure penalty */
+ 		if (!partial && !authctxt->server_caused_failure &&
++		    !authctxt->auth_failure_already_counted &&
+ 		    (authctxt->attempt > 1 || strcmp(method, "none") != 0))
+ 			authctxt->failures++;
+ 		if (authctxt->failures >= options.max_authtries) {
+diff --color -ruNp a/auth2-pubkey.c b/auth2-pubkey.c
+--- a/auth2-pubkey.c	2026-10-27 14:51:30.697633716 +0100
++++ b/auth2-pubkey.c	2026-10-27 14:54:09.786583899 +0100
+@@ -302,7 +302,19 @@ userauth_pubkey(struct ssh *ssh, const c
+ 			    (r = ssh_packet_write_wait(ssh)) != 0)
+ 				fatal_fr(r, "send packet");
+ 			authctxt->postponed = 1;
+-		}
++		} else {
++			/*
++			 * Don't count this as an authentication failure
++			 * unless we have already used up the separate
++			 * max-pk-ok budget (if any).
++			 */
++			if (authctxt->pk_ok_failures++ < options.max_pubkey_ok)
++				authctxt->auth_failure_already_counted = 1;
++			debug3_f("pubkey test %d of %d%s",
++			    authctxt->pk_ok_failures, options.max_pubkey_ok,
++			    authctxt->auth_failure_already_counted ?
++			    "" : ": treating as authentication failure");
++		 }
+ 	}
+ done:
+ 	if (authenticated == 1 && auth_activate_options(ssh, authopts) != 0) {
+diff --color -ruNp a/auth.h b/auth.h
+--- a/auth.h	2026-10-27 14:51:30.722237194 +0100
++++ b/auth.h	2026-10-27 14:54:09.785583918 +0100
+@@ -59,6 +59,8 @@ struct Authctxt {
+ 	int		 valid;		/* user exists and is allowed to login */
+ 	int		 attempt;
+ 	int		 failures;
++	int		 pk_ok_failures;
++	int		 auth_failure_already_counted;
+ 	int		 server_caused_failure;
+ 	int		 force_pwchange;
+ 	char		*user;		/* username sent by the client */
+diff --color -ruNp a/servconf.c b/servconf.c
+--- a/servconf.c	2026-10-27 14:51:30.750905362 +0100
++++ b/servconf.c	2026-10-27 14:54:38.788031312 +0100
+@@ -134,6 +134,7 @@ initialize_server_options(ServerOptions
+ 	options->hostkeyalgorithms = NULL;
+ 	options->pubkey_authentication = -1;
+ 	options->pubkey_auth_options = -1;
++	options->max_pubkey_ok = -1;
+ 	options->pubkey_accepted_algos = NULL;
+ 	options->kerberos_authentication = -1;
+ 	options->kerberos_or_local_passwd = -1;
+@@ -388,8 +389,10 @@ fill_default_server_options(ServerOption
+ 		options->hostbased_uses_name_from_packet_only = 0;
+ 	if (options->pubkey_authentication == -1)
+ 		options->pubkey_authentication = 1;
+-	if (options->pubkey_auth_options == -1)
++	if (options->pubkey_auth_options == -1) {
+ 		options->pubkey_auth_options = 0;
++		options->max_pubkey_ok = DEFAULT_AUTH_FAIL_MAX;
++	}
+ 	if (options->kerberos_authentication == -1)
+ 		options->kerberos_authentication = 0;
+ 	if (options->kerberos_or_local_passwd == -1)
+@@ -1670,6 +1673,7 @@ process_server_config_line_depth(ServerO
+ 	case sPubkeyAuthOptions:
+ 		intptr = &options->pubkey_auth_options;
+ 		value = 0;
++		value2 = DEFAULT_AUTH_FAIL_MAX;
+ 		while ((arg = argv_next(&ac, &av)) != NULL) {
+ 			if (strcasecmp(arg, "none") == 0)
+ 				continue;
+@@ -1677,14 +1681,24 @@ process_server_config_line_depth(ServerO
+ 				value |= PUBKEYAUTH_TOUCH_REQUIRED;
+ 			else if (strcasecmp(arg, "verify-required") == 0)
+ 				value |= PUBKEYAUTH_VERIFY_REQUIRED;
+-			else {
++			else if (strncasecmp(arg, "max-pk-ok:", 10) == 0) {
++				value2 = strtonum(arg + 10, 0, 255, &errstr);
++				if (errstr != NULL) {
++					error("%s line %d: bad %s max-pk-ok "
++					    "value: %s", filename, linenum,
++					keyword, errstr);
++					goto out;
++				}
++			} else {
+ 				error("%s line %d: unsupported %s option %s",
+ 				    filename, linenum, keyword, arg);
+ 				goto out;
+ 			}
+ 		}
+-		if (*activep && *intptr == -1)
+-			*intptr = value;
++		if (*activep && options->pubkey_auth_options == -1) {
++			options->pubkey_auth_options = value;
++			options->max_pubkey_ok = value2;
++		}
+ 		break;
+ 
+ 	case sKerberosAuthentication:
+@@ -3044,6 +3058,15 @@ servconf_merge_subsystems(ServerOptions
+ 	}
+ }
+ 
++static void
++copy_pubkey_auth_options(ServerOptions *dst, const ServerOptions *src)
++{
++	if (src->pubkey_auth_options != -1) {
++		dst->pubkey_auth_options = src->pubkey_auth_options;
++		dst->max_pubkey_ok = src->max_pubkey_ok;
++	}
++}
++
+ /*
+  * Copy any supported values that are set.
+  *
+@@ -3063,7 +3086,7 @@ copy_set_server_options(ServerOptions *d
+ 	M_CP_INTOPT(gss_authentication);
+ 	M_CP_INTOPT(gss_allow_s4u2self);
+ 	M_CP_INTOPT(pubkey_authentication);
+-	M_CP_INTOPT(pubkey_auth_options);
++	copy_pubkey_auth_options(dst, src);
+ 	M_CP_INTOPT(kerberos_authentication);
+ 	M_CP_INTOPT(hostbased_authentication);
+ 	M_CP_INTOPT(hostbased_uses_name_from_packet_only);
+@@ -3570,6 +3593,8 @@ dump_config(ServerOptions *o)
+ 		printf(" touch-required");
+ 	if (o->pubkey_auth_options & PUBKEYAUTH_VERIFY_REQUIRED)
+ 		printf(" verify-required");
++	if (o->max_pubkey_ok != -1)
++		printf(" max-pk-ok:%d", o->max_pubkey_ok);
+ 	printf("\n");
+ 
+ 	if (o->per_source_penalty.enabled) {
+diff --color -ruNp a/servconf.h b/servconf.h
+--- a/servconf.h	2026-10-27 14:51:30.672523719 +0100
++++ b/servconf.h	2026-10-27 14:54:27.583244805 +0100
+@@ -140,6 +140,8 @@ typedef struct {
+ 	int     pubkey_authentication;	/* If true, permit ssh2 pubkey authentication. */
+ 	char   *pubkey_accepted_algos;	/* Signature algos allowed for pubkey */
+ 	int	pubkey_auth_options;	/* -1 or mask of PUBKEYAUTH_* flags */
++	int	max_pubkey_ok;		/* Max pubkey tests before they count
++					 * against MaxAuthTries */
+ 	int     kerberos_authentication;	/* If true, permit Kerberos
+ 						 * authentication. */
+ 	int     kerberos_or_local_passwd;	/* If true, permit kerberos
+diff --color -ruNp a/sshd_config.5 b/sshd_config.5
+--- a/sshd_config.5	2026-10-27 14:51:30.723614651 +0100
++++ b/sshd_config.5	2026-10-27 14:54:09.792182183 +0100
+@@ -1859,9 +1859,10 @@ Sets one or more public key authenticati
+ The supported keywords are:
+ .Cm none
+ (the default; indicating no additional options are enabled),
+-.Cm touch-required
++.Cm touch-required ,
++.Cm verify-required
+ and
+-.Cm verify-required .
++.Cm max-pk-ok .
+ .Pp
+ The
+ .Cm touch-required
+@@ -1889,6 +1890,19 @@ Neither the
+ or
+ .Cm verify-required
+ options have any effect for other, non-FIDO, public key types.
++.Pp
++The
++.Cm max-pk-ok
++option takes a numeric argument separated by a colon character, e.g.
++.Sq max-pk-ok:4
++to specify the number of public key query attempts are permitted
++before the attempts are considered failed authentications that count against
++.Cm MaxAuthTries .
++Public key queries are a SSH protocol mechanism that allow a client to test
++whether a server accepts a given public key before an actual authentication
++attempt, to avoid the need to enter PINs/key passphrases or touch FIDO
++authenticators unnecessarily.
++The default is 6.
+ .It Cm PubkeyAuthentication
+ Specifies whether public key authentication is allowed.
+ The default is
