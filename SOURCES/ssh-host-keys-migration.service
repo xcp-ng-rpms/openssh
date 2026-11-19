@@ -8,7 +8,7 @@ ConditionPathExists=!/var/lib/.ssh-host-keys-migration
 [Service]
 Type=oneshot
 ExecStart=-/usr/libexec/openssh/ssh-host-keys-migration.sh
-ExecStart=touch /var/lib/.ssh-host-keys-migration
+ExecStart=/usr/bin/touch /var/lib/.ssh-host-keys-migration
 RemainAfterExit=yes
 
 [Install]
