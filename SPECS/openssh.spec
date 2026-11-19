@@ -896,10 +896,12 @@ fi
 %attr(0755,root,root) %{_libdir}/sshtest/sk-dummy.so
 
 %changelog
-* Mon Nov 16 2026 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 9.9p1-33.1
+* Mon Nov 16 2026 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 9.9p1-33.2
 - Fix temporary lockout when trying to copy public ssh-keys with
   ssh-copy-id: public key queries no longer count against MaxAuthTries
   until the new PubkeyAuthOptions max-pk-ok limit is reached (default 6)
+
+* Mon Nov 9 2026 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 9.9p1-33.1
 - Import OpenSSH 9.9p1-33 from Alma 10
 - Drop the XCP-ng backports of CVE-2026-60000 and CVE-2026-60001
   (Patch2001 and Patch2002) in favour of the Alma patches
