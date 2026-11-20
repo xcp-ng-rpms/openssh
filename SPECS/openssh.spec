@@ -1,5 +1,5 @@
 # XCP-ng sub release number
-%define xcpng_subrel 2
+%define xcpng_subrel 3
 
 # Do we want SELinux & Audit
 %if 0%{?!noselinux:1}
@@ -896,10 +896,17 @@ fi
 %attr(0755,root,root) %{_libdir}/sshtest/sk-dummy.so
 
 %changelog
-* Mon Nov 16 2026 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 9.9p1-33.1
+* Thu Nov 19 2026 Vincent Michel <vincent.michel@vates.tech> - 9.9p1-33.3
+- Use an absolute path for touch in ssh-host-keys-migration.service:
+  systemd 219 ignores non-absolute Exec paths, so the stamp file was
+  never created and the unit ran again on every boot of a fresh install
+
+* Mon Nov 16 2026 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 9.9p1-33.2
 - Fix temporary lockout when trying to copy public ssh-keys with
   ssh-copy-id: public key queries no longer count against MaxAuthTries
   until the new PubkeyAuthOptions max-pk-ok limit is reached (default 6)
+
+* Mon Nov 9 2026 Lucas Ravagnier <lucas.ravagnier@vates.tech> - 9.9p1-33.1
 - Import OpenSSH 9.9p1-33 from Alma 10
 - Drop the XCP-ng backports of CVE-2026-60000 and CVE-2026-60001
   (Patch2001 and Patch2002) in favour of the Alma patches
